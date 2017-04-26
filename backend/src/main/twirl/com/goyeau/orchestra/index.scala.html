@@ -1,0 +1,10 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+    <title>Orchestra</title>
+</head>
+<body>
+@scalajs.html.scripts("web", name => s"/assets/$name", name => getClass.getResource(s"/public/$name") != null)
+</body>
+</html>
