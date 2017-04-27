@@ -1,11 +1,14 @@
 package com.goyeau.orchestra
 
+import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
+import autowire._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.router.{RouterConfigDsl, RouterCtl, StaticDsl}
 import japgolly.scalajs.react.vdom.TagOf
 import japgolly.scalajs.react.vdom.html_<^._
 import shapeless.{HList, Poly}
 import shapeless.ops.hlist.{Mapper, ToTraversable}
+import io.circe.generic.auto._
 
 sealed trait Board {
   def name: String
@@ -62,8 +65,10 @@ object SingleTaskBoard {
         <.div(
           <.div(props.name) +:
             props.params :+
-            <.button(^.onClick --> Callback.alert("Toto"), "Run"): _*
+            <.button(^.onClick --> runTask, "Run"): _*
         )
       }
       .build
+
+  def runTask = Callback(AutowireClient[Api].runTask('ahah).call())
 }

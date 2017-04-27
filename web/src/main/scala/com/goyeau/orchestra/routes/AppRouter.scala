@@ -16,11 +16,11 @@ object AppRouter {
   case class Boards(p: Board) extends AppPage
   case object Status extends AppPage
 
-  val emptyTask = Task {
+  val emptyTask = Task('emptyTask) {
     println("empty")
   }
 
-  val deployBackend = Task(Param[String]("version"), RunId) { (version, runId) =>
+  val deployBackend = Task('deployBackend)(Param[String]("version"), RunId) { (version, runId) =>
     println(version + runId)
   }
 

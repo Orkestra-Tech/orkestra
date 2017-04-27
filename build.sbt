@@ -21,8 +21,9 @@ lazy val common = crossProject
   .enablePlugins(ScalaJSPlugin)
   .settings(
     libraryDependencies ++= Seq(
-      "com.chuusai" %%% "shapeless" % "2.3.2"
-    ) ++ scalaJsReact.value
+      "com.chuusai" %%% "shapeless" % "2.3.2",
+      autowire.value
+    ) ++ scalaJsReact.value ++ circe.value
   )
 lazy val commonJVM = common.jvm
 lazy val commonJS = common.js
@@ -52,14 +53,14 @@ lazy val web = project
   .dependsOn(commonJS)
   .enablePlugins(ScalaJSPlugin, ScalaJSWeb)
   .settings(
+    scalaJSUseMainModuleInitializer := true,
     libraryDependencies ++= {
       val scalaCssVersion = "0.5.3-RC1"
       Seq(
         "com.github.japgolly.scalacss" %%% "core" % scalaCssVersion,
-        "com.github.japgolly.scalacss" %%% "ext-react" % scalaCssVersion,
-        autowire.value
+        "com.github.japgolly.scalacss" %%% "ext-react" % scalaCssVersion
       )
-    } ++ scalaJsReact.value ++ circe.value,
+    },
     jsDependencies ++= {
       val reactVersion = "15.4.2"
       Seq(
@@ -73,6 +74,6 @@ lazy val orchestra = project
   .in(file("."))
   .settings(
     version in ThisBuild := "0.1",
-    scalaVersion in ThisBuild := "2.12.1"
+    scalaVersion in ThisBuild := "2.12.2"
   )
   .aggregate(backend, web)

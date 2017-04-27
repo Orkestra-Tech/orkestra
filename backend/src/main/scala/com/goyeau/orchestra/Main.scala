@@ -4,10 +4,6 @@ package com.goyeau.orchestra
 
 object Main extends App {
 
-  val deployBackend = Task(Param[String]("version"), RunId) { (version, runId) =>
-    println(version + runId)
-  }
-
   Orchestra("DriveTribe").startServer("localhost", 1234)
 
 //  val channel = new RandomAccessFile(new File("lock"), "rw").getChannel

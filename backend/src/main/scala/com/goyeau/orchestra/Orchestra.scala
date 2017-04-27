@@ -9,7 +9,7 @@ import com.goyeau.orchestra._
 case class Orchestra(name: String) extends HttpApp {
   implicit val twirlHtmlMarshaller: ToEntityMarshaller[Html] =
     Marshaller.StringMarshaller.wrap(`text/html`)(_.toString)
-  implicit val executionContext = systemReference.get().dispatcher
+  implicit lazy val executionContext = systemReference.get().dispatcher
 
   def route: Route = //Root(name)(displayItems: _*).route
     pathSingleSlash {

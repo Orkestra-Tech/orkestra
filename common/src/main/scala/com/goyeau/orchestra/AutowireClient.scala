@@ -1,12 +1,14 @@
 package com.goyeau.orchestra
 
 import scala.concurrent.Future
+import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
+import autowire._
+import io.circe.generic.auto._
 import io.circe
 import io.circe.parser._
 import io.circe.syntax._
 import org.scalajs.dom.ext.Ajax
-import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
 object AutowireClient extends autowire.Client[String, circe.Decoder, circe.Encoder] {
   override def doCall(req: Request): Future[String] =
