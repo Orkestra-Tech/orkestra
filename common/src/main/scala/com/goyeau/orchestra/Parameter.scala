@@ -1,10 +1,12 @@
 package com.goyeau.orchestra
 
-trait Parameter[T] {
+trait Parameter[T]
+trait DisplayableParameter {
   def name: String
 }
-case class Param[T: Encoder](name: String) extends Parameter[T]
 
-object RunId extends Parameter[String] {
-  val name = "runId"
-}
+case class Param[T](name: String) extends Parameter[T] with DisplayableParameter
+
+object RunId extends Parameter[String]
+
+object Dummy extends Parameter[Unit]

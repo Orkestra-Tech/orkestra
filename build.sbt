@@ -1,8 +1,16 @@
 val scalaJsReact = Def.setting {
-  val scalaJSReactVersion = "1.0.0-RC2"
+  val scalaJSReactVersion = "1.0.0"
   Seq(
     "com.github.japgolly.scalajs-react" %%% "core" % scalaJSReactVersion,
     "com.github.japgolly.scalajs-react" %%% "extra" % scalaJSReactVersion
+  )
+}
+val akkaHttp = Def.setting {
+  val akkaHttpVersion = "10.0.5"
+  Seq(
+    "com.typesafe.akka" %% "akka-http" % akkaHttpVersion,
+    "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpVersion % Test,
+    "de.heikoseeberger" %% "akka-http-circe" % "1.15.0"
   )
 }
 
@@ -23,7 +31,7 @@ lazy val common = crossProject
     libraryDependencies ++= Seq(
       "com.chuusai" %%% "shapeless" % "2.3.2",
       autowire.value
-    ) ++ scalaJsReact.value ++ circe.value
+    ) ++ scalaJsReact.value ++ circe.value ++ akkaHttp.value
   )
 lazy val commonJVM = common.jvm
 lazy val commonJS = common.js
@@ -32,17 +40,9 @@ lazy val backend = project
   .dependsOn(commonJVM)
   .enablePlugins(SbtWeb, SbtTwirl)
   .settings(
-    libraryDependencies ++= {
-      val akkaHttpVersion = "10.0.5"
-      Seq(
-        "com.typesafe.akka" %% "akka-http" % akkaHttpVersion,
-        "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpVersion % Test,
-        "com.typesafe.akka" %% "akka-http-spray-json" % akkaHttpVersion,
-        "com.vmunier" %% "scalajs-scripts" % "1.1.0",
-        autowire.value,
-        "de.heikoseeberger" %% "akka-http-circe" % "1.15.0"
-      ) ++ circe.value
-    },
+    libraryDependencies ++= Seq(
+      "com.vmunier" %% "scalajs-scripts" % "1.1.0"
+    ),
     WebKeys.packagePrefix in Assets := "public/",
     managedClasspath in Runtime += (packageBin in Assets).value,
     scalaJSProjects := Seq(web),
@@ -55,7 +55,7 @@ lazy val web = project
   .settings(
     scalaJSUseMainModuleInitializer := true,
     libraryDependencies ++= {
-      val scalaCssVersion = "0.5.3-RC1"
+      val scalaCssVersion = "0.5.3"
       Seq(
         "com.github.japgolly.scalacss" %%% "core" % scalaCssVersion,
         "com.github.japgolly.scalacss" %%% "ext-react" % scalaCssVersion

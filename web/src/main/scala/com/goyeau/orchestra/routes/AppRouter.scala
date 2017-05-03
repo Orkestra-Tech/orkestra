@@ -20,8 +20,9 @@ object AppRouter {
     println("empty")
   }
 
-  val deployBackend = Task('deployBackend)(Param[String]("version"), RunId) { (version, runId) =>
-    println(version + runId)
+  val deployBackend = Task('deployBackend)(ParamMagnet.multiParameters(Param[String]("version"), RunId)) {
+    case (version, runId) =>
+      println(version + runId)
   }
 
   val rootBoard = FolderBoard("Drivetribe")(

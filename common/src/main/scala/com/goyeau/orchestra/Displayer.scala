@@ -11,9 +11,6 @@ trait Displayer[T] {
 }
 
 object Displayer {
-  implicit val runIdDisplayer = new Displayer[RunId.type] {
-    def display(p: RunId.type) = <.input(^.key := p.name, ^.`type` := "hidden", ^.value := Random.nextInt().toString)
-  }
   implicit val stringDisplayer = new Displayer[Param[String]] {
     def display(p: Param[String]) = <.input(^.key := p.name, ^.value := p.name)
   }
