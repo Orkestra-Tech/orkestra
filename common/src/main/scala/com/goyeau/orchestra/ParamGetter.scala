@@ -45,7 +45,7 @@ object ParamGetter {
   }
 
   object GetDisplays extends Poly {
-    implicit def forParameter[Disps <: HList, P](
+    implicit def forParameter[Disps <: HList, P <: Parameter[_]](
       implicit displayer: Displayer[P],
       prepend: Prepend[Disps, TagMod :: HNil]
     ) =

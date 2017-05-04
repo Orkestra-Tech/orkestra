@@ -6,7 +6,7 @@ import japgolly.scalajs.react.vdom.TagMod
 import japgolly.scalajs.react.vdom.html_<^._
 import shapeless.syntax.typeable._
 
-trait Displayer[T] { // TODO restrict to Parameter[_] ?
+trait Displayer[T <: Parameter[_]] {
   def apply(p: T, $ : RenderScope[_, Map[String, Any], _]): TagMod
 }
 
@@ -49,7 +49,7 @@ object Displayer extends LowPriorityDisplayers {
 trait LowPriorityDisplayers {
 
   // Dont display by default
-  implicit def default[T] = new Displayer[T] {
+  implicit def default[T <: Parameter[_]] = new Displayer[T] {
     def apply(p: T, $ : RenderScope[_, Map[String, Any], _]) = TagMod()
   }
 }
