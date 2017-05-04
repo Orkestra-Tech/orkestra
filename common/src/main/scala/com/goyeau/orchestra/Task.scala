@@ -7,31 +7,17 @@ import shapeless.ops.hlist._
 
 case class Task[Params <: HList, ParamValue, Result](id: Symbol, params: Params, task: ParamValue => Result) {
   trait Api {
-    def run(runId: String, params: ParamValue): Result
+    def run(taskInfo: Task.Info, params: ParamValue): Result
   }
   object ApiImpl extends Api {
-    override def run(runId: String, params: ParamValue): Result = task(params)
+    override def run(taskInfo: Task.Info, params: ParamValue): Result = task(params)
   }
 }
 
 object Task {
   def apply(id: Symbol)(magnet: ParamMagnet): magnet.Out = magnet(id)
 
-//  object FetchParams extends Poly {
-//    implicit def forParameter[Result <: HList, T](implicit prepend: Prepend[Result, T :: HNil], decode: Encoder[T]) =
-//      use((c: (Result, Map[String, String]), p: Parameter[T]) => (c._1 :+ decode(c._2(p.name)), c._2))
-//  }
-//
-//  def run[Params <: HList, Func, ParamTypes <: HList](job: Task[Params, Func], givenParams: Map[String, String])(
-//    implicit folder: LeftFolder.Aux[Params,
-//                                    (HNil.type, Map[String, String]),
-//                                    FetchParams.type,
-//                                    (ParamTypes, Map[String, String])],
-//    fn2Prod: FnToProduct.Aux[Func, ParamTypes => Unit]
-//  ): Unit = {
-//    val (fetchedParams, _) = job.params.foldLeft((HNil, givenParams))(FetchParams)
-//    fn2Prod(job.task)(fetchedParams)
-//  }
+  case class Info(runId: String)
 }
 
 // Trick to hide shapeless implicits
@@ -41,8 +27,6 @@ sealed trait ParamMagnet {
 }
 
 object ParamMagnet {
-
-//  def f(p: Unit, f: () => String) = f(p)
 
   implicit def noParameter[Result](f: => Result) =
     new ParamMagnet {

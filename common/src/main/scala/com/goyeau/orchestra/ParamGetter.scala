@@ -1,47 +1,46 @@
 package com.goyeau.orchestra
 
-import japgolly.scalajs.react.component.builder.Lifecycle.RenderScope
 import japgolly.scalajs.react.vdom.TagMod
 import shapeless.{::, HList, HNil, Poly}
 import shapeless.ops.hlist.{LeftFolder, Prepend, ToTraversable, Tupler}
 
 trait ParamGetter[Params <: HList, ParamValues] {
-  def displays(params: Params, $ : RenderScope[Unit, Map[String, Any], Unit]): TagMod
+  def displays(params: Params, state: Displayer.State): TagMod
   def values(params: Params, map: Map[String, Any]): ParamValues
 }
 
 object ParamGetter {
   implicit val noParameter = new ParamGetter[HNil, Unit] {
-    override def values(params: HNil, map: Map[String, Any]) = ()
+    override def displays(params: HNil, state: Displayer.State): TagMod = TagMod()
 
-    override def displays(params: HNil, $ : RenderScope[Unit, Map[String, Any], Unit]): TagMod = TagMod()
+    override def values(params: HNil, map: Map[String, Any]) = ()
   }
 
   implicit def oneParameter[ParamValue](implicit displayer: Displayer[Parameter[ParamValue]]) =
     new ParamGetter[Parameter[ParamValue] :: HNil, ParamValue] {
+      override def displays(params: Parameter[ParamValue] :: HNil, state: Displayer.State): TagMod =
+        displayer(params.head, state)
+
       override def values(params: Parameter[ParamValue] :: HNil, map: Map[String, Any]): ParamValue =
         params.head.getValue(map)
-
-      override def displays(params: Parameter[ParamValue] :: HNil,
-                            $ : RenderScope[Unit, Map[String, Any], Unit]): TagMod = displayer(params.head, $)
     }
 
-  implicit def multiParameters[Params <: HList, Disps <: HList, ParamValues <: HList, ParamValue](
-    implicit valuesGetter: LeftFolder.Aux[Params,
-                                          (HNil.type, Map[String, Any]),
-                                          GetValues.type,
-                                          (ParamValues, Map[String, Any])],
-    tupler: Tupler.Aux[ParamValues, ParamValue],
-    displaysGetter: LeftFolder.Aux[Params,
-                                   (HNil.type, RenderScope[Unit, Map[String, Any], Unit]),
-                                   GetDisplays.type,
-                                   (Disps, RenderScope[Unit, Map[String, Any], Unit])],
+  implicit def multiParameters[Params <: HList, Disps <: HList, ParamValuesL <: HList, ParamValues](
+    implicit displaysGetter: LeftFolder.Aux[Params,
+                                            (HNil.type, Displayer.State),
+                                            GetDisplays.type,
+                                            (Disps, Displayer.State)],
+    valuesGetter: LeftFolder.Aux[Params,
+                                 (HNil.type, Map[String, Any]),
+                                 GetValues.type,
+                                 (ParamValuesL, Map[String, Any])],
+    tupler: Tupler.Aux[ParamValuesL, ParamValues],
     toSeq: ToTraversable.Aux[Disps, Seq, TagMod]
-  ) = new ParamGetter[Params, ParamValue] {
-    override def values(params: Params, map: Map[String, Any]) = tupler(params.foldLeft((HNil, map))(GetValues)._1)
+  ) = new ParamGetter[Params, ParamValues] {
+    override def displays(params: Params, state: Displayer.State): TagMod =
+      TagMod(toSeq(params.foldLeft((HNil, state))(GetDisplays)._1): _*)
 
-    override def displays(params: Params, $ : RenderScope[Unit, Map[String, Any], Unit]): TagMod =
-      TagMod(toSeq(params.foldLeft((HNil, $))(GetDisplays)._1): _*)
+    override def values(params: Params, map: Map[String, Any]) = tupler(params.foldLeft((HNil, map))(GetValues)._1)
   }
 
   object GetDisplays extends Poly {
@@ -49,7 +48,7 @@ object ParamGetter {
       implicit displayer: Displayer[P],
       prepend: Prepend[Disps, TagMod :: HNil]
     ) =
-      use((acc: (Disps, RenderScope[Unit, Map[String, Any], Unit]), p: P) => (acc._1 :+ displayer(p, acc._2), acc._2))
+      use((acc: (Disps, Displayer.State), p: P) => (acc._1 :+ displayer(p, acc._2), acc._2))
   }
 
   object GetValues extends Poly {

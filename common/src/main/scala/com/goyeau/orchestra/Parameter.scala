@@ -1,6 +1,6 @@
 package com.goyeau.orchestra
 
-import scala.util.Random
+import java.util.UUID
 
 trait Parameter[T] {
   def name: String
@@ -17,5 +17,6 @@ case class Param[T](name: String, defaultValue: Option[T] = None) extends Parame
 
 object RunId extends Parameter[String] {
   val name = "runId"
-  def defaultValue = Some(Random.nextInt().toString) // Generate a Slug Id instead
+  def defaultValue = None
+  def newId() = UUID.randomUUID().toString
 }
