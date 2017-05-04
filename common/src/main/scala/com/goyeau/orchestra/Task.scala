@@ -4,14 +4,13 @@ import scala.language.{higherKinds, implicitConversions}
 
 import shapeless._
 import shapeless.ops.hlist._
-import shapeless.ops.function._
 
-case class Task[Params <: HList, ParamTypes, Result](id: Symbol, params: Params, task: ParamTypes => Result) {
+case class Task[Params <: HList, ParamValue, Result](id: Symbol, params: Params, task: ParamValue => Result) {
   trait Api {
-    def run(params: ParamTypes): Result
+    def run(runId: String, params: ParamValue): Result
   }
   object ApiImpl extends Api {
-    override def run(params: ParamTypes): Result = task(params)
+    override def run(runId: String, params: ParamValue): Result = task(params)
   }
 }
 
@@ -63,10 +62,12 @@ object ParamMagnet {
                                ParamTypes <: HList,
                                TupledParamTypes <: Product](
     params: TupledParams
-  )(implicit tuple2HList: Generic.Aux[TupledParams, Params],
-    mapper: Mapper.Aux[UnifyParameter.type, Params, UniParams],
+  )(
+    implicit tuple2HList: Generic.Aux[TupledParams, Params],
+    unifyer: Mapper.Aux[UnifyParameter.type, Params, UniParams],
     comapper: Comapped.Aux[UniParams, Parameter, ParamTypes],
-    tupledParamTypes: Tupler.Aux[ParamTypes, TupledParamTypes]) =
+    tupledParamTypes: Tupler.Aux[ParamTypes, TupledParamTypes]
+  ) =
     new ParamMagnet {
       type Out = TaskBuilder[Params, TupledParamTypes]
       def apply(id: Symbol) = TaskBuilder(id, tuple2HList.to(params))
@@ -76,8 +77,8 @@ object ParamMagnet {
     def apply[Result, Func](f: ParamTypes => Result) =
       Task[Params, ParamTypes, Result](id, params, f)
   }
+}
 
-  object UnifyParameter extends Poly {
-    implicit def forParameter[P, T](implicit ev: P <:< Parameter[T]) = use((x: P) => ev(x))
-  }
+object UnifyParameter extends Poly {
+  implicit def forParameter[P, T](implicit ev: P <:< Parameter[T]) = use((x: P) => ev(x))
 }

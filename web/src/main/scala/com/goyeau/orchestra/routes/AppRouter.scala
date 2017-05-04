@@ -5,8 +5,6 @@ import japgolly.scalajs.react.vdom.html_<^._
 import com.goyeau.orchestra.components.{Footer, TopNav}
 import com.goyeau.orchestra.models.Menu
 import com.goyeau.orchestra.pages.StatusPage
-import scalacss.ScalaCssReact._
-
 import com.goyeau.orchestra._
 
 object AppRouter {
@@ -20,7 +18,11 @@ object AppRouter {
     println("empty")
   }
 
-  val deployBackend = Task('deployBackend)(ParamMagnet.multiParameters(Param[String]("version"), RunId)) {
+  val oneParamTask = Task('oneParamTask)(Param[String]("version")) { v =>
+    println(v)
+  }
+
+  val deployBackend = Task('deployBackend)(Param[String]("version", Some("12")), RunId) {
     case (version, runId) =>
       println(version + runId)
   }
@@ -33,7 +35,7 @@ object AppRouter {
     ),
     FolderBoard("Infrastructure")(
       FolderBoard("Staging")(
-        SingleTaskBoard("Create", deployBackend)
+        SingleTaskBoard("Create", oneParamTask)
       )
     )
   )
