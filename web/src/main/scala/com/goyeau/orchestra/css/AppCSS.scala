@@ -3,13 +3,15 @@ package com.goyeau.orchestra.css
 import com.goyeau.orchestra.components.TopNav
 import com.goyeau.orchestra.pages.StatusPage
 import scalacss.ScalaCssReact._
-import scalacss.Defaults._
+import scalacss.DevDefaults._
+import scalacss.ProdDefaults._
 import scalacss.internal.mutable.GlobalRegistry
 
 object AppCSS {
+  val CssSettings = scalacss.devOrProdDefaults; import CssSettings._
 
   def load = {
-    GlobalRegistry.register(GlobalStyle, TopNav.Style, StatusPage.Style)
+    GlobalRegistry.register(Global.Style, TopNav.Style, StatusPage.Style)
     GlobalRegistry.onRegistration(_.addToDocument())
   }
 }

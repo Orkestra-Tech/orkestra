@@ -74,6 +74,7 @@ lazy val orchestra = project
   .in(file("."))
   .settings(
     version in ThisBuild := "0.1",
-    scalaVersion in ThisBuild := "2.12.2"
+    scalaVersion in ThisBuild := "2.12.2",
+    scalacOptions in ThisBuild += "-deprecation"
   )
   .aggregate(backend, web)

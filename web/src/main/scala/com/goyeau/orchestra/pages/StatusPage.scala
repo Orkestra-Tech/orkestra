@@ -3,10 +3,12 @@ package com.goyeau.orchestra.pages
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 
-import scalacss.Defaults._
+import scalacss.DevDefaults._
+import scalacss.ProdDefaults._
 import scalacss.ScalaCssReact._
 
 object StatusPage {
+  val CssSettings = scalacss.devOrProdDefaults; import CssSettings._
 
   object Style extends StyleSheet.Inline {
     import dsl._

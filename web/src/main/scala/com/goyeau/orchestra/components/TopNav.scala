@@ -4,13 +4,15 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.Reusability
 import japgolly.scalajs.react.extra.router.RouterCtl
 import japgolly.scalajs.react.vdom.html_<^._
-import scalacss.Defaults._
+import scalacss.DevDefaults._
+import scalacss.ProdDefaults._
 import scalacss.ScalaCssReact._
 
 import com.goyeau.orchestra.models.Menu
 import com.goyeau.orchestra.routes.AppRouter.AppPage
 
 object TopNav {
+  val CssSettings = scalacss.devOrProdDefaults; import CssSettings._
 
   object Style extends StyleSheet.Inline {
     import dsl._
