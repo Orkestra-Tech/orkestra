@@ -16,12 +16,12 @@ object ParamGetter {
     override def values(params: HNil, map: Map[String, Any]) = ()
   }
 
-  implicit def oneParameter[ParamValue](implicit displayer: Displayer[Parameter[ParamValue]]) =
-    new ParamGetter[Parameter[ParamValue] :: HNil, ParamValue] {
-      override def displays(params: Parameter[ParamValue] :: HNil, state: Displayer.State): TagMod =
+  implicit def oneParameter[Param <: Parameter[ParamValue], ParamValue](implicit displayer: Displayer[Param]) =
+    new ParamGetter[Param :: HNil, ParamValue] {
+      override def displays(params: Param :: HNil, state: Displayer.State): TagMod =
         displayer(params.head, state)
 
-      override def values(params: Parameter[ParamValue] :: HNil, map: Map[String, Any]): ParamValue =
+      override def values(params: Param :: HNil, map: Map[String, Any]): ParamValue =
         params.head.getValue(map)
     }
 

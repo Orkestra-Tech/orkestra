@@ -11,7 +11,7 @@ sealed trait Board {
   def route: StaticDsl.Rule[Board]
 }
 
-case class FolderBoard(name: String)(childBoards: Board*) extends Board {
+case class FolderBoard(name: String, childBoards: Seq[Board]) extends Board {
 
   val route = RouterConfigDsl[Board].buildRule { dsl =>
     import dsl._
@@ -19,6 +19,9 @@ case class FolderBoard(name: String)(childBoards: Board*) extends Board {
       renderR(ctrl => FolderBoardView.component(FolderBoardView.Props(name, childBoards, ctrl))) |
       childBoards.map(_.route).reduce(_ | _).prefixPath_/(name)
   }
+}
+object FolderBoard {
+  def apply(name: String): (Board*) => FolderBoard = (childBoards: Seq[Board]) => FolderBoard(name, childBoards)
 }
 
 object FolderBoardView {
