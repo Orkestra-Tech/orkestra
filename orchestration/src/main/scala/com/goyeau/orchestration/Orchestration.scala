@@ -1,11 +1,8 @@
 package com.goyeau.orchestration
 
 import com.goyeau.orchestra._
-import io.circe._
-import io.circe.syntax._
-import io.circe.generic.auto._
 
-object Main extends Orchestra {
+object Orchestration extends Orchestra {
 
   val emptyTask = Task('emptyTask) {
     println("empty")
@@ -13,6 +10,7 @@ object Main extends Orchestra {
 
   val oneParamTask = Task('oneParamTask)(Param[String]("version")) { v =>
     println(v)
+    12
   }
 
   val deployBackend = Task('deployBackend)(Param[String]("version", Some("12")), RunId) {

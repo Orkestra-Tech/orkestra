@@ -37,7 +37,7 @@ case class Backend(board: Board) extends HttpApp {
           getFromResource(s"public/$file")
         }
       } ~
-      path("api" / Segments) { segments =>
-        post(AutowireServer.dispatch(segments))
+      pathPrefix("api") {
+        board.apiRoute
       }
 }

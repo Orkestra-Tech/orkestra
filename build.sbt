@@ -3,26 +3,27 @@ scalaVersion in ThisBuild := "2.12.2"
 scalacOptions in ThisBuild += "-deprecation"
 
 val scalaJsReact = Def.setting {
+  val scalaJsReactVersion = "1.0.0"
   Seq(
-    "com.github.japgolly.scalajs-react" %%% "core",
-    "com.github.japgolly.scalajs-react" %%% "extra"
-  ).map(_ % "1.0.0")
+    "com.github.japgolly.scalajs-react" %%% "core" % scalaJsReactVersion,
+    "com.github.japgolly.scalajs-react" %%% "extra" % scalaJsReactVersion
+  )
 }
 
 val akkaHttp = Def.setting {
-  val akkaHttpVersion = "10.0.5"
+  val akkaHttpVersion = "10.0.6"
   Seq(
     "com.typesafe.akka" %% "akka-http" % akkaHttpVersion,
-    "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpVersion % Test,
-    "de.heikoseeberger" %% "akka-http-circe" % "1.15.0"
+    "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpVersion % Test
   )
 }
 
 val scalaCss = Def.setting {
+  val scalaCssVersion = "0.5.3"
   Seq(
-    "com.github.japgolly.scalacss" %%% "core",
-    "com.github.japgolly.scalacss" %%% "ext-react"
-  ).map(_ % "0.5.3")
+    "com.github.japgolly.scalacss" %%% "core" % scalaCssVersion,
+    "com.github.japgolly.scalacss" %%% "ext-react" % scalaCssVersion
+  )
 }
 
 val react = Def.setting {
@@ -35,22 +36,33 @@ val react = Def.setting {
 
 val autowire = Def.setting(Seq("com.lihaoyi" %%% "autowire" % "0.2.6"))
 
-val circe = Def.setting {
+val circeVersion = "0.7.0"
+val circeJS = Def.setting {
   Seq(
-    "io.circe" %%% "circe-core",
-    "io.circe" %%% "circe-generic",
-    "io.circe" %%% "circe-parser"
-  ).map(_ % "0.7.0")
+    "io.circe" %%% "circe-core" % circeVersion,
+    "io.circe" %%% "circe-generic" % circeVersion,
+    "io.circe" %%% "circe-parser" % circeVersion
+  )
+}
+val circeJVM = Def.setting {
+  Seq(
+    "io.circe" %% "circe-core" % circeVersion,
+    "io.circe" %% "circe-generic" % circeVersion,
+    "io.circe" %% "circe-parser" % circeVersion
+  )
 }
 
 lazy val orchestra = crossProject
   .crossType(CrossType.Pure)
   .enablePlugins(ScalaJSPlugin)
+  // For some reason we need to manually separate the JVM en JS version
+  .jsSettings(libraryDependencies ++= circeJS.value)
+  .jvmSettings(libraryDependencies ++= circeJVM.value)
   .settings(
     libraryDependencies ++= Seq(
       "com.chuusai" %%% "shapeless" % "2.3.2",
       "com.vmunier" %% "scalajs-scripts" % "1.1.0"
-    ) ++ scalaJsReact.value ++ circe.value ++ akkaHttp.value ++ scalaCss.value ++ autowire.value,
+    ) ++ scalaJsReact.value ++ akkaHttp.value ++ scalaCss.value ++ autowire.value,
     jsDependencies ++= react.value
   )
 lazy val orchestraJVM = orchestra.jvm

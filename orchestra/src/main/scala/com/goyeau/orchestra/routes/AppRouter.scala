@@ -6,6 +6,7 @@ import com.goyeau.orchestra.components.{Footer, TopNav}
 import com.goyeau.orchestra.models.Menu
 import com.goyeau.orchestra.pages.StatusPage
 import com.goyeau.orchestra._
+import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
 object AppRouter {
 

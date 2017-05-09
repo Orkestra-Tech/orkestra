@@ -44,18 +44,18 @@ object ParamGetter {
   }
 
   object GetDisplays extends Poly {
-    implicit def forParameter[Disps <: HList, P <: Parameter[_]](
-      implicit displayer: Displayer[P],
+    implicit def forParameter[Disps <: HList, Param <: Parameter[_]](
+      implicit displayer: Displayer[Param],
       prepend: Prepend[Disps, TagMod :: HNil]
     ) =
-      use((acc: (Disps, Displayer.State), p: P) => (acc._1 :+ displayer(p, acc._2), acc._2))
+      use((acc: (Disps, Displayer.State), p: Param) => (acc._1 :+ displayer(p, acc._2), acc._2))
   }
 
   object GetValues extends Poly {
-    implicit def forParameter[ParamValues <: HList, P, T](
-      implicit paramT: P <:< Parameter[T],
-      prepend: Prepend[ParamValues, T :: HNil]
+    implicit def forParameter[ParamValues <: HList, Param, ParamValue]( // TODO: Ask Aldo why
+      implicit paramEv: Param <:< Parameter[ParamValue],
+      prepend: Prepend[ParamValues, ParamValue :: HNil]
     ) =
-      use((acc: (ParamValues, Map[String, Any]), p: P) => (acc._1 :+ paramT(p).getValue(acc._2), acc._2))
+      use((acc: (ParamValues, Map[String, Any]), p: Param) => (acc._1 :+ paramEv(p).getValue(acc._2), acc._2))
   }
 }
