@@ -13,7 +13,7 @@ object Orchestration extends Orchestra {
     12
   }
 
-  val deployBackend = Task('deployBackend)(Param[String]("version", Some("12")), RunId) {
+  val deployBackend = Task('deployBackend)(Param[String]("version", defaultValue = Some("12")), RunId) {
     case (version, runId) =>
       println(version + runId)
   }

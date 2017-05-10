@@ -27,5 +27,5 @@ case class AutowireClient(taskId: Symbol) extends autowire.Client[String, Decode
       case Right(result) => result
     }
 
-  override def write[T: Encoder](r: T) = r.asJson.noSpaces
+  override def write[T: Encoder](o: T) = o.asJson.noSpaces
 }

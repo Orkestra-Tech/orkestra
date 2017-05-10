@@ -1,9 +1,10 @@
-package com.goyeau.orchestra
+package com.goyeau.orchestra.routes
+
+import scalajs.html.scripts
 
 import akka.http.scaladsl.model.{ContentTypes, HttpEntity}
-import akka.http.scaladsl.model.MediaTypes._
 import akka.http.scaladsl.server.{HttpApp, Route}
-import scalajs.html.scripts
+import com.goyeau.orchestra.Board
 
 case class Backend(board: Board) extends HttpApp {
   implicit lazy val executionContext = systemReference.get.dispatcher

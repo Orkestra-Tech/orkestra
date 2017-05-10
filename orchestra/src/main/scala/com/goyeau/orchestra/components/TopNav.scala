@@ -9,7 +9,7 @@ import scalacss.ProdDefaults._
 import scalacss.ScalaCssReact._
 
 import com.goyeau.orchestra.models.Menu
-import com.goyeau.orchestra.routes.AppRouter.AppPage
+import com.goyeau.orchestra.routes.WebRouter.AppPage
 
 object TopNav {
   val CssSettings = scalacss.devOrProdDefaults; import CssSettings._

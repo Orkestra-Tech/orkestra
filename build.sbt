@@ -76,6 +76,8 @@ lazy val orchestration = crossProject
 lazy val orchestrationJVM = orchestration.jvm
   .enablePlugins(SbtWeb)
   .settings(
+    reForkOptions := reForkOptions.value
+      .copy(envVars = reForkOptions.value.envVars + ("ORCHESTRA_HOME" -> "target/orchestra")),
     WebKeys.packagePrefix in Assets := "public/",
     managedClasspath in Runtime += (packageBin in Assets).value,
     scalaJSProjects := Seq(orchestrationJS),

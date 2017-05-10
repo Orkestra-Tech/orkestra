@@ -1,6 +1,9 @@
 package com.goyeau.orchestra
 
-import scala.concurrent.ExecutionContext
+import java.io.{File, FileOutputStream, PrintStream, PrintWriter}
+import java.time.Instant
+
+import scala.concurrent.{ExecutionContext, Future}
 import scala.language.{higherKinds, implicitConversions}
 
 import akka.http.scaladsl.server.Directives._
@@ -12,35 +15,54 @@ import io.circe.syntax._
 import io.circe.generic.auto._
 import shapeless._
 import shapeless.ops.hlist._
+import Utils._
 
 case class Task[Params <: HList, ParamValue: Decoder, Result: Encoder](id: Symbol,
                                                                        params: Params,
                                                                        task: ParamValue => Result) {
   trait Api {
-    def run(taskInfo: Task.Info, params: ParamValue): Boolean // TODO: Change Boolean for a Status enum, Running, Failure[Exception], Success[Result]...
+    def run(taskInfo: RunInfo, params: ParamValue): RunStatus
   }
 
-  object ApiServer extends Api {
-    override def run(taskInfo: Task.Info, params: ParamValue): Boolean = {
-      task(params)
-      true
-    }
+  private def apiServer(implicit ec: ExecutionContext) = new Api {
+    override def run(runInfo: RunInfo, params: ParamValue): RunStatus = {
+      val runPath = s"${Config.home}/${runInfo.id}"
+      new File(runPath).mkdirs()
 
-    def route(url: List[String])(implicit ec: ExecutionContext): Route =
-      entity(as[String]) { entity =>
-        val body = AutowireServer.read[Map[String, String]](entity)
-        val request = AutowireServer.route[Api](ApiServer)(Core.Request(url, body))
-        onSuccess(request)(complete(_))
+      val status = RunStatus.Running(Instant.now().toEpochMilli)
+
+      Future {
+        val logsOut = new PrintStream(new FileOutputStream(s"$runPath/logs"), true)
+        val statusWriter = new PrintWriter(s"$runPath/status")
+
+        withOutErr(logsOut) {
+          try {
+            statusWriter.write(status.asJson.noSpaces)
+            task(params)
+          } catch {
+            case e: Throwable =>
+              e.printStackTrace()
+              statusWriter.write(RunStatus.Failed(e).asJson.noSpaces)
+          } finally statusWriter.close()
+        }
       }
+
+      status
+    }
   }
+
+  def apiRoute(url: List[String])(implicit ec: ExecutionContext): Route =
+    entity(as[String]) { entity =>
+      val body = AutowireServer.read[Map[String, String]](entity)
+      val request = AutowireServer.route[Api](apiServer)(Core.Request(url, body))
+      onSuccess(request)(complete(_))
+    }
 
   val apiClient = AutowireClient(id)[Api]
 }
 
 object Task {
   def apply(id: Symbol)(magnet: ParamMagnet): magnet.Out = magnet(id)
-
-  case class Info(runId: String)
 }
 
 // Trick to hide shapeless implicits

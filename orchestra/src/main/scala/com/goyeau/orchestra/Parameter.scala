@@ -15,8 +15,7 @@ trait Parameter[T] {
 
 case class Param[T](name: String, defaultValue: Option[T] = None) extends Parameter[T]
 
-object RunId extends Parameter[String] {
+object RunId extends Parameter[UUID] {
   val name = "runId"
   def defaultValue = None
-  def newId() = UUID.randomUUID().toString
 }

@@ -1,11 +1,9 @@
 package com.goyeau.orchestra.pages
 
+import scalacss.ScalaCssReact._
+
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
-
-import scalacss.DevDefaults._
-import scalacss.ProdDefaults._
-import scalacss.ScalaCssReact._
 
 object StatusPage {
   val CssSettings = scalacss.devOrProdDefaults; import CssSettings._

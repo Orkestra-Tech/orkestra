@@ -3,7 +3,7 @@ package com.goyeau.orchestra
 import scala.scalajs.js.JSApp
 
 import com.goyeau.orchestra.css.AppCSS
-import com.goyeau.orchestra.routes.AppRouter
+import com.goyeau.orchestra.routes.{Backend, WebRouter}
 import org.scalajs.dom
 
 trait Orchestra extends JSApp {
@@ -12,7 +12,7 @@ trait Orchestra extends JSApp {
   // Web main
   override def main(): Unit = {
     AppCSS.load
-    AppRouter.router(board).renderIntoDOM(dom.document.getElementById("orchestra"))
+    WebRouter.router(board).renderIntoDOM(dom.document.getElementById("orchestra"))
   }
 
   // Backend main

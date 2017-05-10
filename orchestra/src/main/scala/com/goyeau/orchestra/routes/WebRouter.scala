@@ -1,25 +1,30 @@
 package com.goyeau.orchestra.routes
 
+import java.util.UUID
+
 import japgolly.scalajs.react.extra.router.{Resolution, RouterConfigDsl, RouterCtl, _}
 import japgolly.scalajs.react.vdom.html_<^._
 import com.goyeau.orchestra.components.{Footer, TopNav}
 import com.goyeau.orchestra.models.Menu
-import com.goyeau.orchestra.pages.StatusPage
 import com.goyeau.orchestra._
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
-object AppRouter {
+import com.goyeau.orchestra.pages.StatusPage
+
+object WebRouter {
 
   sealed trait AppPage
-
-  case class Boards(p: Board) extends AppPage
+  case class BoardPage(board: Board) extends AppPage
+  case class TaskLogsPage(runId: UUID) extends AppPage
   case object Status extends AppPage
 
   def config(board: Board) = RouterConfigDsl[AppPage].buildConfig { dsl =>
     import dsl._
 
+    val rootBoard = BoardPage(board)
+
     val mainMenu = Vector(
-      Menu("Boards", Boards(board)),
+      Menu("Boards", rootBoard),
       Menu("Status", Status)
     )
 
@@ -30,12 +35,8 @@ object AppRouter {
         Footer()
       )
 
-    val boardRoute = board.route.pmap[AppPage](Boards) {
-      case Boards(p) => p
-    }
-
-    (trimSlashes | (boardRoute | staticRoute("status", Status) ~> render(StatusPage())).prefixPath_/("#"))
-      .notFound(redirectToPage(Boards(board))(Redirect.Replace))
+    (trimSlashes | (board.route | staticRoute("status", Status) ~> render(StatusPage())).prefixPath_/("#"))
+      .notFound(redirectToPage(rootBoard)(Redirect.Replace))
       .renderWith(layout)
   }
 
