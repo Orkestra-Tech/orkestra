@@ -12,7 +12,7 @@ trait Orchestra extends JSApp {
   // Web main
   override def main(): Unit = {
     AppCSS.load
-    AppRouter.router(board).renderIntoDOM(dom.document.body)
+    AppRouter.router(board).renderIntoDOM(dom.document.getElementById("orchestra"))
   }
 
   // Backend main

@@ -6,7 +6,7 @@ import akka.http.scaladsl.server.{HttpApp, Route}
 import scalajs.html.scripts
 
 case class Backend(board: Board) extends HttpApp {
-  implicit lazy val executionContext = systemReference.get().dispatcher
+  implicit lazy val executionContext = systemReference.get.dispatcher
 
   def route: Route =
     pathSingleSlash {
@@ -19,6 +19,7 @@ case class Backend(board: Board) extends HttpApp {
              |    <title>Orchestra</title>
              |</head>
              |<body>
+             |<div id="orchestra"></div>
              |${scripts(
                "web",
                name => s"/assets/$name",
