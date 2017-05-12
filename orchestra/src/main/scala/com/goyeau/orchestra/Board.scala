@@ -51,9 +51,9 @@ case class SingleTaskBoard[Params <: HList, ParamValues: Encoder, Result: Decode
     import dsl._
     (
       staticRoute(root, BoardPage(this)) ~> renderR { ctrl =>
-        SingleTaskBoardPage.component(SingleTaskBoardPage.Props(name, task, ctrl))
+        SingleTaskBoardPage.component(name, task, ctrl)
       } |
-        dynamicRouteCT(uuid.caseClass[TaskLogsPage] / "logs") ~> dynRender(LogsPage.component)
+        dynamicRouteCT(uuid.caseClass[TaskLogsPage] / "logs") ~> dynRender(page => LogsPage.component(page, task))
     ).prefixPath_/(pathName)
   }
 

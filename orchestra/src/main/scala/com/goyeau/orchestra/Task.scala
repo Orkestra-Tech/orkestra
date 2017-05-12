@@ -2,8 +2,10 @@ package com.goyeau.orchestra
 
 import java.io.{File, FileOutputStream, PrintStream, PrintWriter}
 import java.time.Instant
+import java.util.UUID
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.io.Source
 import scala.language.{higherKinds, implicitConversions}
 
 import akka.http.scaladsl.server.Directives._
@@ -22,6 +24,7 @@ case class Task[Params <: HList, ParamValue: Decoder, Result: Encoder](id: Symbo
                                                                        task: ParamValue => Result) {
   trait Api {
     def run(taskInfo: RunInfo, params: ParamValue): RunStatus
+    def logs(runId: UUID): String
   }
 
   private def apiServer(implicit ec: ExecutionContext) = new Api {
@@ -29,7 +32,7 @@ case class Task[Params <: HList, ParamValue: Decoder, Result: Encoder](id: Symbo
       val runPath = s"${Config.home}/${runInfo.id}"
       new File(runPath).mkdirs()
 
-      val status = RunStatus.Running(Instant.now().toEpochMilli)
+      val runningStatus = RunStatus.Running(Instant.now().toEpochMilli)
 
       Future {
         val logsOut = new PrintStream(new FileOutputStream(s"$runPath/logs"), true)
@@ -37,8 +40,9 @@ case class Task[Params <: HList, ParamValue: Decoder, Result: Encoder](id: Symbo
 
         withOutErr(logsOut) {
           try {
-            statusWriter.write(status.asJson.noSpaces)
+            statusWriter.write(runningStatus.asJson.noSpaces)
             task(params)
+            statusWriter.write(RunStatus.Success.asJson.noSpaces)
           } catch {
             case e: Throwable =>
               e.printStackTrace()
@@ -47,7 +51,12 @@ case class Task[Params <: HList, ParamValue: Decoder, Result: Encoder](id: Symbo
         }
       }
 
-      status
+      runningStatus
+    }
+
+    def logs(taskInfo: UUID): String = {
+      val runPath = s"${Config.home}/$taskInfo"
+      Source.fromFile(s"$runPath/logs").mkString
     }
   }
 

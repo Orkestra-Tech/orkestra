@@ -17,18 +17,11 @@ import japgolly.scalajs.react.extra.router.RouterCtl
 
 object SingleTaskBoardPage {
 
-  case class Props[Params <: HList, ParamValues, Result](name: String,
-                                                         task: Task[Params, ParamValues, Result],
-                                                         ctrl: RouterCtl[AppPage])(
-    implicit val paramGetter: ParamGetter[Params, ParamValues]
-  ) {
-    def displays($ : Displayer.State) = paramGetter.displays(task.params, $)
-    def values(rawParams: Map[String, Any]) = paramGetter.values(task.params, rawParams)
-  }
-
   def component[Params <: HList, ParamValues: Encoder, Result: Decoder](
-    props: Props[Params, ParamValues, Result]
-  )(implicit ec: ExecutionContext) =
+    name: String,
+    task: Task[Params, ParamValues, Result],
+    ctrl: RouterCtl[AppPage]
+  )(implicit ec: ExecutionContext, paramGetter: ParamGetter[Params, ParamValues]) =
     ScalaComponent
       .builder[Unit](getClass.getSimpleName)
       .initialState {
@@ -37,8 +30,8 @@ object SingleTaskBoardPage {
       }
       .render { $ =>
         def runTask = Callback.future {
-          props.task.apiClient.run($.state._1, props.values($.state._2)).call().map {
-            case RunStatus.Running(_) | RunStatus.Success => props.ctrl.set(TaskLogsPage($.state._1.id))
+          task.apiClient.run($.state._1, paramGetter.values(task.params, $.state._2)).call().map {
+            case RunStatus.Running(_) | RunStatus.Success => ctrl.set(TaskLogsPage($.state._1.id))
             case RunStatus.Failed(e) => Callback.alert(e.getMessage)
           }
         }
@@ -46,8 +39,8 @@ object SingleTaskBoardPage {
         val displayState = Displayer.State(kv => $.modState(s => s.copy(_2 = s._2 + kv)), key => $.state._2.get(key))
 
         <.div(
-          <.div(props.name),
-          props.displays(displayState),
+          <.div(name),
+          paramGetter.displays(task.params, displayState),
           <.button(^.onClick --> runTask, "Run")
         )
       }
