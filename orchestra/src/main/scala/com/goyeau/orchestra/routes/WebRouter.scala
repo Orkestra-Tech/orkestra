@@ -14,6 +14,7 @@ import com.goyeau.orchestra.pages.StatusPage
 object WebRouter {
 
   sealed trait AppPage
+  case class BoardPage2(path: String) extends AppPage
   case class BoardPage(board: Board) extends AppPage
   case class TaskLogsPage(runId: UUID) extends AppPage
   case object Status extends AppPage

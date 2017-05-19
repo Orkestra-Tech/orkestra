@@ -1,33 +1,55 @@
 package com.goyeau.orchestration
 
+import java.util.UUID
+
+import scala.io.Source
+
 import com.goyeau.orchestra._
 
 object Orchestration extends Orchestra {
 
-  val emptyTask = Task('emptyTask) {
-    println("empty")
-  }
+  lazy val emptyTaskDef = Task[() => Unit]('emptyTask)
+  lazy val emptyTask = emptyTaskDef(() => println("empty"))
 
-  val oneParamTask = Task('oneParamTask)(Param[String]("version")) { v =>
+  lazy val oneParamTaskDef = Task[String => Int]('oneParamTask)
+  lazy val oneParamTask = oneParamTaskDef { v =>
+    Source.fromFile("")
     println(v)
     12
   }
 
-  val deployBackend = Task('deployBackend)(Param[String]("version", defaultValue = Some("12")), RunId) {
-    case (version, runId) =>
-      println(version + runId)
-  }
+  lazy val deployBackendDef = Task[(String, UUID) => Unit]('deployBackend)
+  lazy val deployBackend = deployBackendDef((version, runId) => println(version + runId))
 
-  val board = FolderBoard("Drivetribe")(
+  lazy val registedTasks = Seq(
+    emptyTask,
+    oneParamTask,
+    deployBackend
+  )
+
+  lazy val board = FolderBoard("Drivetribe")(
     FolderBoard("Operation")(
       FolderBoard("Staging")(
-        SingleTaskBoard("DeployBackend", deployBackend)
+        SingleTaskBoard("DeployBackend", deployBackendDef)(Param[String]("version", defaultValue = Some("12")), RunId)
       )
     ),
     FolderBoard("Infrastructure")(
       FolderBoard("Staging")(
-        SingleTaskBoard("Create", oneParamTask)
+        SingleTaskBoard("Create", oneParamTaskDef)(Param[String]("version")),
+        SingleTaskBoard("Create", emptyTaskDef)
       )
     )
   )
+}
+
+class Deploy {
+  def deploy(version: String) {
+    println("Deploying")
+  }
+}
+
+object Deploy {
+  def deploy(version: String) {
+    println("Deploying")
+  }
 }

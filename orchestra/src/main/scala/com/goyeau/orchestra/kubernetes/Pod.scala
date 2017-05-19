@@ -1,4 +1,4 @@
-package com.goyeau.orchestra
+package com.goyeau.orchestra.kubernetes
 
 case class Pod(containers: String*)(f: Seq[String] => Unit) {}
 

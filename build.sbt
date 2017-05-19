@@ -41,14 +41,16 @@ val circeJS = Def.setting {
   Seq(
     "io.circe" %%% "circe-core" % circeVersion,
     "io.circe" %%% "circe-generic" % circeVersion,
-    "io.circe" %%% "circe-parser" % circeVersion
+    "io.circe" %%% "circe-parser" % circeVersion,
+    "io.circe" %%% "circe-shapes" % circeVersion
   )
 }
 val circeJVM = Def.setting {
   Seq(
     "io.circe" %% "circe-core" % circeVersion,
     "io.circe" %% "circe-generic" % circeVersion,
-    "io.circe" %% "circe-parser" % circeVersion
+    "io.circe" %% "circe-parser" % circeVersion,
+    "io.circe" %% "circe-shapes" % circeVersion
   )
 }
 
@@ -77,7 +79,12 @@ lazy val orchestrationJVM = orchestration.jvm
   .enablePlugins(SbtWeb)
   .settings(
     reForkOptions := reForkOptions.value
-      .copy(envVars = reForkOptions.value.envVars + ("ORCHESTRA_HOME" -> "target/orchestra")),
+      .copy(
+        envVars = reForkOptions.value.envVars ++ Map(
+          "ORCHESTRA_HOME" -> "target/orchestra",
+          "ORCHESTRA_KUBE_HOST" -> "127.0.0.1:8001"
+        )
+      ),
     WebKeys.packagePrefix in Assets := "public/",
     managedClasspath in Runtime += (packageBin in Assets).value,
     scalaJSProjects := Seq(orchestrationJS),

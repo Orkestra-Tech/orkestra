@@ -1,44 +1,38 @@
 package com.goyeau.orchestra.pages
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.duration._
+import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
+import scala.scalajs.js
 
 import autowire._
 import com.goyeau.orchestra.Task
 import com.goyeau.orchestra.routes.WebRouter.TaskLogsPage
-import io.circe.{Decoder, Encoder}
 import japgolly.scalajs.react._
+import japgolly.scalajs.react.component.builder.Lifecycle.ComponentDidMount
 import japgolly.scalajs.react.vdom.html_<^._
 import shapeless.HList
-import scala.scalajs.js
-import scala.concurrent.duration._
-
-import japgolly.scalajs.react.component.builder.Lifecycle.StateRW
 
 object LogsPage {
+  case class Props(page: TaskLogsPage, task: Task.Definition[_, _ <: HList])
 
-  def component[Params <: HList, ParamValues: Encoder, Result: Decoder](
-    itemPage: TaskLogsPage,
-    task: Task[Params, ParamValues, Result]
-  )(implicit ec: ExecutionContext) = {
-    def pullLogs($ : StateRW[Unit, String, Unit]) =
-      task.apiClient.logs(itemPage.runId).call().foreach(logs => $.modState(_ => logs).runNow())
-
+  val component =
     ScalaComponent
-      .builder[Unit](getClass.getSimpleName)
+      .builder[Props](getClass.getSimpleName)
       .initialState[String]("")
       .render { $ =>
         <.div(
-          <.div("Logs: " + itemPage.runId.toString),
+          <.div("Logs: " + $.props.page.runId.toString),
           <.div($.state)
         )
       }
       .componentDidMount { $ =>
+        def pullLogs($ : ComponentDidMount[Props, String, Unit]) =
+          $.props.task.Api.client.logs($.props.page.runId).call().foreach(logs => $.modState(_ => logs).runNow())
+
         Callback {
           pullLogs($)
           js.timers.setInterval(1.second)(pullLogs($))
         }
       }
       .build
-      .apply()
-  }
 }

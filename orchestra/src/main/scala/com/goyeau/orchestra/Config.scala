@@ -1,8 +1,5 @@
 package com.goyeau.orchestra
 
 object Config {
-
-  val home = Option(System.getenv("ORCHESTRA_HOME"))
-    .filter(_.nonEmpty)
-    .getOrElse(System.getProperty("user.home"))
+  def apply(envVar: String) = Option(System.getenv(envVar)).filter(_.nonEmpty)
 }
