@@ -6,13 +6,13 @@ import java.util.UUID
 import io.circe._
 import io.circe.generic.semiauto._
 
-sealed trait RunStatus
-object RunStatus {
-  case class Running(since: Long) extends RunStatus
-  case object Success extends RunStatus
+sealed trait ARunStatus
+object ARunStatus {
+  case class Running(since: Long) extends ARunStatus
+  case object Success extends ARunStatus
 //  case class Running[T](since: Instant) extends RunStatus[T]
 ////  case class Success[Result: Encoder](r: Result) extends RunStatus
-  case class Failed(e: Throwable) extends RunStatus
+  case class Failed(e: Throwable) extends ARunStatus
 
   implicit val encodeFailed = new Encoder[Failed] {
     final def apply(o: Failed): Json = Json.obj(

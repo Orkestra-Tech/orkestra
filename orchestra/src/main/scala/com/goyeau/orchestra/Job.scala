@@ -17,14 +17,14 @@ import io.circe.generic.auto._
 import shapeless.HList
 import shapeless.ops.function.FnToProduct
 
-object Task {
+object Job {
   case class Definition[Func, ParamValues <: HList: Decoder](id: Symbol) {
 
     def apply[Result](func: Func)(implicit fnToProd: FnToProduct.Aux[Func, ParamValues => Result]) =
       Runner(this, fnToProd(func))
 
     trait Api {
-      def run(runInfo: RunInfo, params: ParamValues): RunStatus
+      def run(runInfo: RunInfo, params: ParamValues): ARunStatus
       def logs(runId: UUID): String
     }
 
@@ -37,14 +37,14 @@ object Task {
   }
 
   case class Runner[Func, ParamValues <: HList, Result](definition: Definition[Func, ParamValues],
-                                                        task: ParamValues => Result) {
+                                                        job: ParamValues => Result) {
 
     def apiServer(implicit ec: ExecutionContext) = new definition.Api {
-      override def run(runInfo: RunInfo, params: ParamValues): RunStatus = {
+      override def run(runInfo: RunInfo, params: ParamValues): ARunStatus = {
         val runPath = s"${OrchestraConfig.home}/${definition.id.name}/${runInfo.id}"
         new File(runPath).mkdirs()
 
-        val runningStatus = RunStatus.Running(Instant.now().toEpochMilli)
+        val runningStatus = ARunStatus.Running(Instant.now().toEpochMilli)
 
         Future {
           val logsOut = new PrintStream(new FileOutputStream(s"$runPath/logs"), true)
@@ -53,12 +53,12 @@ object Task {
           Utils.withOutErr(logsOut) {
             try {
               statusWriter.write(runningStatus.asJson.noSpaces)
-              task(params)
-              statusWriter.write(RunStatus.Success.asJson.noSpaces)
+              job(params)
+              statusWriter.write(ARunStatus.Success.asJson.noSpaces)
             } catch {
               case e: Throwable =>
                 e.printStackTrace()
-                statusWriter.write(RunStatus.Failed(e).asJson.noSpaces)
+                statusWriter.write(ARunStatus.Failed(e).asJson.noSpaces)
             } finally statusWriter.close()
           }
         }

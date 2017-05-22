@@ -36,7 +36,7 @@ object FolderBoard {
 
 case class SingleTaskBoard[Func, ParamValues <: HList: Encoder, Params <: HList](
   name: String,
-  task: Task.Definition[Func, ParamValues],
+  job: Job.Definition[Func, ParamValues],
   params: Params
 )(implicit paramGetter: ParamGetter[Params, ParamValues])
     extends Board {
@@ -46,10 +46,10 @@ case class SingleTaskBoard[Func, ParamValues <: HList: Encoder, Params <: HList]
     import dsl._
     (
       staticRoute(root, BoardPage(this)) ~> renderR { ctrl =>
-        SingleTaskBoardPage.component(name, task, params, ctrl)
+        SingleTaskBoardPage.component(name, job, params, ctrl)
       } |
         dynamicRouteCT(uuid.caseClass[TaskLogsPage] / "logs") ~> dynRender { page =>
-          LogsPage.component(LogsPage.Props(page, task))
+          LogsPage.component(LogsPage.Props(page, job))
         }
     ).prefixPath_/(pathName)
   }
@@ -59,19 +59,19 @@ object SingleTaskBoard {
 
   def apply[Func](
     name: String,
-    task: Task.Definition[Func, HNil]
+    job: Job.Definition[Func, HNil]
   ): SingleTaskBoard[Func, HNil, HNil] =
-    SingleTaskBoard[Func, HNil, HNil](name, task, HNil)
+    SingleTaskBoard[Func, HNil, HNil](name, job, HNil)
 
   def apply[Func, ParamValue: Encoder](
     name: String,
-    key: Task.Definition[Func, ParamValue :: HNil]
+    key: Job.Definition[Func, ParamValue :: HNil]
   )(param: Parameter[ParamValue]): SingleTaskBoard[Func, ParamValue :: HNil, Parameter[ParamValue] :: HNil] =
     SingleTaskBoard(name, key, param :: HNil)
 
   def apply[Func, TupledParams, Params <: HList, UniParams <: HList, ParamValues <: HList: Encoder](
     name: String,
-    key: Task.Definition[Func, ParamValues]
+    key: Job.Definition[Func, ParamValues]
   )(
     params: TupledParams
   )(

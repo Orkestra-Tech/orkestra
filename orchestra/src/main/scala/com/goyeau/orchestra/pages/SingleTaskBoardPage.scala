@@ -18,21 +18,21 @@ object SingleTaskBoardPage {
 
   def component[Params <: HList, ParamValues <: HList: Encoder](
     name: String,
-    task: Task.Definition[_, ParamValues],
+    job: Job.Definition[_, ParamValues],
     params: Params,
     ctrl: RouterCtl[AppPage]
   )(implicit ec: ExecutionContext, paramGetter: ParamGetter[Params, ParamValues]) =
     ScalaComponent
       .builder[Unit](getClass.getSimpleName)
       .initialState {
-        val taskInfo = RunInfo(id = UUID.randomUUID())
-        (taskInfo, Map[String, Any](RunId.name -> taskInfo.id))
+        val jobInfo = RunInfo(id = UUID.randomUUID())
+        (jobInfo, Map[String, Any](RunId.name -> jobInfo.id))
       }
       .render { $ =>
         def runTask = Callback.future {
-          task.Api.client.run($.state._1, paramGetter.values(params, $.state._2)).call().map {
-            case RunStatus.Running(_) | RunStatus.Success => ctrl.set(TaskLogsPage($.state._1.id))
-            case RunStatus.Failed(e) => Callback.alert(e.getMessage)
+          job.Api.client.run($.state._1, paramGetter.values(params, $.state._2)).call().map {
+            case ARunStatus.Running(_) | ARunStatus.Success => ctrl.set(TaskLogsPage($.state._1.id))
+            case ARunStatus.Failed(e) => Callback.alert(e.getMessage)
           }
         }
 

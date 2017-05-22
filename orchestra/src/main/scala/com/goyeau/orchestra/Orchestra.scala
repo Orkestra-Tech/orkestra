@@ -2,7 +2,7 @@ package com.goyeau.orchestra
 
 import scala.scalajs.js.JSApp
 
-import com.goyeau.orchestra.Task.Runner
+import com.goyeau.orchestra.Job.Runner
 import com.goyeau.orchestra.css.AppCSS
 import com.goyeau.orchestra.routes.{Backend, WebRouter}
 import io.circe.shapes.HListInstances

@@ -4,9 +4,9 @@ import scalajs.html.scripts
 
 import akka.http.scaladsl.model.{ContentTypes, HttpEntity}
 import akka.http.scaladsl.server.{HttpApp, Route}
-import com.goyeau.orchestra.Task.Runner
+import com.goyeau.orchestra.Job.Runner
 
-case class Backend(tasks: Seq[Runner[_, _, _]]) extends HttpApp {
+case class Backend(jobs: Seq[Runner[_, _, _]]) extends HttpApp {
   implicit lazy val executionContext = systemReference.get.dispatcher
 
   lazy val route: Route =
@@ -40,6 +40,6 @@ case class Backend(tasks: Seq[Runner[_, _, _]]) extends HttpApp {
         }
       } ~
       pathPrefix("api") {
-        tasks.map(_.apiRoute).reduce(_ ~ _)
+        jobs.map(_.apiRoute).reduce(_ ~ _)
       }
 }

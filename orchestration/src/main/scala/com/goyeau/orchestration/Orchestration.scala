@@ -8,17 +8,17 @@ import com.goyeau.orchestra._
 
 object Orchestration extends Orchestra {
 
-  lazy val emptyTaskDef = Task[() => Unit]('emptyTask)
+  lazy val emptyTaskDef = Job[() => Unit]('emptyTask)
   lazy val emptyTask = emptyTaskDef(() => println("empty"))
 
-  lazy val oneParamTaskDef = Task[String => Int]('oneParamTask)
+  lazy val oneParamTaskDef = Job[String => Int]('oneParamTask)
   lazy val oneParamTask = oneParamTaskDef { v =>
     Source.fromFile("")
     println(v)
     12
   }
 
-  lazy val deployBackendDef = Task[(String, UUID) => Unit]('deployBackend)
+  lazy val deployBackendDef = Job[(String, UUID) => Unit]('deployBackend)
   lazy val deployBackend = deployBackendDef((version, runId) => println(version + runId))
 
   lazy val registedTasks = Seq(

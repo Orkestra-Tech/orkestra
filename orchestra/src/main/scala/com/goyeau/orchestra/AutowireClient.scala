@@ -10,11 +10,11 @@ import io.circe.parser._
 import io.circe.syntax._
 import org.scalajs.dom.ext.Ajax
 
-case class AutowireClient(taskId: Symbol) extends autowire.Client[String, Decoder, Encoder] {
+case class AutowireClient(jobId: Symbol) extends autowire.Client[String, Decoder, Encoder] {
   override def doCall(req: Request): Future[String] =
     Ajax
       .post(
-        url = ("api" +: taskId.name +: req.path).mkString("/"),
+        url = ("api" +: jobId.name +: req.path).mkString("/"),
         data = req.args.asJson.noSpaces,
         responseType = "application/json",
         headers = Map("Content-Type" -> "application/json")
