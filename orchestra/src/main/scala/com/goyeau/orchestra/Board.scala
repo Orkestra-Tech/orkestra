@@ -69,39 +69,20 @@ object SingleTaskBoard {
   )(param: Parameter[ParamValue]): SingleTaskBoard[Func, ParamValue :: HNil, Parameter[ParamValue] :: HNil] =
     SingleTaskBoard(name, key, param :: HNil)
 
-  def apply[Func, ParamValues <: HList: Encoder](
+  def apply[Func, TupledParams, Params <: HList, UniParams <: HList, ParamValues <: HList: Encoder](
     name: String,
     key: Task.Definition[Func, ParamValues]
-  )(magnet: ParamMagnet[Func, ParamValues]): magnet.Out = magnet(name, key)
+  )(
+    params: TupledParams
+  )(
+    implicit tupleToHList: Generic.Aux[TupledParams, Params],
+    unifyer: Mapper.Aux[UnifyParameter.type, Params, UniParams],
+    paramValuesExtracter: Comapped.Aux[UniParams, Parameter, ParamValues],
+    paramGetter: ParamGetter[Params, ParamValues]
+  ): SingleTaskBoard[Func, ParamValues, Params] =
+    SingleTaskBoard(name, key, tupleToHList.to(params))
 
-  // Trick to hide shapeless implicits
-  sealed trait ParamMagnet[Func, ParamValues <: HList] {
-    type Out
-    def apply(name: String, key: Task.Definition[Func, ParamValues]): Out
-  }
-
-  object ParamMagnet {
-
-    implicit def multiParameters[Func,
-                                 TupledParams,
-                                 Params <: HList,
-                                 UniParams <: HList,
-                                 ParamValues <: HList: Encoder](
-      params: TupledParams
-    )(
-      implicit tuple2HList: Generic.Aux[TupledParams, Params],
-      unifyer: Mapper.Aux[UnifyParameter.type, Params, UniParams],
-      comapper: Comapped.Aux[UniParams, Parameter, ParamValues],
-      paramGetter: ParamGetter[Params, ParamValues]
-    ) =
-      new ParamMagnet[Func, ParamValues] {
-        type Out = SingleTaskBoard[Func, ParamValues, Params]
-        def apply(name: String, key: Task.Definition[Func, ParamValues]) =
-          SingleTaskBoard(name, key, tuple2HList.to(params))
-      }
-
-    object UnifyParameter extends Poly {
-      implicit def forParameter[Param, T](implicit ev: Param <:< Parameter[T]) = use((x: Param) => ev(x))
-    }
+  private object UnifyParameter extends Poly {
+    implicit def forParameter[Param, T](implicit ev: Param <:< Parameter[T]) = use((x: Param) => ev(x))
   }
 }
