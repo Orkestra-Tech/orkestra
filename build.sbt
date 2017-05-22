@@ -36,7 +36,7 @@ val react = Def.setting {
 
 val autowire = Def.setting(Seq("com.lihaoyi" %%% "autowire" % "0.2.6"))
 
-val circeVersion = "0.7.0"
+val circeVersion = "0.8.0"
 val circeJS = Def.setting {
   Seq(
     "io.circe" %%% "circe-core" % circeVersion,
