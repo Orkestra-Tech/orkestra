@@ -6,6 +6,7 @@ import java.util.UUID
 import io.circe._
 import io.circe.generic.semiauto._
 
+// Start with A because of a compiler bug
 sealed trait ARunStatus
 object ARunStatus {
   case class Running(since: Long) extends ARunStatus

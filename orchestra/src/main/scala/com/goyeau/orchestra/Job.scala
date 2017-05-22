@@ -86,7 +86,7 @@ object Job {
 
   def apply[Func](magnet: ParamMagnet[Func]): magnet.Out = magnet()
 
-  // Trick to hide shapeless implicits
+  // Trick to hide shapeless types and implicits
   sealed trait ParamMagnet[Func] {
     type Out
     def apply(): Out
