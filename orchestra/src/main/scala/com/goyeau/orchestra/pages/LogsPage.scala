@@ -1,7 +1,7 @@
 package com.goyeau.orchestra.pages
 
+import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
-import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.scalajs.js
 
 import autowire._
@@ -13,7 +13,7 @@ import japgolly.scalajs.react.vdom.html_<^._
 import shapeless.HList
 
 object LogsPage {
-  case class Props(page: TaskLogsPage, task: Task.Definition[_, _ <: HList])
+  case class Props(page: TaskLogsPage, task: Task.Definition[_, _ <: HList])(implicit val ec: ExecutionContext)
 
   val component =
     ScalaComponent
@@ -26,6 +26,8 @@ object LogsPage {
         )
       }
       .componentDidMount { $ =>
+        implicit val ec = $.props.ec
+
         def pullLogs($ : ComponentDidMount[Props, String, Unit]) =
           $.props.task.Api.client.logs($.props.page.runId).call().foreach(logs => $.modState(_ => logs).runNow())
 
