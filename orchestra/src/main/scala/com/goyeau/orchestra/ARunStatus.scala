@@ -34,4 +34,4 @@ object ARunStatus {
   }
 }
 
-case class RunInfo(id: UUID)
+case class RunInfo(job: Symbol, id: UUID)

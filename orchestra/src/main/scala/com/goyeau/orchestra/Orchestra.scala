@@ -7,11 +7,10 @@ import com.goyeau.orchestra.css.AppCSS
 import com.goyeau.orchestra.routes.{Backend, WebRouter}
 import io.circe.shapes.HListInstances
 import org.scalajs.dom
-import shapeless._
 
 trait Orchestra extends JSApp with HListInstances {
 
-  def registedTasks: Seq[Runner[_, _, _]]
+  def jobs: Seq[Runner[_, _, _]]
   def board: Board
 
   // Web main
@@ -22,5 +21,13 @@ trait Orchestra extends JSApp with HListInstances {
 
   // Backend main
   def main(args: Array[String]): Unit =
-    Backend(registedTasks).startServer("localhost", 1234)
+    OrchestraConfig.runInfo.fold {
+      val port = OrchestraConfig.port.getOrElse(throw new IllegalStateException("ORCHESTRA_PORT should be set"))
+      Backend(jobs).startServer("0.0.0.0", port)
+    } { runInfo =>
+      jobs
+        .find(_.definition.id == runInfo.job)
+        .getOrElse(throw new IllegalArgumentException(s"No job found for id ${runInfo.job}"))
+        .run(runInfo)
+    }
 }

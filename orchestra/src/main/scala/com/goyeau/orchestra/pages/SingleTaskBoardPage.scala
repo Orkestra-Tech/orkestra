@@ -25,13 +25,13 @@ object SingleTaskBoardPage {
     ScalaComponent
       .builder[Unit](getClass.getSimpleName)
       .initialState {
-        val jobInfo = RunInfo(id = UUID.randomUUID())
+        val jobInfo = RunInfo(job.id, UUID.randomUUID())
         (jobInfo, Map[String, Any](RunId.name -> jobInfo.id))
       }
       .render { $ =>
-        def runTask = Callback.future {
+        def runJob = Callback.future {
           job.Api.client.run($.state._1, paramGetter.values(params, $.state._2)).call().map {
-            case ARunStatus.Running(_) | ARunStatus.Success => ctrl.set(TaskLogsPage($.state._1.id))
+            case ARunStatus.Running(_) | ARunStatus.Success => ctrl.set(TaskLogsPage(job, $.state._1.id))
             case ARunStatus.Failed(e) => Callback.alert(e.getMessage)
           }
         }
@@ -41,7 +41,7 @@ object SingleTaskBoardPage {
         <.div(
           <.div(name),
           paramGetter.displays(params, displayState),
-          <.button(^.onClick --> runTask, "Run")
+          <.button(^.onClick --> runJob, "Run")
         )
       }
       .build

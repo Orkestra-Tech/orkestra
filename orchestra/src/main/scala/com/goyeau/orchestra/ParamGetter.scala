@@ -20,7 +20,7 @@ object ParamGetter {
     paramGetter: ParamGetter[TailParams, TailParamValues]
   ) = new ParamGetter[HeadParam :: TailParams, HeadParamValue :: TailParamValues] {
     override def displays(params: HeadParam :: TailParams, state: Displayer.State): TagMod =
-      TagMod(displayer(params.head, state)).apply(paramGetter.displays(params.tail, state))
+      TagMod(displayer(params.head, state))(paramGetter.displays(params.tail, state))
 
     override def values(params: HeadParam :: TailParams, valueMap: Map[String, Any]) =
       params.head.getValue(valueMap) :: paramGetter.values(params.tail, valueMap)

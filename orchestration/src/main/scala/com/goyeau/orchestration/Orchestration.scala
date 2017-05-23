@@ -2,9 +2,8 @@ package com.goyeau.orchestration
 
 import java.util.UUID
 
-import scala.io.Source
-
 import com.goyeau.orchestra._
+import io.circe.generic.auto._
 
 object Orchestration extends Orchestra {
 
@@ -13,7 +12,6 @@ object Orchestration extends Orchestra {
 
   lazy val oneParamTaskDef = Job[String => Int]('oneParamTask)
   lazy val oneParamTask = oneParamTaskDef { v =>
-    Source.fromFile("")
     println(v)
     12
   }
@@ -21,7 +19,7 @@ object Orchestration extends Orchestra {
   lazy val deployBackendDef = Job[(String, UUID) => Unit]('deployBackend)
   lazy val deployBackend = deployBackendDef((version, runId) => println(version + runId))
 
-  lazy val registedTasks = Seq(
+  lazy val jobs = Seq(
     emptyTask,
     oneParamTask,
     deployBackend
@@ -30,26 +28,14 @@ object Orchestration extends Orchestra {
   lazy val board = FolderBoard("Drivetribe")(
     FolderBoard("Operation")(
       FolderBoard("Staging")(
-        SingleTaskBoard("DeployBackend", deployBackendDef)(Param[String]("version", defaultValue = Some("12")), RunId)
+        SingleJobBoard("DeployBackend", deployBackendDef)(Param[String]("version", defaultValue = Some("12")), RunId)
       )
     ),
     FolderBoard("Infrastructure")(
       FolderBoard("Staging")(
-        SingleTaskBoard("Create", oneParamTaskDef)(Param[String]("version")),
-        SingleTaskBoard("Create", emptyTaskDef)
+        SingleJobBoard("OneParam", oneParamTaskDef)(Param[String]("version")),
+        SingleJobBoard("Create", emptyTaskDef)
       )
     )
   )
-}
-
-class Deploy {
-  def deploy(version: String) {
-    println("Deploying")
-  }
-}
-
-object Deploy {
-  def deploy(version: String) {
-    println("Deploying")
-  }
 }

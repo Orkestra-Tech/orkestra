@@ -4,13 +4,13 @@ import java.io.PrintStream
 
 object Utils {
 
-  def withOutErr(out: PrintStream)(func: => Unit): Unit = {
+  def withOutErr[T](out: PrintStream)(func: => T): T = {
     val stdOut = System.out
     val stdErr = System.err
     try {
       System.setOut(out)
       System.setErr(out)
-      scala.Console.withOut(out)(scala.Console.withErr(out)(func))
+      Console.withOut(out)(Console.withErr(out)(func))
     } finally {
       out.flush()
       out.close()

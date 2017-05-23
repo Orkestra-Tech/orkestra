@@ -1,3 +1,5 @@
+import com.typesafe.sbt.packager.docker._
+
 version in ThisBuild := "0.1"
 scalaVersion in ThisBuild := "2.12.2"
 scalacOptions in ThisBuild += "-deprecation"
@@ -76,19 +78,24 @@ lazy val orchestration = crossProject
   .dependsOn(orchestra)
 
 lazy val orchestrationJVM = orchestration.jvm
-  .enablePlugins(SbtWeb)
+  .enablePlugins(SbtWeb, JavaAppPackaging)
   .settings(
-    reForkOptions := reForkOptions.value
-      .copy(
-        envVars = reForkOptions.value.envVars ++ Map(
-          "ORCHESTRA_HOME" -> "target/orchestra",
-          "ORCHESTRA_KUBE_HOST" -> "127.0.0.1:8001"
-        )
-      ),
+    reForkOptions := reForkOptions.value.copy(
+      envVars = reForkOptions.value.envVars ++ Map(
+        "ORCHESTRA_HOME" -> "target/orchestra",
+        "ORCHESTRA_PORT" -> "8080",
+        "ORCHESTRA_KUBE_URI" -> "http://127.0.0.1:8001"
+      )
+    ),
     WebKeys.packagePrefix in Assets := "public/",
     managedClasspath in Runtime += (packageBin in Assets).value,
     scalaJSProjects := Seq(orchestrationJS),
-    pipelineStages in Assets := Seq(scalaJSPipeline)
+    pipelineStages in Assets := Seq(scalaJSPipeline),
+    maintainer in Docker := "github:joan38",
+    dockerRepository := Option("joan38"),
+    dockerUpdateLatest := true,
+    dockerExposedPorts := Seq(8080),
+    daemonUser in Docker := "root" // Workaround minikube volume rights
   )
 lazy val orchestrationJS = orchestration.js
   .enablePlugins(ScalaJSPlugin, ScalaJSWeb)

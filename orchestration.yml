@@ -1,0 +1,89 @@
+---
+kind: ServiceAccount
+apiVersion: v1
+metadata:
+  name: orchestration
+
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1beta1
+metadata:
+  name: orchestration
+rules:
+  - apiGroups: ["*"]
+    resources: ["*"]
+    verbs: ["*"]
+
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1beta1
+metadata:
+  name: orchestration
+roleRef:
+  kind: ClusterRole
+  name: orchestration
+  apiGroup: rbac.authorization.k8s.io
+subjects:
+  - kind: ServiceAccount
+    name: orchestration
+    namespace: default
+
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: orchestration-master
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: orchestration
+    spec:
+      serviceAccountName: orchestration
+      containers:
+        - name: orchestration
+          image: joan38/orchestration:latest
+          env:
+#            - name: JAVA_OPTS
+#              value: -Djavax.net.ssl.trustStore=/etc/ssl/certs/java/cacerts -Djavax.net.ssl.keyStore=/etc/ssl/certs/java/cacerts
+            - name: ORCHESTRA_HOME
+              value: orchestra
+            - name: ORCHESTRA_PORT
+              value: "8080"
+            - name: ORCHESTRA_KUBE_URI
+              value: https://kubernetes.default.svc.cluster.local
+            - name: ORCHESTRA_KUBE_POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: ORCHESTRA_KUBE_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          ports:
+            - name: ui
+              containerPort: 8080
+          volumeMounts:
+            - name: data
+              mountPath: /opt/docker/orchestra
+      volumes:
+        - name: data
+          hostPath:
+            path: /Users/joangoyeau/Code/orchestra/target/orchestra
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: orchestration-ui
+spec:
+  type: NodePort
+  selector:
+    app: orchestration
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      nodePort: 31010
+      targetPort: 8080
