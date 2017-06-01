@@ -1,36 +1,32 @@
 package com.goyeau.orchestra
 
-import java.time.Instant
 import java.util.UUID
 
 import io.circe._
+import io.circe.generic.auto._
 import io.circe.generic.semiauto._
 
 // Start with A because of a compiler bug
-sealed trait ARunStatus
+sealed trait ARunStatus[+Result]
 object ARunStatus {
-  case class Running(since: Long) extends ARunStatus
-  case object Success extends ARunStatus
-//  case class Running[T](since: Instant) extends RunStatus[T]
-////  case class Success[Result: Encoder](r: Result) extends RunStatus
-  case class Failed(e: Throwable) extends ARunStatus
+  case class Scheduled(at: Long) extends ARunStatus[Nothing]
+  case class Running(at: Long) extends ARunStatus[Nothing]
+  case class Success[Result](at: Long, result: Result) extends ARunStatus[Result]
+  case class Failed(e: Throwable) extends ARunStatus[Nothing]
+  case object Unknown extends ARunStatus[Nothing]
 
-  implicit val encodeFailed = new Encoder[Failed] {
-    final def apply(o: Failed): Json = Json.obj(
-      (
-        "e",
-        Json.obj(
-          ("message", Json.fromString(o.e.getMessage))
-        )
-      )
+  // Circe encoders/decoders
+  implicit val encodeThrowable = new Encoder[Throwable] {
+    final def apply(o: Throwable): Json = Json.obj(
+      ("message", Json.fromString(o.getMessage))
     )
   }
 
-  implicit val decodeFailed = new Decoder[Failed] {
-    final def apply(c: HCursor): Decoder.Result[Failed] =
+  implicit val decodeThrowable = new Decoder[Throwable] {
+    final def apply(c: HCursor): Decoder.Result[Throwable] =
       for {
-        message <- c.downField("e").downField("message").as[String]
-      } yield Failed(new Throwable(message))
+        message <- c.downField("message").as[String]
+      } yield new Throwable(message)
   }
 }
 

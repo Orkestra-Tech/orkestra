@@ -4,9 +4,10 @@ import java.io.{File, FileOutputStream, PrintStream, PrintWriter}
 import java.time.Instant
 import java.util.UUID
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{Await, ExecutionContext}
 import scala.io.Source
 import scala.language.{higherKinds, implicitConversions}
+import scala.concurrent.duration._
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.server.Directives._
@@ -14,19 +15,20 @@ import akka.http.scaladsl.server.Route
 import akka.stream.Materializer
 import autowire.Core
 import io.circe.{Decoder, Encoder}
-import io.circe.syntax._
 import io.circe.generic.auto._
+import com.goyeau.orchestra.ARunStatus._
 import shapeless.HList
 import shapeless.ops.function.FnToProduct
 
 object Job {
-  case class Definition[Func, ParamValues <: HList: Encoder: Decoder](id: Symbol) {
+  case class Definition[Func, ParamValues <: HList: Encoder: Decoder, Result: Encoder: Decoder](
+    id: Symbol
+  )(implicit fnToProd: FnToProduct.Aux[Func, ParamValues => Result]) {
 
-    def apply[Result](func: Func)(implicit fnToProd: FnToProduct.Aux[Func, ParamValues => Result]) =
-      Runner(this, fnToProd(func))
+    def apply(job: Func) = Runner(this, fnToProd(job))
 
     trait Api {
-      def run(runInfo: RunInfo, params: ParamValues): ARunStatus
+      def run(runInfo: RunInfo, params: ParamValues): ARunStatus[Result]
       def logs(runId: UUID): String
     }
 
@@ -38,8 +40,10 @@ object Job {
     }
   }
 
-  case class Runner[Func, ParamValues <: HList: Encoder: Decoder, Result](definition: Definition[Func, ParamValues],
-                                                                          job: ParamValues => Result) {
+  case class Runner[Func, ParamValues <: HList: Encoder: Decoder, Result: Encoder: Decoder](
+    definition: Definition[Func, ParamValues, Result],
+    job: ParamValues => Result
+  ) {
 
     def run(runInfo: RunInfo): Unit = {
       val runPath = s"${OrchestraConfig.home}/${definition.id.name}/${runInfo.id}"
@@ -47,34 +51,50 @@ object Job {
 
       val logsOut = new PrintStream(new FileOutputStream(s"$runPath/logs"), true)
       val statusWriter = new PrintWriter(s"$runPath/status")
-      val runningStatus = ARunStatus.Running(Instant.now().toEpochMilli)
 
       Utils.withOutErr(logsOut) {
         try {
-          statusWriter.write(AutowireServer.write(runningStatus))
-          job(AutowireServer.read[ParamValues](Source.fromFile(s"$runPath/params").mkString))
-          statusWriter.write(AutowireServer.write(ARunStatus.Success))
+          statusWriter.append(
+            AutowireServer.write[ARunStatus[Result]](ARunStatus.Running(Instant.now().toEpochMilli)) + "\n"
+          )
+          val result = job(AutowireServer.read[ParamValues](Source.fromFile(s"$runPath/params").mkString))
+          statusWriter.append(
+            AutowireServer.write[ARunStatus[Result]](ARunStatus.Success(Instant.now().toEpochMilli, result)) + "\n"
+          )
         } catch {
           case e: Throwable =>
             e.printStackTrace()
-            statusWriter.write(AutowireServer.write(ARunStatus.Failed(e)))
+            statusWriter.append(AutowireServer.write(ARunStatus.Failed(e)))
         } finally statusWriter.close()
       }
     }
 
     def apiServer(implicit ec: ExecutionContext, system: ActorSystem, mat: Materializer) = new definition.Api {
-      override def run(runInfo: RunInfo, params: ParamValues): ARunStatus = {
+      override def run(runInfo: RunInfo, params: ParamValues): ARunStatus[Result] = {
         val runPath = s"${OrchestraConfig.home}/${definition.id.name}/${runInfo.id}"
-        new File(runPath).mkdirs()
+        val runDir = new File(runPath)
+        val statusFile = new File(s"$runPath/status")
 
-        val runningStatus = ARunStatus.Running(Instant.now().toEpochMilli) // TODO: Should be Scheduling
-        val paramsWriter = new PrintWriter(s"$runPath/params")
-        try paramsWriter.write(AutowireServer.write(params))
-        finally paramsWriter.close()
+        if (runDir.exists() && statusFile.exists())
+          AutowireServer.read[ARunStatus[Result]](Source.fromFile(statusFile).getLines().toSeq.last)
+        else if (runDir.exists() && !statusFile.exists()) ARunStatus.Unknown
+        else {
+          runDir.mkdirs()
+          val paramsWriter = new PrintWriter(s"$runPath/params")
+          try paramsWriter.write(AutowireServer.write(params))
+          finally paramsWriter.close()
 
-        kubernetes.Job.schedule(definition.id, runInfo)
+          val status = Await
+            .ready(kubernetes.Job.schedule(definition.id, runInfo), 1.minute)
+            .value
+            .get
+            .fold[ARunStatus[Result]](e => ARunStatus.Failed(e), _ => ARunStatus.Scheduled(Instant.now().toEpochMilli))
 
-        runningStatus
+          val statusWriter = new PrintWriter(statusFile)
+          statusWriter.append(AutowireServer.write(status) + "\n")
+          statusWriter.close()
+          status
+        }
       }
 
       override def logs(runId: UUID): String = {
@@ -107,12 +127,14 @@ object Job {
 
     implicit def apply[Func, ParamValues <: HList, Result](id: Symbol)(
       implicit fnToProd: FnToProduct.Aux[Func, ParamValues => Result],
-      encoder: Encoder[ParamValues],
-      decoder: Decoder[ParamValues]
+      encoderP: Encoder[ParamValues],
+      decoderP: Decoder[ParamValues],
+      encoderR: Encoder[Result],
+      decoderR: Decoder[Result]
     ) =
       new ParamMagnet[Func] {
-        type Out = Definition[Func, ParamValues]
-        def apply() = Definition[Func, ParamValues](id)
+        type Out = Definition[Func, ParamValues, Result]
+        def apply() = Definition[Func, ParamValues, Result](id)
       }
   }
 }

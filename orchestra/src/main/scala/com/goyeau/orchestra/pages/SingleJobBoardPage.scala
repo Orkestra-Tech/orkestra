@@ -6,19 +6,20 @@ import scala.concurrent.ExecutionContext
 
 import autowire._
 import com.goyeau.orchestra._
+import com.goyeau.orchestra.ARunStatus._
 import com.goyeau.orchestra.routes.WebRouter.{AppPage, TaskLogsPage}
-import io.circe.Encoder
+import io.circe.{Decoder, Encoder}
 import io.circe.generic.auto._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.router.RouterCtl
 import japgolly.scalajs.react.vdom.html_<^._
 import shapeless.HList
 
-object SingleTaskBoardPage {
+object SingleJobBoardPage {
 
-  def component[Params <: HList, ParamValues <: HList: Encoder](
+  def component[Params <: HList, ParamValues <: HList: Encoder, Result: Decoder](
     name: String,
-    job: Job.Definition[_, ParamValues],
+    job: Job.Definition[_, ParamValues, Result],
     params: Params,
     ctrl: RouterCtl[AppPage]
   )(implicit ec: ExecutionContext, paramGetter: ParamGetter[Params, ParamValues]) =
@@ -31,8 +32,8 @@ object SingleTaskBoardPage {
       .render { $ =>
         def runJob = Callback.future {
           job.Api.client.run($.state._1, paramGetter.values(params, $.state._2)).call().map {
-            case ARunStatus.Running(_) | ARunStatus.Success => ctrl.set(TaskLogsPage(job, $.state._1.id))
             case ARunStatus.Failed(e) => Callback.alert(e.getMessage)
+            case _ => ctrl.set(TaskLogsPage(job, $.state._1.id))
           }
         }
 
