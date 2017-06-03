@@ -17,11 +17,15 @@ import com.goyeau.orchestra.{AutowireServer, RunInfo}
 import io.circe.Json
 import io.circe.generic.auto._
 import io.circe.parser._
+import shapeless.HList
 
 object Job {
 
-  def schedule(jobId: Symbol,
-               runInfo: RunInfo)(implicit ec: ExecutionContext, system: ActorSystem, mat: Materializer) = {
+  def schedule[Containers <: HList](
+    jobId: Symbol,
+    runInfo: RunInfo,
+    podConfig: PodConfig[Containers]
+  )(implicit ec: ExecutionContext, system: ActorSystem, mat: Materializer) = {
     val token = Authorization(OAuth2BearerToken(authToken()))
 
     for {
@@ -40,11 +44,16 @@ object Job {
           HttpMethods.POST,
           s"${KubeConfig.uri}/apis/batch/v1/namespaces/${KubeConfig.namespace}/jobs",
           headers = List(token),
-          entity = HttpEntity(ContentTypes.`application/json`, ByteString(createJob(masterPod, runInfo).noSpaces))
+          entity = HttpEntity(
+            ContentTypes.`application/json`,
+            ByteString(createJob(masterPod, runInfo, podConfig).noSpaces)
+          )
         )
       )
       jobScheduleEntity <- jobScheduleResponse.entity.dataBytes.runFold(ByteString(""))(_ ++ _)
-    } yield println("entity2: " + jobScheduleEntity.utf8String)
+    } yield
+      if (jobScheduleResponse.status.isFailure())
+        throw new IllegalStateException(s"Scheduling job on Kubernetes failed: ${jobScheduleEntity.utf8String}")
   }
 
   private def authToken() = {
@@ -63,7 +72,7 @@ object Job {
     Source.fromFile("/var/run/secrets/kubernetes.io/serviceaccount/token").mkString
   }
 
-  private def createJob(masterPod: Json, runInfo: RunInfo) = {
+  private def createJob[Containers <: HList](masterPod: Json, runInfo: RunInfo, podConfig: PodConfig[Containers]) = {
     val spec = masterPod.hcursor.downField("spec")
     val container = spec.downField("containers").downArray.first
     val runInfoEnv = Json.obj(
@@ -72,6 +81,12 @@ object Job {
     )
     val envs = container.downField("env").focus.get.asArray.get :+ runInfoEnv
     val name = s"orchestra-slave-${runInfo.id}"
+    val containers = podConfig.containerSeq.map { container =>
+      Json.obj(
+        "name" -> Json.fromString(container.name),
+        "image" -> Json.fromString(container.image)
+      )
+    }
 
     Json.obj(
       "apiVersion" -> Json.fromString("batch/v1"),
@@ -87,7 +102,7 @@ object Job {
                 "image" -> container.downField("image").focus.get,
                 "env" -> Json.fromValues(envs),
                 "volumeMounts" -> container.downField("volumeMounts").focus.get
-              )
+              ) +: containers: _*
             ),
             "volumes" -> spec.downField("volumes").focus.get,
             "restartPolicy" -> Json.fromString("Never")

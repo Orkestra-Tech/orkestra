@@ -10,7 +10,7 @@ import org.scalajs.dom
 
 trait Orchestra extends JSApp with HListInstances {
 
-  def jobs: Seq[Runner[_, _, _]]
+  def jobs: Seq[Runner[_, _, _, _]]
   def board: Board
 
   // Web main

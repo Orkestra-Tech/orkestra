@@ -17,15 +17,41 @@ import autowire.Core
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.auto._
 import com.goyeau.orchestra.ARunStatus._
-import shapeless.HList
+import com.goyeau.orchestra.kubernetes.PodConfig
+import shapeless._
 import shapeless.ops.function.FnToProduct
 
 object Job {
-  case class Definition[Func, ParamValues <: HList: Encoder: Decoder, Result: Encoder: Decoder](
-    id: Symbol
-  )(implicit fnToProd: FnToProduct.Aux[Func, ParamValues => Result]) {
+  case class Definition[JobFn, ParamValues <: HList: Encoder: Decoder, Result: Encoder: Decoder](id: Symbol) {
 
-    def apply(job: Func) = Runner(this, fnToProd(job))
+    def apply(job: JobFn)(implicit fnToProd: FnToProduct.Aux[JobFn, ParamValues => Result]) =
+      Runner(this, PodConfig(HNil), fnToProd(job))
+
+    def apply(magnet: ParamMagnet): magnet.Out = magnet(this)
+
+    // Trick to hide shapeless types and implicits
+    sealed trait ParamMagnet {
+      type Out
+      def apply(definition: Definition[JobFn, ParamValues, Result]): Out
+    }
+
+    object ParamMagnet {
+
+      implicit def apply[Containers <: HList, PodJobFn](podConfig: PodConfig[Containers])(
+        implicit fnToProd: FnToProduct.Aux[JobFn, ParamValues => Result],
+        podFnToProd: FnToProduct.Aux[PodJobFn, Containers => JobFn]
+      ) =
+        new ParamMagnet {
+          type Out = PodJobFn => Runner[JobFn, ParamValues, Result, Containers]
+          def apply(definition: Definition[JobFn, ParamValues, Result]) =
+            (job: PodJobFn) =>
+              Runner[JobFn, ParamValues, Result, Containers](
+                definition,
+                podConfig,
+                fnToProd(podFnToProd(job)(podConfig.containers))
+            )
+        }
+    }
 
     trait Api {
       def run(runInfo: RunInfo, params: ParamValues): ARunStatus[Result]
@@ -40,8 +66,9 @@ object Job {
     }
   }
 
-  case class Runner[Func, ParamValues <: HList: Encoder: Decoder, Result: Encoder: Decoder](
-    definition: Definition[Func, ParamValues, Result],
+  case class Runner[JobFn, ParamValues <: HList: Encoder: Decoder, Result: Encoder: Decoder, Containers <: HList](
+    definition: Definition[JobFn, ParamValues, Result],
+    podConfig: PodConfig[Containers],
     job: ParamValues => Result
   ) {
 
@@ -85,7 +112,7 @@ object Job {
           finally paramsWriter.close()
 
           val status = Await
-            .ready(kubernetes.Job.schedule(definition.id, runInfo), 1.minute)
+            .ready(kubernetes.Job.schedule(definition.id, runInfo, podConfig), 1.minute)
             .value
             .get
             .fold[ARunStatus[Result]](e => ARunStatus.Failed(e), _ => ARunStatus.Scheduled(Instant.now().toEpochMilli))
@@ -115,26 +142,26 @@ object Job {
       }
   }
 
-  def apply[Func](magnet: ParamMagnet[Func]): magnet.Out = magnet()
+  def apply[JobFn](magnet: ParamMagnet[JobFn]): magnet.Out = magnet()
 
   // Trick to hide shapeless types and implicits
-  sealed trait ParamMagnet[Func] {
+  sealed trait ParamMagnet[JobFn] {
     type Out
     def apply(): Out
   }
 
   object ParamMagnet {
 
-    implicit def apply[Func, ParamValues <: HList, Result](id: Symbol)(
-      implicit fnToProd: FnToProduct.Aux[Func, ParamValues => Result],
+    implicit def apply[JobFn, ParamValues <: HList, Result](id: Symbol)(
+      implicit fnToProd: FnToProduct.Aux[JobFn, ParamValues => Result],
       encoderP: Encoder[ParamValues],
       decoderP: Decoder[ParamValues],
       encoderR: Encoder[Result],
       decoderR: Decoder[Result]
     ) =
-      new ParamMagnet[Func] {
-        type Out = Definition[Func, ParamValues, Result]
-        def apply() = Definition[Func, ParamValues, Result](id)
+      new ParamMagnet[JobFn] {
+        type Out = Definition[JobFn, ParamValues, Result]
+        def apply() = Definition[JobFn, ParamValues, Result](id)
       }
   }
 }

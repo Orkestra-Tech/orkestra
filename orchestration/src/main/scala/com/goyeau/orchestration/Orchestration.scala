@@ -3,6 +3,7 @@ package com.goyeau.orchestration
 import java.util.UUID
 
 import com.goyeau.orchestra._
+import com.goyeau.orchestra.kubernetes.{Container, PodConfig}
 import io.circe.generic.auto._
 
 object Orchestration extends Orchestra {
@@ -11,10 +12,12 @@ object Orchestration extends Orchestra {
   lazy val emptyTask = emptyTaskDef(() => println("empty"))
 
   lazy val oneParamTaskDef = Job[String => Int]('oneParamTask)
-  lazy val oneParamTask = oneParamTaskDef { v =>
-    println(v)
-    12
-  }
+  lazy val oneParamTask =
+    oneParamTaskDef(PodConfig(Container("aws", "jakesys/aws"), Container("aws2", "jakesys/aws"))) {
+      (aws, terraform) => v =>
+        println(v)
+        12
+    }
 
   lazy val deployBackendDef = Job[(String, UUID) => Unit]('deployBackend)
   lazy val deployBackend = deployBackendDef((version, runId) => println(version + runId))

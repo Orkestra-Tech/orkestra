@@ -7,7 +7,7 @@ import akka.http.scaladsl.server.{HttpApp, Route}
 import akka.stream.ActorMaterializer
 import com.goyeau.orchestra.Job.Runner
 
-case class Backend(jobs: Seq[Runner[_, _, _]]) extends HttpApp {
+case class Backend(jobs: Seq[Runner[_, _, _, _]]) extends HttpApp {
   implicit lazy val actorSystem = systemReference.get
   implicit lazy val executionContext = actorSystem.dispatcher
   implicit lazy val materializer = ActorMaterializer()
