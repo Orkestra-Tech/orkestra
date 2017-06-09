@@ -13,7 +13,7 @@ val scalaJsReact = Def.setting {
 }
 
 val akkaHttp = Def.setting {
-  val akkaHttpVersion = "10.0.6"
+  val akkaHttpVersion = "10.0.7+21-dac82986"
   Seq(
     "com.typesafe.akka" %% "akka-http" % akkaHttpVersion,
     "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpVersion % Test

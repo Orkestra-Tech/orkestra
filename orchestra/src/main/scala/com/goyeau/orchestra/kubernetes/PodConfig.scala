@@ -1,7 +1,7 @@
 package com.goyeau.orchestra.kubernetes
 
 import shapeless.ops.hlist.ToTraversable
-import shapeless.{Generic, HList}
+import shapeless._
 
 case class PodConfig[Containers <: HList](containers: Containers)(
   implicit toSeq: ToTraversable.Aux[Containers, Seq, Container]
@@ -13,10 +13,11 @@ object PodConfig {
   def apply[TupledContainers, Containers <: HList](containers: TupledContainers)(
     implicit tupleToHList: Generic.Aux[TupledContainers, Containers],
     toSeq: ToTraversable.Aux[Containers, Seq, Container]
-  ): PodConfig[Containers] = {
-    val containersHList = tupleToHList.to(containers)
-    PodConfig(containersHList)
-  }
+  ): PodConfig[Containers] =
+    PodConfig(tupleToHList.to(containers))
+
+  def apply(container: Container): PodConfig[Container :: HNil] =
+    PodConfig(container :: HNil)
 }
 
-case class Container(name: String, image: String)
+case class Container(name: String, image: String, tty: Boolean = false, command: Seq[String] = Seq.empty)

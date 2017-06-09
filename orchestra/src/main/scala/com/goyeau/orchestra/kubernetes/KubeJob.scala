@@ -19,7 +19,7 @@ import io.circe.generic.auto._
 import io.circe.parser._
 import shapeless.HList
 
-object Job {
+object KubeJob {
 
   def schedule[Containers <: HList](
     jobId: Symbol,
@@ -56,7 +56,7 @@ object Job {
         throw new IllegalStateException(s"Scheduling job on Kubernetes failed: ${jobScheduleEntity.utf8String}")
   }
 
-  private def authToken() = {
+  def authToken() = {
     val keyStore = KeyStore.getInstance(KeyStore.getDefaultType)
     keyStore.load(null, Array.empty)
 
@@ -84,7 +84,12 @@ object Job {
     val containers = podConfig.containerSeq.map { container =>
       Json.obj(
         "name" -> Json.fromString(container.name),
-        "image" -> Json.fromString(container.image)
+        "image" -> Json.fromString(container.image),
+        "stdin" -> Json.True,
+        "stdout" -> Json.True,
+        "stderr" -> Json.True,
+        "tty" -> Json.fromBoolean(container.tty),
+        "command" -> Json.fromValues(container.command.map(Json.fromString))
       )
     }
 

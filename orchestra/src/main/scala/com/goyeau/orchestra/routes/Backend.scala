@@ -12,7 +12,7 @@ case class Backend(jobs: Seq[Runner[_, _, _, _]]) extends HttpApp {
   implicit lazy val executionContext = actorSystem.dispatcher
   implicit lazy val materializer = ActorMaterializer()
 
-  lazy val route: Route =
+  lazy val routes: Route =
     pathSingleSlash {
       complete {
         HttpEntity(
