@@ -27,7 +27,7 @@ object SingleJobBoardPage {
       .builder[Unit](getClass.getSimpleName)
       .initialState {
         val jobInfo = RunInfo(job.id, UUID.randomUUID())
-        (jobInfo, Map[String, Any](RunId.name -> jobInfo.id))
+        (jobInfo, Map[String, Any](RunId.name -> jobInfo.id), TagMod("Loading runs"))
       }
       .render { $ =>
         def runJob = Callback.future {
@@ -42,7 +42,20 @@ object SingleJobBoardPage {
         <.div(
           <.div(name),
           paramGetter.displays(params, displayState),
-          <.button(^.onClick --> runJob, "Run")
+          <.button(^.onClick --> runJob, "Run"),
+          <.div($.state._3)
+        )
+      }
+      .componentDidMount { $ =>
+        Callback.future(
+          job.Api.client
+            .runs()
+            .call()
+            .map { runs =>
+              val runDisplays =
+                runs.map(uuid => <.button(^.onClick --> ctrl.set(TaskLogsPage(job, uuid)), uuid.toString))
+              $.modState(_.copy(_3 = if (runDisplays.nonEmpty) TagMod(runDisplays: _*) else TagMod("No job ran yet")))
+            }
         )
       }
       .build

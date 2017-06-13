@@ -56,6 +56,7 @@ object Job {
     trait Api {
       def run(runInfo: RunInfo, params: ParamValues): ARunStatus[Result]
       def logs(runId: UUID): String
+      def runs(): Seq[UUID]
     }
 
     object Api {
@@ -128,6 +129,15 @@ object Job {
         val runPath = s"${OrchestraConfig.home}/${definition.id.name}/$runId"
         Option(new File(s"$runPath/logs")).filter(_.exists).fold("")(Source.fromFile(_).mkString)
       }
+
+      def runs(): Seq[UUID] =
+        Seq(new File(s"${OrchestraConfig.home}/${definition.id.name}"))
+          .filter(_.exists())
+          .flatMap(_.listFiles())
+          .filter(_.isDirectory)
+          .sortBy(_.lastModified)
+          .reverse
+          .map(runDir => UUID.fromString(runDir.getName))
     }
 
     def apiRoute(implicit ec: ExecutionContext, system: ActorSystem, mat: Materializer): Route =

@@ -19,7 +19,6 @@ package object kubernetes {
       implicit val materializer = ActorMaterializer()
       import system.dispatcher
 
-      // print each incoming strict text message
       val printSink = Sink.foreach[Message] {
         case message: BinaryMessage.Strict =>
           println(message.data.utf8String)
