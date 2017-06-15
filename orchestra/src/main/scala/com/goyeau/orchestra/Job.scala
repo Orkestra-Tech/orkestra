@@ -80,8 +80,8 @@ object Job {
       val logsOut = new PrintStream(new FileOutputStream(s"$runPath/logs", true), true)
       val statusWriter = new PrintWriter(s"$runPath/status")
 
-      Utils.withOutErr(logsOut) {
-        try {
+      try {
+        Utils.withOutErr(logsOut) {
           statusWriter.append(
             AutowireServer.write[ARunStatus[Result]](ARunStatus.Running(Instant.now().toEpochMilli)) + "\n"
           )
@@ -89,11 +89,14 @@ object Job {
           statusWriter.append(
             AutowireServer.write[ARunStatus[Result]](ARunStatus.Success(Instant.now().toEpochMilli, result)) + "\n"
           )
-        } catch {
-          case e: Throwable =>
-            e.printStackTrace()
-            statusWriter.append(AutowireServer.write(ARunStatus.Failed(e)))
-        } finally statusWriter.close()
+        }
+      } catch {
+        case e: Throwable =>
+          e.printStackTrace()
+          statusWriter.append(AutowireServer.write(ARunStatus.Failed(e)))
+      } finally {
+        statusWriter.close()
+        logsOut.close()
       }
     }
 

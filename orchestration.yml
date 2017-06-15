@@ -48,7 +48,7 @@ spec:
 #            - name: JAVA_OPTS
 #              value: -Djavax.net.ssl.trustStore=/etc/ssl/certs/java/cacerts -Djavax.net.ssl.keyStore=/etc/ssl/certs/java/cacerts
             - name: ORCHESTRA_HOME
-              value: orchestra
+              value: /opt/docker/orchestra
             - name: ORCHESTRA_PORT
               value: "8080"
             - name: ORCHESTRA_KUBE_URI

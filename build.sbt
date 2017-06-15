@@ -65,7 +65,8 @@ lazy val orchestra = crossProject
   .settings(
     libraryDependencies ++= Seq(
       "com.chuusai" %%% "shapeless" % "2.3.2",
-      "com.vmunier" %% "scalajs-scripts" % "1.1.0"
+      "com.vmunier" %% "scalajs-scripts" % "1.1.0",
+      "org.eclipse.jgit" % "org.eclipse.jgit" % "4.8.0.201705170830-rc1"
     ) ++ scalaJsReact.value ++ akkaHttp.value ++ scalaCss.value ++ autowire.value,
     jsDependencies ++= react.value
   )

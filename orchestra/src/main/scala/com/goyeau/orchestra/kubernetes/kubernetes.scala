@@ -14,7 +14,8 @@ import akka.http.scaladsl.model.headers.{Authorization, OAuth2BearerToken}
 package object kubernetes {
 
   implicit class ContainerProcess(val command: String) extends AnyVal {
-    def !(container: Container): Future[Done] = {
+
+    def !>(container: Container): Future[Done] = {
       implicit val system = ActorSystem()
       implicit val materializer = ActorMaterializer()
       import system.dispatcher
@@ -56,7 +57,7 @@ package object kubernetes {
         else throw new RuntimeException(s"Connection failed: ${upgrade.response.status}")
       }
 
-      connected.flatMap(_ => closed).andThen { case _ => system.terminate() }
+      connected.flatMap(_ => upgradeResponse).flatMap(_ => closed).andThen { case _ => system.terminate() }
     }
   }
 

@@ -1,6 +1,6 @@
 package com.goyeau.orchestra.kubernetes
 
-import java.io.{FileInputStream, FileOutputStream}
+import java.io.{File, FileInputStream, FileOutputStream}
 import java.security.KeyStore
 import java.security.cert.CertificateFactory
 
@@ -13,7 +13,7 @@ import akka.http.scaladsl.model.headers.{Authorization, OAuth2BearerToken}
 import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpMethods, HttpRequest}
 import akka.stream.Materializer
 import akka.util.ByteString
-import com.goyeau.orchestra.{AutowireServer, RunInfo}
+import com.goyeau.orchestra.{AutowireServer, OrchestraConfig, RunInfo}
 import io.circe.Json
 import io.circe.generic.auto._
 import io.circe.parser._
@@ -81,6 +81,15 @@ object KubeJob {
     )
     val envs = container.downField("env").focus.get.asArray.get :+ runInfoEnv
     val name = s"orchestra-slave-${runInfo.id}"
+    val workspace = s"/opt/docker/${OrchestraConfig.workspace.getPath}"
+    val homeDirMount = Json.obj(
+      "mountPath" -> Json.fromString(workspace),
+      "name" -> Json.fromString("home")
+    )
+    val homeDirVolume = Json.obj(
+      "name" -> Json.fromString("home"),
+      "emptyDir" -> Json.obj()
+    )
     val containers = podConfig.containerSeq.map { container =>
       Json.obj(
         "name" -> Json.fromString(container.name),
@@ -89,7 +98,9 @@ object KubeJob {
         "stdout" -> Json.True,
         "stderr" -> Json.True,
         "tty" -> Json.fromBoolean(container.tty),
-        "command" -> Json.fromValues(container.command.map(Json.fromString))
+        "command" -> Json.fromValues(container.command.map(Json.fromString)),
+        "workingDir" -> Json.fromString(workspace),
+        "volumeMounts" -> Json.arr(homeDirMount)
       )
     }
 
@@ -106,10 +117,12 @@ object KubeJob {
                 "name" -> container.downField("name").focus.get,
                 "image" -> container.downField("image").focus.get,
                 "env" -> Json.fromValues(envs),
-                "volumeMounts" -> container.downField("volumeMounts").focus.get
+                "volumeMounts" -> Json.arr(
+                  container.downField("volumeMounts").values.toVector.flatten :+ homeDirMount: _*
+                )
               ) +: containers: _*
             ),
-            "volumes" -> spec.downField("volumes").focus.get,
+            "volumes" -> Json.arr(spec.downField("volumes").values.toVector.flatten :+ homeDirVolume: _*),
             "restartPolicy" -> Json.fromString("Never")
           )
         )
