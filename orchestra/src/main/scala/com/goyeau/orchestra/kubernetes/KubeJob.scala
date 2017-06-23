@@ -80,7 +80,7 @@ object KubeJob {
       "value" -> Json.fromString(AutowireServer.write(runInfo))
     )
     val envs = container.downField("env").focus.get.asArray.get :+ runInfoEnv
-    val name = s"orchestra-slave-${runInfo.id}"
+    val name = s"orchestra-slave-${runInfo.runId}"
     val workspace = s"/opt/docker/${OrchestraConfig.workspace.getPath}"
     val homeDirMount = Json.obj(
       "mountPath" -> Json.fromString(workspace),

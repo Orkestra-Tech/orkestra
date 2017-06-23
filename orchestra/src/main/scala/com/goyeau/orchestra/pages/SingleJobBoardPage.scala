@@ -27,13 +27,13 @@ object SingleJobBoardPage {
       .builder[Unit](getClass.getSimpleName)
       .initialState {
         val jobInfo = RunInfo(job.id, UUID.randomUUID())
-        (jobInfo, Map[String, Any](RunId.name -> jobInfo.id), TagMod("Loading runs"))
+        (jobInfo, Map[String, Any](RunId.name -> jobInfo.runId), TagMod("Loading runs"))
       }
       .render { $ =>
         def runJob = Callback.future {
           job.Api.client.run($.state._1, paramGetter.values(params, $.state._2)).call().map {
             case ARunStatus.Failed(e) => Callback.alert(e.getMessage)
-            case _ => ctrl.set(TaskLogsPage(job, $.state._1.id))
+            case _ => ctrl.set(TaskLogsPage(job, $.state._1.runId))
           }
         }
 

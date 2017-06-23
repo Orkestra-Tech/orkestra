@@ -1,5 +1,3 @@
-import com.typesafe.sbt.packager.docker._
-
 version in ThisBuild := "0.1"
 scalaVersion in ThisBuild := "2.12.2"
 scalacOptions in ThisBuild += "-deprecation"
@@ -85,6 +83,7 @@ lazy val orchestrationJVM = orchestration.jvm
       envVars = reForkOptions.value.envVars ++ Map(
         "ORCHESTRA_HOME" -> "target/orchestra",
         "ORCHESTRA_PORT" -> "8080",
+        "ORCHESTRA_GITHUB_PORT" -> "8081",
         "ORCHESTRA_KUBE_URI" -> "http://127.0.0.1:8001"
       )
     ),
@@ -93,9 +92,9 @@ lazy val orchestrationJVM = orchestration.jvm
     scalaJSProjects := Seq(orchestrationJS),
     pipelineStages in Assets := Seq(scalaJSPipeline),
     maintainer in Docker := "github:joan38",
-    dockerRepository := Option("joan38"),
+    dockerRepository := Option("registry.drivetribe.com/tools"),
     dockerUpdateLatest := true,
-    dockerExposedPorts := Seq(8080),
+    dockerExposedPorts := Seq(8080, 8081),
     daemonUser in Docker := "root" // Workaround minikube volume rights
   )
 lazy val orchestrationJS = orchestration.js

@@ -13,7 +13,11 @@ import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider
 import scala.sys.process._
 
-object Orchestration extends Orchestra {
+import com.goyeau.orchestra.Job
+import com.goyeau.orchestra.Boards
+import com.goyeau.orchestra.github.{BranchTrigger, Github}
+
+object Orchestration extends Jobs with Boards with Github {
 
   lazy val emptyTaskDef = Job[() => Unit]('emptyJob)
   lazy val emptyTask = emptyTaskDef(() => println("empty"))
@@ -46,6 +50,10 @@ object Orchestration extends Orchestra {
 
     println(sourceEnv)
   }
+
+  lazy val githubTriggers = Seq(
+    BranchTrigger("drivetribe/backend", "toto", createNardo)
+  )
 
   lazy val jobs = Seq(
     emptyTask,

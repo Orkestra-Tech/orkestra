@@ -9,5 +9,6 @@ object OrchestraConfig {
 
   val home = Config("HOME").getOrElse(System.getProperty("user.home"))
   val port = Config("PORT").map(_.toInt)
+  val githubPort = Config("GITHUB_PORT").map(_.toInt)
   val runInfo = Config("RUN_INFO").map(AutowireServer.read[RunInfo])
 }

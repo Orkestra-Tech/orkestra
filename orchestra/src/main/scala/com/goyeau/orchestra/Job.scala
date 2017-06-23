@@ -74,7 +74,7 @@ object Job {
   ) {
 
     def run(runInfo: RunInfo): Unit = {
-      val runPath = s"${OrchestraConfig.home}/${definition.id.name}/${runInfo.id}"
+      val runPath = s"${OrchestraConfig.home}/${definition.id.name}/${runInfo.runId}"
       new File(runPath).mkdirs()
 
       val logsOut = new PrintStream(new FileOutputStream(s"$runPath/logs", true), true)
@@ -102,7 +102,7 @@ object Job {
 
     def apiServer(implicit ec: ExecutionContext, system: ActorSystem, mat: Materializer) = new definition.Api {
       override def run(runInfo: RunInfo, params: ParamValues): ARunStatus[Result] = {
-        val runPath = s"${OrchestraConfig.home}/${definition.id.name}/${runInfo.id}"
+        val runPath = s"${OrchestraConfig.home}/${definition.id.name}/${runInfo.runId}"
         val runDir = new File(runPath)
         val statusFile = new File(s"$runPath/status")
 
