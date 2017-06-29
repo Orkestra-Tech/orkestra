@@ -15,9 +15,10 @@ import scala.sys.process._
 
 import com.goyeau.orchestra.Job
 import com.goyeau.orchestra.Boards
+import com.goyeau.orchestra.cron.{Cron, CronTrigger}
 import com.goyeau.orchestra.github.{BranchTrigger, Github}
 
-object Orchestration extends Jobs with Boards with Github {
+object Orchestration extends Jobs with Boards with Github with Cron {
 
   lazy val emptyTaskDef = Job[() => Unit]('emptyJob)
   lazy val emptyTask = emptyTaskDef(() => println("empty"))
@@ -53,6 +54,10 @@ object Orchestration extends Jobs with Boards with Github {
 
   lazy val githubTriggers = Seq(
     BranchTrigger("drivetribe/backend", "toto", createNardo)
+  )
+
+  lazy val cronTriggers = Seq(
+    CronTrigger("*/1 * * * *", emptyTask)
   )
 
   lazy val jobs = Seq(

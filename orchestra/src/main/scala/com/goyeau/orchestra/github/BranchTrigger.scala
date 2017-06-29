@@ -22,7 +22,7 @@ case class BranchTrigger(repoName: String, branchRegex: String, job: Job.Runner[
           eventBranchJson <- json.hcursor.downField("ref").focus
           eventBranch = eventBranchJson.as[String].fold(throw _, identity).replace("refs/heads/", "")
           if branchRegex.r.findFirstIn(eventBranch).isDefined
-        } yield job.apiServer.run(RunInfo(job.definition.id, UUID.randomUUID()), eventBranch :: HNil)
+        } yield job.apiServer.run(RunInfo(job.definition.id, Option(UUID.randomUUID())), eventBranch :: HNil)
       case _ =>
     }
 }

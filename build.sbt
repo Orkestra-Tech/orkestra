@@ -18,6 +18,13 @@ val akkaHttp = Def.setting {
   )
 }
 
+val logging = Def.setting {
+  Seq(
+    "com.typesafe.scala-logging" %% "scala-logging" % "3.6.0",
+    "ch.qos.logback" % "logback-classic" % "1.2.3"
+  )
+}
+
 val scalaCss = Def.setting {
   val scalaCssVersion = "0.5.3"
   Seq(
@@ -57,7 +64,7 @@ val circeJVM = Def.setting {
 lazy val orchestra = crossProject
   .crossType(CrossType.Pure)
   .enablePlugins(ScalaJSPlugin)
-  // For some reason we need to manually separate the JVM en JS version
+  // For some reason we need to manually separate the JVM and JS version
   .jsSettings(libraryDependencies ++= circeJS.value)
   .jvmSettings(libraryDependencies ++= circeJVM.value)
   .settings(
@@ -65,7 +72,7 @@ lazy val orchestra = crossProject
       "com.chuusai" %%% "shapeless" % "2.3.2",
       "com.vmunier" %% "scalajs-scripts" % "1.1.0",
       "org.eclipse.jgit" % "org.eclipse.jgit" % "4.8.0.201705170830-rc1"
-    ) ++ scalaJsReact.value ++ akkaHttp.value ++ scalaCss.value ++ autowire.value,
+    ) ++ scalaJsReact.value ++ akkaHttp.value ++ scalaCss.value ++ autowire.value ++ logging.value,
     jsDependencies ++= react.value
   )
 lazy val orchestraJVM = orchestra.jvm

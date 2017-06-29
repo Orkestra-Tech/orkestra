@@ -29,41 +29,6 @@ subjects:
     namespace: default
 
 ---
-apiVersion: v1
-kind: PersistentVolume
-metadata:
-  labels:
-    failure-domain.beta.kubernetes.io/region: eu-west-1
-    service: orchestration
-  name: orchestration-nfs
-  namespace: default
-spec:
-  accessModes:
-    - ReadWriteMany
-  capacity:
-    storage: 100Gi
-  persistentVolumeReclaimPolicy: Retain
-  nfs:
-    server: fs-50e52f99.efs.eu-west-1.amazonaws.com
-    path: /
-
----
-kind: PersistentVolumeClaim
-apiVersion: v1
-metadata:
-  name: orchestration
-  namespace: default
-spec:
-  accessModes:
-    - ReadWriteMany
-  resources:
-    requests:
-      storage: 100Gi
-  selector:
-    matchLabels:
-      service: orchestration
-
----
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
@@ -87,7 +52,7 @@ spec:
             - name: ORCHESTRA_GITHUB_PORT
               value: "8081"
             - name: ORCHESTRA_KUBE_URI
-              value: https://kubernetes.default.svc.k8s-jenkins.drivetribe.com
+              value: https://kubernetes.default.svc.cluster.local
             - name: ORCHESTRA_KUBE_POD_NAME
               valueFrom:
                 fieldRef:
@@ -104,8 +69,8 @@ spec:
               mountPath: /opt/docker/orchestra
       volumes:
         - name: data
-          persistentVolumeClaim:
-            claimName: orchestration
+          hostPath:
+            path: /Users/joangoyeau/Code/orchestra/target/orchestra
 
 ---
 apiVersion: v1
@@ -113,15 +78,12 @@ kind: Service
 metadata:
   name: orchestration-ui
 spec:
-  type: LoadBalancer
+  type: NodePort
   selector:
     app: orchestration
   ports:
     - name: http
       protocol: TCP
       port: 80
+      nodePort: 31010
       targetPort: 8080
-    - name: github-webhooks
-      protocol: TCP
-      port: 81
-      targetPort: 8081

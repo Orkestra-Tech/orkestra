@@ -26,7 +26,7 @@ object SingleJobBoardPage {
     ScalaComponent
       .builder[Unit](getClass.getSimpleName)
       .initialState {
-        val jobInfo = RunInfo(job.id, UUID.randomUUID())
+        val jobInfo = RunInfo(job.id, Option(UUID.randomUUID()))
         (jobInfo, Map[String, Any](RunId.name -> jobInfo.runId), TagMod("Loading runs"))
       }
       .render { $ =>

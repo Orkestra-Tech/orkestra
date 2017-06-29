@@ -17,7 +17,7 @@ import autowire.Core
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.auto._
 import com.goyeau.orchestra.ARunStatus._
-import com.goyeau.orchestra.kubernetes.{KubeJob, PodConfig}
+import com.goyeau.orchestra.kubernetes.{JobScheduler, PodConfig}
 import shapeless._
 import shapeless.ops.function.FnToProduct
 
@@ -116,7 +116,7 @@ object Job {
           finally paramsWriter.close()
 
           val status = Await
-            .ready(KubeJob.schedule(definition.id, runInfo, podConfig), 1.minute)
+            .ready(JobScheduler(runInfo, podConfig), 1.minute)
             .value
             .get
             .fold[ARunStatus[Result]](e => ARunStatus.Failed(e), _ => ARunStatus.Scheduled(Instant.now().toEpochMilli))

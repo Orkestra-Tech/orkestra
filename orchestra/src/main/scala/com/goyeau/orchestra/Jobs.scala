@@ -16,8 +16,6 @@ trait Jobs extends JVMApp with BackendRoutes with HListInstances {
 
   override lazy val routes = super.routes ~
     pathPrefix("assets" / Remaining) { file =>
-      // optionally compresses the response with Gzip or Deflate
-      // if the client accepts compressed responses
       encodeResponse {
         getFromResource(s"public/$file")
       }

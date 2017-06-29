@@ -30,4 +30,6 @@ object ARunStatus {
   }
 }
 
-case class RunInfo(jobId: Symbol, runId: UUID)
+case class RunInfo(jobId: Symbol, runIdMaybe: Option[UUID]) {
+  val runId = runIdMaybe.getOrElse(UUID.randomUUID())
+}

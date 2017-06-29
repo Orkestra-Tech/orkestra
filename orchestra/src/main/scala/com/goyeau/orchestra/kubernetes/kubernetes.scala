@@ -9,8 +9,6 @@ import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.ws._
 import scala.concurrent.Future
 
-import akka.http.scaladsl.model.headers.{Authorization, OAuth2BearerToken}
-
 package object kubernetes {
 
   implicit class ContainerProcess(val command: String) extends AnyVal {
@@ -33,7 +31,6 @@ package object kubernetes {
       // upgradeResponse is a Future[WebSocketUpgradeResponse] that
       // completes or fails when the connection succeeds or fails
       // and closed is a Future[Done] representing the stream completion from above
-      val token = Authorization(OAuth2BearerToken(KubeJob.authToken()))
       val uri =
         s"${KubeConfig.uri.replace("http", "ws")}/api/v1/namespaces/${KubeConfig.namespace}/pods/${KubeConfig.podName}/exec?container=${container.name}&tty=true&stdin=true&stdout=true&stderr=true${command
           .split(" ")
@@ -44,7 +41,7 @@ package object kubernetes {
         Http().singleWebSocketRequest(
           WebSocketRequest(
             uri,
-            extraHeaders = List(token),
+            extraHeaders = List(Auth.header),
             subprotocol = Option("v4.channel.k8s.io")
           ),
           flow
