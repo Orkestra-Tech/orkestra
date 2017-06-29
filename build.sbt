@@ -3,7 +3,7 @@ scalaVersion in ThisBuild := "2.12.2"
 scalacOptions in ThisBuild += "-deprecation"
 
 val scalaJsReact = Def.setting {
-  val scalaJsReactVersion = "1.0.0"
+  val scalaJsReactVersion = "1.0.1"
   Seq(
     "com.github.japgolly.scalajs-react" %%% "core" % scalaJsReactVersion,
     "com.github.japgolly.scalajs-react" %%% "extra" % scalaJsReactVersion
