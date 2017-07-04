@@ -17,7 +17,7 @@ object LogsPage {
   val component =
     ScalaComponent
       .builder[Props](getClass.getSimpleName)
-      .initialState[(String, SetIntervalHandle)](("", null))
+      .initialState[(String, Int, SetIntervalHandle)](("", 0, null))
       .render { $ =>
         <.div(
           <.div("Logs: " + $.props.page.runId.toString),
@@ -27,17 +27,17 @@ object LogsPage {
       .componentDidMount { $ =>
         implicit val ec = $.props.ec
 
-        def pullLogs($ : ComponentDidMount[Props, (String, SetIntervalHandle), Unit]) = {
-          println("Pulling logs")
+        def pullLogs($ : ComponentDidMount[Props, (String, Int, SetIntervalHandle), Unit]) =
           $.props.page.job.Api.client
-            .logs($.props.page.runId)
+            .logs($.props.page.runId, $.state._2)
             .call()
-            .foreach(logs => $.modState(_.copy(_1 = logs)).runNow())
-        }
+            .foreach { logs =>
+              $.modState(_.copy(_1 = $.state._1 + logs.mkString("\n"), _2 = $.state._2 + logs.size)).runNow()
+            }
 
         pullLogs($)
-        $.setState($.state.copy(_2 = js.timers.setInterval(1.second)(pullLogs($))))
+        $.setState($.state.copy(_3 = js.timers.setInterval(1.second)(pullLogs($))))
       }
-      .componentWillUnmount($ => Callback(js.timers.clearInterval($.state._2)))
+      .componentWillUnmount($ => Callback(js.timers.clearInterval($.state._3)))
       .build
 }

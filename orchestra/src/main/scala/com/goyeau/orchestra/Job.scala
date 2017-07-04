@@ -55,7 +55,7 @@ object Job {
 
     trait Api {
       def run(runInfo: RunInfo, params: ParamValues): ARunStatus[Result]
-      def logs(runId: UUID): String
+      def logs(runId: UUID, from: Int): Seq[String]
       def runs(): Seq[UUID]
     }
 
@@ -128,9 +128,11 @@ object Job {
         }
       }
 
-      override def logs(runId: UUID): String = {
+      override def logs(runId: UUID, from: Int): Seq[String] = {
         val runPath = s"${OrchestraConfig.home}/${definition.id.name}/$runId"
-        Option(new File(s"$runPath/logs")).filter(_.exists).fold("")(Source.fromFile(_).mkString)
+        Option(new File(s"$runPath/logs")).filter(_.exists).fold(Seq.empty[String]) { a =>
+          Source.fromFile(a).getLines().slice(from, Int.MaxValue).toSeq
+        }
       }
 
       def runs(): Seq[UUID] =

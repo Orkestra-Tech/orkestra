@@ -57,7 +57,7 @@ object Orchestration extends Jobs with Boards with Github with Cron {
   )
 
   lazy val cronTriggers = Seq(
-    CronTrigger("*/1 * * * *", emptyTask)
+//    CronTrigger("*/1 * * * *", emptyTask)
   )
 
   lazy val jobs = Seq(
