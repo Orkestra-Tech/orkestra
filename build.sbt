@@ -82,6 +82,7 @@ lazy val orchestraJS = orchestra.js
 lazy val orchestration = crossProject
   .crossType(CrossType.Pure)
   .dependsOn(orchestra)
+  .settings(libraryDependencies += "com.beachape" %%% "enumeratum" % "1.5.12")
 
 lazy val orchestrationJVM = orchestration.jvm
   .enablePlugins(SbtWeb, JavaAppPackaging)

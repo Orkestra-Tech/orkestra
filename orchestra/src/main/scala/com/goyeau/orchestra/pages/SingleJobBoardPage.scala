@@ -9,7 +9,6 @@ import com.goyeau.orchestra._
 import com.goyeau.orchestra.ARunStatus._
 import com.goyeau.orchestra.routes.WebRouter.{AppPage, TaskLogsPage}
 import io.circe.{Decoder, Encoder}
-import io.circe.generic.auto._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.router.RouterCtl
 import japgolly.scalajs.react.vdom.html_<^._

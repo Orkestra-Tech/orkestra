@@ -5,9 +5,8 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Directives._
 import akka.stream.ActorMaterializer
 import com.goyeau.orchestra.routes.BackendRoutes
-import io.circe.shapes.HListInstances
 
-trait Jobs extends JVMApp with BackendRoutes with HListInstances {
+trait Jobs extends JVMApp with BackendRoutes {
   implicit lazy val actorSystem = ActorSystem("orchestra")
   implicit lazy val materializer = ActorMaterializer()
   implicit lazy val executionContext = actorSystem.dispatcher

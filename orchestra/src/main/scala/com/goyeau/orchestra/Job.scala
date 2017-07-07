@@ -27,30 +27,17 @@ object Job {
     def apply(job: JobFn)(implicit fnToProd: FnToProduct.Aux[JobFn, ParamValues => Result]) =
       Runner(this, PodConfig(HNil), fnToProd(job))
 
-    def apply(magnet: ParamMagnet): magnet.Out = magnet(this)
+    def apply[Containers <: HList](podConfig: PodConfig[Containers]) = new RunnerBuilder[Containers](podConfig)
 
-    // Trick to hide shapeless types and implicits
-    sealed trait ParamMagnet {
-      type Out
-      def apply(definition: Definition[JobFn, ParamValues, Result]): Out
-    }
-
-    object ParamMagnet {
-
-      implicit def apply[Containers <: HList, PodJobFn](podConfig: PodConfig[Containers])(
+    class RunnerBuilder[Containers <: HList](podConfig: PodConfig[Containers]) {
+      def apply[PodJobFn](job: PodJobFn)(
         implicit fnToProd: FnToProduct.Aux[JobFn, ParamValues => Result],
         podFnToProd: FnToProduct.Aux[PodJobFn, Containers => JobFn]
-      ) =
-        new ParamMagnet {
-          type Out = PodJobFn => Runner[JobFn, ParamValues, Result, Containers]
-          def apply(definition: Definition[JobFn, ParamValues, Result]) =
-            (job: PodJobFn) =>
-              Runner[JobFn, ParamValues, Result, Containers](
-                definition,
-                podConfig,
-                fnToProd(podFnToProd(job)(podConfig.containers))
-            )
-        }
+      ) = Runner[JobFn, ParamValues, Result, Containers](
+        Definition.this,
+        podConfig,
+        fnToProd(podFnToProd(job)(podConfig.containers))
+      )
     }
 
     trait Api {
@@ -72,9 +59,10 @@ object Job {
     podConfig: PodConfig[Containers],
     job: ParamValues => Result
   ) {
+    private val jobDirPath = s"${OrchestraConfig.home}/${OrchestraConfig.jobsDirName}/${definition.id.name}"
 
     def run(runInfo: RunInfo): Unit = {
-      val runPath = s"${OrchestraConfig.home}/${definition.id.name}/${runInfo.runId}"
+      val runPath = s"$jobDirPath/${runInfo.runId}"
       new File(runPath).mkdirs()
 
       val logsOut = new PrintStream(new FileOutputStream(s"$runPath/logs", true), true)
@@ -102,7 +90,7 @@ object Job {
 
     def apiServer(implicit ec: ExecutionContext, system: ActorSystem, mat: Materializer) = new definition.Api {
       override def run(runInfo: RunInfo, params: ParamValues): ARunStatus[Result] = {
-        val runPath = s"${OrchestraConfig.home}/${definition.id.name}/${runInfo.runId}"
+        val runPath = s"$jobDirPath/${runInfo.runId}"
         val runDir = new File(runPath)
         val statusFile = new File(s"$runPath/status")
 
@@ -129,14 +117,14 @@ object Job {
       }
 
       override def logs(runId: UUID, from: Int): Seq[String] = {
-        val runPath = s"${OrchestraConfig.home}/${definition.id.name}/$runId"
+        val runPath = s"$jobDirPath/$runId"
         Option(new File(s"$runPath/logs")).filter(_.exists).fold(Seq.empty[String]) { a =>
           Source.fromFile(a).getLines().slice(from, Int.MaxValue).toSeq
         }
       }
 
       def runs(): Seq[UUID] =
-        Seq(new File(s"${OrchestraConfig.home}/${definition.id.name}"))
+        Seq(new File(jobDirPath))
           .filter(_.exists())
           .flatMap(_.listFiles())
           .filter(_.isDirectory)
@@ -157,26 +145,15 @@ object Job {
       }
   }
 
-  def apply[JobFn](magnet: ParamMagnet[JobFn]): magnet.Out = magnet()
+  def apply[JobFn] = new DefinitionBuilder[JobFn]
 
-  // Trick to hide shapeless types and implicits
-  sealed trait ParamMagnet[JobFn] {
-    type Out
-    def apply(): Out
-  }
-
-  object ParamMagnet {
-
-    implicit def apply[JobFn, ParamValues <: HList, Result](id: Symbol)(
+  class DefinitionBuilder[JobFn] {
+    def apply[ParamValues <: HList, Result](id: Symbol)(
       implicit fnToProd: FnToProduct.Aux[JobFn, ParamValues => Result],
       encoderP: Encoder[ParamValues],
       decoderP: Decoder[ParamValues],
       encoderR: Encoder[Result],
       decoderR: Decoder[Result]
-    ) =
-      new ParamMagnet[JobFn] {
-        type Out = Definition[JobFn, ParamValues, Result]
-        def apply() = Definition[JobFn, ParamValues, Result](id)
-      }
+    ) = Definition[JobFn, ParamValues, Result](id)
   }
 }
