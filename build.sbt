@@ -22,7 +22,7 @@ val akkaHttp = Def.setting {
 
 val logging = Def.setting {
   Seq(
-    "com.typesafe.scala-logging" %% "scala-logging" % "3.6.0",
+    "com.typesafe.scala-logging" %% "scala-logging" % "3.7.1",
     "ch.qos.logback" % "logback-classic" % "1.2.3"
   )
 }

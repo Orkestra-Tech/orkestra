@@ -1,5 +1,8 @@
 package com.goyeau.orchestra
 
+import java.io.File
+import java.net.URLEncoder
+
 import akka.actor.ActorSystem
 import akka.Done
 import akka.http.scaladsl.Http
@@ -9,11 +12,11 @@ import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.ws._
 import scala.concurrent.Future
 
-package object kubernetes {
+package object kubernetes extends DirectoryHelpers {
 
   implicit class ContainerProcess(val command: String) extends AnyVal {
 
-    def !>(container: Container): Future[Done] = {
+    def !>(container: Container)(implicit workDir: Directory): Future[Done] = {
       implicit val system = ActorSystem()
       implicit val materializer = ActorMaterializer()
       import system.dispatcher
@@ -31,11 +34,12 @@ package object kubernetes {
       // upgradeResponse is a Future[WebSocketUpgradeResponse] that
       // completes or fails when the connection succeeds or fails
       // and closed is a Future[Done] representing the stream completion from above
+      val shScript = URLEncoder.encode(s"""cd ${workDir.file.getAbsolutePath} && $command""", "UTF-8")
+      val shCommand = s"""sh -c $shScript"""
+      val commandParams = s"command=${shCommand.replaceAll("\\s", "&command=")}"
+      val execParams = s"""container=${container.name}&tty=true&stdin=true&stdout=true&stderr=true&$commandParams"""
       val uri =
-        s"${KubeConfig.uri.replace("http", "ws")}/api/v1/namespaces/${KubeConfig.namespace}/pods/${KubeConfig.podName}/exec?container=${container.name}&tty=true&stdin=true&stdout=true&stderr=true${command
-          .split(" ")
-          .map(c => s"&command=$c")
-          .mkString}"
+        s"${KubeConfig.uri.replace("http", "ws")}/api/v1/namespaces/${KubeConfig.namespace}/pods/${KubeConfig.podName}/exec?$execParams"
 
       val (upgradeResponse, closed) =
         Http().singleWebSocketRequest(

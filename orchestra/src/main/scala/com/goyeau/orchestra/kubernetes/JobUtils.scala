@@ -5,9 +5,8 @@ import io.circe.Json
 import io.circe.generic.auto._
 
 object JobUtils {
-  private val workspace = s"/opt/docker/${OrchestraConfig.workspace.getPath}"
   private val homeDirMount = Json.obj(
-    "mountPath" -> Json.fromString(workspace),
+    "mountPath" -> Json.fromString(OrchestraConfig.workspace),
     "name" -> Json.fromString("home")
   )
   private val homeDirVolume = Json.obj(
@@ -15,16 +14,17 @@ object JobUtils {
     "emptyDir" -> Json.obj()
   )
 
-  private def createContainer(container: Container) = Json.obj(
+  private def createContainer(container: Container, envs: Vector[Json], volumes: Vector[Json]) = Json.obj(
     "name" -> Json.fromString(container.name),
     "image" -> Json.fromString(container.image),
+    "env" -> Json.fromValues(envs),
     "stdin" -> Json.True,
     "stdout" -> Json.True,
     "stderr" -> Json.True,
     "tty" -> Json.fromBoolean(container.tty),
     "command" -> Json.fromValues(container.command.map(Json.fromString)),
-    "workingDir" -> Json.fromString(workspace),
-    "volumeMounts" -> Json.arr(homeDirMount)
+    "workingDir" -> Json.fromString(OrchestraConfig.workspace),
+    "volumeMounts" -> Json.fromValues(volumes)
   )
 
   def createSpec(masterPod: Json, runInfo: RunInfo, podConfig: PodConfig[_]) = {
@@ -34,6 +34,8 @@ object JobUtils {
       "name" -> Json.fromString("ORCHESTRA_RUN_INFO"),
       "value" -> Json.fromString(AutowireServer.write(runInfo))
     )
+    val volumeMounts = container.downField("volumeMounts").values.toVector.flatten :+ JobUtils.homeDirMount
+    val volumes = spec.downField("volumes").values.toVector.flatten :+ JobUtils.homeDirVolume
 
     Json.obj(
       "template" -> Json.obj(
@@ -43,12 +45,11 @@ object JobUtils {
               "name" -> container.downField("name").focus.get,
               "image" -> container.downField("image").focus.get,
               "env" -> Json.fromValues(envs),
-              "volumeMounts" -> Json.arr(
-                container.downField("volumeMounts").values.toVector.flatten :+ JobUtils.homeDirMount: _*
-              )
-            ) +: podConfig.containerSeq.map(createContainer): _*
+              "workingDir" -> Json.fromString(OrchestraConfig.workspace),
+              "volumeMounts" -> Json.fromValues(volumeMounts)
+            ) +: podConfig.containerSeq.map(createContainer(_, envs, volumeMounts)): _*
           ),
-          "volumes" -> Json.arr(spec.downField("volumes").values.toVector.flatten :+ JobUtils.homeDirVolume: _*),
+          "volumes" -> Json.fromValues(volumes),
           "restartPolicy" -> Json.fromString("Never")
         )
       )

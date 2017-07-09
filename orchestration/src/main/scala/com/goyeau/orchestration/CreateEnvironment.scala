@@ -8,7 +8,7 @@ import scala.sys.process._
 
 import com.goyeau.orchestra._
 import com.goyeau.orchestra.kubernetes._
-import com.goyeau.orchestra.{Job, OrchestraConfig}
+import com.goyeau.orchestra.Job
 import com.goyeau.orchestra.kubernetes.Container
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider
@@ -29,22 +29,31 @@ object CreateEnvironment {
     SingleJobBoard("Create", jobDefinition(environment))(Param[String]("sourceEnv", defaultValue = Some("staging")))
 
   def apply(environment: Environment)(ansible: Container, terraform: Container)(sourceEnv: String) = {
-    val infrastructure = new File(OrchestraConfig.workspace, "infrastructure")
     Git
       .cloneRepository()
-      .setURI(s"https://github.com/drivetribe/infrastructure.git")
+      .setURI(s"https://github.com/drivetribe/infrastructure")
       .setCredentialsProvider(
-        new UsernamePasswordCredentialsProvider("drivetribeci", "12aeb93d19a941063619cd3d4765ef3f43ecd89d")
+        new UsernamePasswordCredentialsProvider(System.getenv("GITHUB_USERNAME"), System.getenv("GITHUB_TOKEN"))
       )
-      .setDirectory(infrastructure)
+      .setDirectory(new File("infrastructure"))
       .call()
 
-    val exec = "ansible-galaxy install -r infrastructure/ansible/requirements.yml" !> ansible
-    Await.ready(exec, Duration.Inf)
-
-    println("Try to acquire lock on env")
     Lock.onEnvironment(environment) {
-      println("Acquired lock on env")
+      dir("infrastructure") { implicit wd =>
+        println("Install Ansible deps")
+        val ansibleDeps = "ansible-galaxy install -r ansible/requirements.yml" !> ansible
+        Await.ready(ansibleDeps, Duration.Inf)
+
+        dir(s"terraform/providers/aws/app/${environment.environmentType.entryName}") { implicit wd =>
+          println("Init Terraform")
+          val terraformInit = s"terraform init -backend-config=key=tfstates/app-${environment.entryName}.tfstate" !> terraform
+          Await.ready(terraformInit, Duration.Inf)
+
+          println("Init Ansible")
+          val ansibleInit = s"ansible-playbook init.yml --vault-password-file /opt/docker/secrets/ansible/vault-pass --private-key /opt/docker/secrets/ssh-key.pem -e env_name=${environment.entryName}" !> ansible
+          Await.ready(ansibleInit, Duration.Inf)
+        }
+      }
     }
 
     println("Try to acquire lock on env again")

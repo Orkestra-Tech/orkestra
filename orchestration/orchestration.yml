@@ -96,16 +96,48 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.namespace
+            - name: GITHUB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: github
+                  key: username
+            - name: GITHUB_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: github
+                  key: token
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: aws
+                  key: access-key-id
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: aws
+                  key: secret-access-key
           ports:
             - name: ui
               containerPort: 8080
           volumeMounts:
             - name: data
               mountPath: /opt/docker/orchestra
+            - name: ansible-secrets
+              mountPath: /opt/docker/secrets/ansible
+              readOnly: true
+            - name: ssh-key
+              mountPath: /opt/docker/secrets/ssh-key.pem
+              readOnly: true
       volumes:
         - name: data
           persistentVolumeClaim:
             claimName: orchestration
+        - name: ansible-secrets
+          secret:
+            secretName: ansible
+        - name: ssh-key
+          secret:
+            secretName: ssh-key
 
 ---
 apiVersion: v1
