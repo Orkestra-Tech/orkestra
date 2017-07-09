@@ -40,7 +40,7 @@ object LogsPage {
       .foreach { logs =>
         val isScrolledToBottom = window.innerHeight + window.pageYOffset + 1 >= document.body.scrollHeight
         $.modState(_.copy(_1 = $.state._1 + logs.mkString("\n"), _2 = $.state._2 + logs.size)).runNow()
-        if (isScrolledToBottom) window.scrollTo(0, document.body.scrollHeight)
+        if (isScrolledToBottom) window.scrollTo(window.pageXOffset.toInt, document.body.scrollHeight)
       }
   }
 }
