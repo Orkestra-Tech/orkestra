@@ -45,7 +45,7 @@ spec:
         - name: orchestration
           image: registry.drivetribe.com/tools/orchestration:latest
           env:
-            - name: ORCHESTRA_HOME
+            - name: ORCHESTRA_DATA
               value: /opt/docker/orchestra
             - name: ORCHESTRA_PORT
               value: "8080"
@@ -61,6 +61,16 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.namespace
+            - name: GITHUB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: github
+                  key: username
+            - name: GITHUB_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: github
+                  key: token
           ports:
             - name: ui
               containerPort: 8080
