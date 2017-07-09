@@ -1,3 +1,5 @@
+import com.typesafe.sbt.packager.docker.{Cmd, ExecCmd}
+
 version in ThisBuild := "0.1"
 scalaVersion in ThisBuild := "2.12.2"
 scalacOptions in ThisBuild += "-deprecation"
@@ -71,7 +73,7 @@ lazy val orchestra = crossProject
     libraryDependencies ++= Seq(
       "com.chuusai" %%% "shapeless" % "2.3.2",
       "com.vmunier" %% "scalajs-scripts" % "1.1.0",
-      "org.eclipse.jgit" % "org.eclipse.jgit" % "4.8.0.201705170830-rc1"
+      "org.eclipse.jgit" % "org.eclipse.jgit" % "4.8.0.201706111038-r"
     ) ++ scalaJsReact.value ++ akkaHttp.value ++ scalaCss.value ++ autowire.value ++ logging.value,
     jsDependencies ++= react.value
   )
@@ -103,6 +105,8 @@ lazy val orchestrationJVM = orchestration.jvm
     dockerRepository := Option("registry.drivetribe.com/tools"),
     dockerUpdateLatest := true,
     dockerExposedPorts := Seq(8080, 8081),
+    // Workaround the face that ENTRYPOINT is not absolute, so when we change the WORKDIR the won't start
+    dockerEntrypoint := Seq(s"${(defaultLinuxInstallLocation in Docker).value}/bin/${executableScriptName.value}"),
     daemonUser in Docker := "root" // Workaround minikube volume rights
   )
 lazy val orchestrationJS = orchestration.js
