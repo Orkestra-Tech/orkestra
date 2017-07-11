@@ -3,6 +3,7 @@ package com.goyeau.orchestra.pages
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 import scala.scalajs.js
+import scala.scalajs.js.Dynamic._
 import scala.scalajs.js.timers.SetIntervalHandle
 
 import autowire._
@@ -22,7 +23,12 @@ object LogsPage {
       .render { $ =>
         <.div(
           <.div("Logs: " + $.props.page.runId.toString),
-          <.pre($.state._1)
+          <.pre(
+            ^.dangerouslySetInnerHtml :=
+              newInstance(global.AnsiUp)()
+                .ansi_to_html($.state._1)
+                .asInstanceOf[String]
+          )
         )
       }
       .componentDidMount { $ =>

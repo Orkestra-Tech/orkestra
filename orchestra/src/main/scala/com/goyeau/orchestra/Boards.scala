@@ -7,7 +7,6 @@ import akka.http.scaladsl.model.{ContentTypes, HttpEntity}
 import akka.http.scaladsl.server.Directives.{complete, pathSingleSlash, _}
 import com.goyeau.orchestra.css.AppCSS
 import com.goyeau.orchestra.routes.{BackendRoutes, WebRouter}
-import io.circe.shapes.HListInstances
 import org.scalajs.dom
 
 trait Boards extends BackendRoutes with JSApp {

@@ -75,7 +75,9 @@ lazy val orchestra = crossProject
       "com.vmunier" %% "scalajs-scripts" % "1.1.0",
       "org.eclipse.jgit" % "org.eclipse.jgit" % "4.8.0.201706111038-r"
     ) ++ scalaJsReact.value ++ akkaHttp.value ++ scalaCss.value ++ autowire.value ++ logging.value,
-    jsDependencies ++= react.value
+    jsDependencies ++= Seq(
+      "org.webjars.npm" % "ansi_up" % "2.0.2" / "ansi_up.js" commonJSName "ansi_up"
+    ) ++ react.value
   )
 lazy val orchestraJVM = orchestra.jvm
 lazy val orchestraJS = orchestra.js

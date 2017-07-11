@@ -52,7 +52,7 @@ object SingleJobBoardPage {
             .call()
             .map { runs =>
               val runDisplays =
-                runs.map(uuid => <.button(^.onClick --> ctrl.set(TaskLogsPage(job, uuid)), uuid.toString))
+                runs.map(uuid => <.div(<.button(^.onClick --> ctrl.set(TaskLogsPage(job, uuid)), uuid.toString)))
               $.modState(_.copy(_3 = if (runDisplays.nonEmpty) TagMod(runDisplays: _*) else TagMod("No job ran yet")))
             }
         )
