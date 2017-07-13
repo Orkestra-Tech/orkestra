@@ -5,8 +5,8 @@ import scala.concurrent.ExecutionContext
 import com.goyeau.orchestra.pages.FolderBoardPage
 import com.goyeau.orchestra.routes.WebRouter.{AppPage, BoardPage, TaskLogsPage}
 import com.goyeau.orchestra.pages.{LogsPage, SingleJobBoardPage}
-import io.circe.{Decoder, Encoder}
-import io.circe.shapes._
+import _root_.io.circe.{Decoder, Encoder}
+import _root_.io.circe.shapes._
 import japgolly.scalajs.react.extra.router.{RouterConfigDsl, StaticDsl}
 import japgolly.scalajs.react.vdom.html_<^._
 import shapeless.{::, Generic, HList, HNil, Poly}

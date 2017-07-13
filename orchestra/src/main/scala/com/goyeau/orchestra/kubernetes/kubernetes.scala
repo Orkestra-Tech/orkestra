@@ -1,6 +1,5 @@
 package com.goyeau.orchestra
 
-import java.io.File
 import java.net.URLEncoder
 
 import akka.actor.ActorSystem
@@ -10,11 +9,20 @@ import akka.stream.ActorMaterializer
 import akka.stream.scaladsl._
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.ws._
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
+import scala.sys.process.Process
 
-package object kubernetes extends DirectoryHelpers {
+import com.goyeau.orchestra.io.Directory
+
+package object kubernetes {
 
   implicit class ContainerProcess(val command: String) extends AnyVal {
+
+    def !(implicit workDir: Directory, ec: ExecutionContext): Future[Int] =
+      Future(Process(command).!)
+
+    def !!(implicit workDir: Directory, ec: ExecutionContext): Future[String] =
+      Future(Process(command).!!)
 
     def !>(container: Container)(implicit workDir: Directory): Future[Done] = {
       implicit val system = ActorSystem()

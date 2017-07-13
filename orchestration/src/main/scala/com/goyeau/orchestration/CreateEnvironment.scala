@@ -1,15 +1,12 @@
 package com.goyeau.orchestration
 
-import java.io.File
-
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
-import scala.sys.process._
 
 import com.goyeau.orchestra._
 import com.goyeau.orchestra.kubernetes._
 import com.goyeau.orchestra.Job
-import com.goyeau.orchestra.kubernetes.Container
+import com.goyeau.orchestra.io.LocalFile
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider
 
@@ -35,7 +32,7 @@ object CreateEnvironment {
       .setCredentialsProvider(
         new UsernamePasswordCredentialsProvider(System.getenv("GITHUB_USERNAME"), System.getenv("GITHUB_TOKEN"))
       )
-      .setDirectory(new File("infrastructure"))
+      .setDirectory(LocalFile("infrastructure"))
       .call()
 
     Lock.onEnvironment(environment) {

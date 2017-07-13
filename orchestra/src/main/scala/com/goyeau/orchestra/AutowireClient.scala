@@ -4,10 +4,10 @@ import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
 import autowire._
-import io.circe.{Decoder, Encoder}
-import io.circe.generic.auto._
-import io.circe.parser._
-import io.circe.syntax._
+import _root_.io.circe.{Decoder, Encoder}
+import _root_.io.circe.generic.auto._
+import _root_.io.circe.parser._
+import _root_.io.circe.syntax._
 import org.scalajs.dom.ext.Ajax
 
 case class AutowireClient(jobId: Symbol) extends autowire.Client[String, Decoder, Encoder] {
