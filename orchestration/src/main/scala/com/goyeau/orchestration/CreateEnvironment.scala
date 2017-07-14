@@ -28,7 +28,7 @@ object CreateEnvironment {
   def apply(environment: Environment)(ansible: Container, terraform: Container)(sourceEnv: String) = {
     Git
       .cloneRepository()
-      .setURI(s"https://github.com/drivetribe/infrastructure")
+      .setURI(s"https://github.com/drivetribe/infrastructure.git")
       .setCredentialsProvider(
         new UsernamePasswordCredentialsProvider(System.getenv("GITHUB_USERNAME"), System.getenv("GITHUB_TOKEN"))
       )
