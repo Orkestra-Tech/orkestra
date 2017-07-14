@@ -11,5 +11,4 @@
 *.iml
 bin
 target
-create-secrets.sh
-*.pem
+secrets

@@ -96,7 +96,7 @@ spec:
       volumes:
         - name: data
           hostPath:
-            path: /Users/joangoyeau/Code/orchestra/target/orchestra
+            path: /tmp/orchestra
         - name: ansible-secrets
           secret:
             secretName: ansible
