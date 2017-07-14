@@ -3,7 +3,7 @@ scalaVersion in ThisBuild := "2.12.2"
 scalacOptions in ThisBuild += "-deprecation"
 
 val scalaJsReact = Def.setting {
-  val scalaJsReactVersion = "1.0.1"
+  val scalaJsReactVersion = "1.1.0"
   Seq(
     "com.github.japgolly.scalajs-react" %%% "core" % scalaJsReactVersion,
     "com.github.japgolly.scalajs-react" %%% "extra" % scalaJsReactVersion
@@ -11,7 +11,7 @@ val scalaJsReact = Def.setting {
 }
 
 val akkaHttp = Def.setting {
-  val akkaHttpVersion = "10.0.7+21-dac82986"
+  val akkaHttpVersion = "10.0.9"
   Seq(
     "com.typesafe.akka" %% "akka-http" % akkaHttpVersion,
     "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpVersion % Test
@@ -34,7 +34,7 @@ val scalaCss = Def.setting {
 }
 
 val react = Def.setting {
-  val reactVersion = "15.4.2"
+  val reactVersion = "15.6.1"
   Seq(
     "org.webjars.bower" % "react" % reactVersion / "react-with-addons.js" minified "react-with-addons.min.js" commonJSName "React",
     "org.webjars.bower" % "react" % reactVersion / "react-dom.js" minified "react-dom.min.js" dependsOn "react-with-addons.js" commonJSName "ReactDOM"
@@ -70,7 +70,7 @@ lazy val orchestra = crossProject
   .settings(
     libraryDependencies ++= Seq(
       "com.chuusai" %%% "shapeless" % "2.3.2",
-      "com.vmunier" %% "scalajs-scripts" % "1.1.0",
+      "com.vmunier" %% "scalajs-scripts" % "1.1.1",
       "org.eclipse.jgit" % "org.eclipse.jgit" % "4.8.0.201706111038-r"
     ) ++ scalaJsReact.value ++ akkaHttp.value ++ scalaCss.value ++ autowire.value ++ logging.value,
     jsDependencies ++= Seq(

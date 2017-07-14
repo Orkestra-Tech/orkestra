@@ -2,13 +2,9 @@ package com.goyeau.orchestration
 
 import java.util.UUID
 
-import com.goyeau.orchestra._
-import com.goyeau.orchestra.kubernetes._
-
-import com.goyeau.orchestra.Job
-import com.goyeau.orchestra.Boards
-import com.goyeau.orchestra.cron.{Cron, CronTrigger}
-import com.goyeau.orchestra.github.{BranchTrigger, Github}
+import com.goyeau.orchestra.{Boards, _}
+import com.goyeau.orchestra.cron.Cron
+import com.goyeau.orchestra.github.Github
 
 object Orchestration extends Jobs with Boards with Github with Cron {
 
