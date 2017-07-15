@@ -1,19 +1,13 @@
 package com.goyeau.orchestra.github
 
-import scala.concurrent.ExecutionContext
-
-import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.server.Directives.{entity, _}
-import akka.stream.Materializer
 import com.goyeau.orchestra.{JVMApp, OrchestraConfig}
+import com.goyeau.orchestra.Implicits._
 import io.circe.parser._
 
 trait Github extends JVMApp {
-  implicit def actorSystem: ActorSystem
-  implicit def materializer: Materializer
-  implicit def executionContext: ExecutionContext
 
   def githubTriggers: Seq[BranchTrigger]
 

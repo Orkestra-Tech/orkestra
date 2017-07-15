@@ -1,15 +1,11 @@
 package com.goyeau.orchestra
 
-import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Directives._
-import akka.stream.ActorMaterializer
 import com.goyeau.orchestra.routes.BackendRoutes
+import com.goyeau.orchestra.Implicits._
 
 trait Jobs extends JVMApp with BackendRoutes {
-  implicit lazy val actorSystem = ActorSystem("orchestra")
-  implicit lazy val materializer = ActorMaterializer()
-  implicit lazy val executionContext = actorSystem.dispatcher
 
   def jobs: Seq[Job.Runner[_, _, _, _]]
 
@@ -34,6 +30,8 @@ trait Jobs extends JVMApp with BackendRoutes {
         .find(_.definition.id == runInfo.jobId)
         .getOrElse(throw new IllegalArgumentException(s"No job found for id ${runInfo.jobId}"))
         .run(runInfo)
+
+      system.terminate().foreach(_ => System.exit(0))
     }
   }
 }

@@ -19,33 +19,33 @@ object LogsPage {
   val component =
     ScalaComponent
       .builder[Props](getClass.getSimpleName)
-      .initialState[(String, Int, SetIntervalHandle)](("", 0, null))
+      .initialState[(Seq[String], SetIntervalHandle)]((Seq.empty, null))
       .render { $ =>
         <.div(
           <.div("Logs: " + $.props.page.runId.toString),
           <.pre(
             ^.dangerouslySetInnerHtml :=
               newInstance(global.AnsiUp)()
-                .ansi_to_html($.state._1)
+                .ansi_to_html($.state._1.mkString("\n"))
                 .asInstanceOf[String]
           )
         )
       }
       .componentDidMount { $ =>
         pullLogs($)
-        $.setState($.state.copy(_3 = js.timers.setInterval(1.second)(pullLogs($))))
+        $.setState($.state.copy(_2 = js.timers.setInterval(1.second)(pullLogs($))))
       }
-      .componentWillUnmount($ => Callback(js.timers.clearInterval($.state._3)))
+      .componentWillUnmount($ => Callback(js.timers.clearInterval($.state._2)))
       .build
 
-  private def pullLogs($ : ComponentDidMount[Props, (String, Int, SetIntervalHandle), Unit]) = {
+  private def pullLogs($ : ComponentDidMount[Props, (Seq[String], SetIntervalHandle), Unit]) = {
     implicit val ec = $.props.ec
     $.props.page.job.Api.client
-      .logs($.props.page.runId, $.state._2)
+      .logs($.props.page.runId, $.state._1.size)
       .call()
       .foreach { logs =>
         val isScrolledToBottom = window.innerHeight + window.pageYOffset + 1 >= document.body.scrollHeight
-        $.modState(_.copy(_1 = $.state._1 + logs.mkString("\n"), _2 = $.state._2 + logs.size)).runNow()
+        $.modState(_.copy(_1 = $.state._1 ++ logs)).runNow()
         if (isScrolledToBottom) window.scrollTo(window.pageXOffset.toInt, document.body.scrollHeight)
       }
   }

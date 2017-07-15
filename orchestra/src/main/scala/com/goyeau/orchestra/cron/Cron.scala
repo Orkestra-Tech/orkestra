@@ -1,16 +1,10 @@
 package com.goyeau.orchestra.cron
 
-import scala.concurrent.ExecutionContext
-
-import akka.actor.ActorSystem
-import akka.stream.Materializer
 import com.goyeau.orchestra.kubernetes.CronJobScheduler
 import com.goyeau.orchestra.{JVMApp, OrchestraConfig}
+import com.goyeau.orchestra.Implicits._
 
 trait Cron extends JVMApp {
-  implicit def actorSystem: ActorSystem
-  implicit def materializer: Materializer
-  implicit def executionContext: ExecutionContext
 
   def cronTriggers: Seq[CronTrigger]
 

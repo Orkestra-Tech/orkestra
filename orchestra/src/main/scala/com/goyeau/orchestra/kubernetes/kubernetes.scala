@@ -2,10 +2,8 @@ package com.goyeau.orchestra
 
 import java.net.URLEncoder
 
-import akka.actor.ActorSystem
 import akka.Done
 import akka.http.scaladsl.Http
-import akka.stream.ActorMaterializer
 import akka.stream.scaladsl._
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.ws._
@@ -14,7 +12,7 @@ import scala.sys.process.Process
 
 import com.goyeau.orchestra.io.Directory
 
-package object kubernetes {
+package object kubernetes extends Implicits {
 
   implicit class ContainerProcess(val command: String) extends AnyVal {
 
@@ -25,13 +23,8 @@ package object kubernetes {
       Future(Process(command).!!)
 
     def !>(container: Container)(implicit workDir: Directory): Future[Done] = {
-      implicit val system = ActorSystem()
-      implicit val materializer = ActorMaterializer()
-      import system.dispatcher
-
       val printSink = Sink.foreach[Message] {
-        case message: BinaryMessage.Strict =>
-          println(message.data.utf8String)
+        case message: BinaryMessage.Strict => print(message.data.utf8String)
         case message => throw new IllegalStateException(s"Unexpected message type received: $message")
       }
 
@@ -54,7 +47,7 @@ package object kubernetes {
           WebSocketRequest(
             uri,
             extraHeaders = List(Auth.header),
-            subprotocol = Option("v4.channel.k8s.io")
+            subprotocol = Option("channel.k8s.io")
           ),
           flow
         )
@@ -66,7 +59,7 @@ package object kubernetes {
         else throw new RuntimeException(s"Connection failed: ${upgrade.response.status}")
       }
 
-      connected.flatMap(_ => upgradeResponse).flatMap(_ => closed).andThen { case _ => system.terminate() }
+      connected.flatMap(_ => upgradeResponse).flatMap(_ => closed)
     }
   }
 

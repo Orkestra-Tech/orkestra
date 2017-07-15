@@ -15,17 +15,13 @@ object CreateEnvironment {
   def jobDefinition(environment: Environment) = Job[String => Unit](Symbol(s"create${environment.entryName}"))
 
   def job(environment: Environment) =
-    jobDefinition(environment)(
-      PodConfig(
-        Container("ansible", "registry.drivetribe.com/tools/ansible:cached", tty = true, Seq("cat")),
-        Container("terraform", "hashicorp/terraform:0.9.8", tty = true, Seq("cat"))
-      )
-    )(apply(environment) _)
+    jobDefinition(environment)(PodConfig(AnsibleContainer, TerraformContainer))(apply(environment) _)
 
   def board(environment: Environment) =
     SingleJobBoard("Create", jobDefinition(environment))(Param[String]("sourceEnv", defaultValue = Some("staging")))
 
-  def apply(environment: Environment)(ansible: Container, terraform: Container)(sourceEnv: String) = {
+  def apply(environment: Environment)(ansible: AnsibleContainer.type,
+                                      terraform: TerraformContainer.type)(sourceEnv: String): Unit = {
     Git
       .cloneRepository()
       .setURI(s"https://github.com/drivetribe/infrastructure.git")
@@ -34,28 +30,37 @@ object CreateEnvironment {
       )
       .setDirectory(LocalFile("infrastructure"))
       .call()
+    println()
 
     Lock.onEnvironment(environment) {
       dir("infrastructure") { implicit wd =>
-        println("Install Ansible deps")
-        val ansibleDeps = "ansible-galaxy install -r ansible/requirements.yml" !> ansible
+        val ansibleDeps = ansible.install
         Await.ready(ansibleDeps, Duration.Inf)
 
-        dir(s"terraform/providers/aws/app/${environment.environmentType.entryName}") { implicit wd =>
-          println("Init Terraform")
-          val terraformInit = s"terraform init -backend-config=key=tfstates/app-${environment.entryName}.tfstate" !> terraform
-          Await.ready(terraformInit, Duration.Inf)
-
-          println("Init Ansible")
-          val ansibleInit = s"ansible-playbook init.yml --vault-password-file /opt/docker/secrets/ansible/vault-pass --private-key /opt/docker/secrets/ssh-key.pem -e env_name=${environment.entryName}" !> ansible
-          Await.ready(ansibleInit, Duration.Inf)
+        val run = dir(s"terraform/providers/aws/app/${environment.environmentType.entryName}") { implicit wd =>
+          for {
+            _ <- terraform.init(environment)
+            _ <- ansible.init(environment)
+            _ <- provisionKafkaZkElasticsearch(environment, terraform)
+          } yield ()
         }
+        Await.ready(run, Duration.Inf)
       }
     }
-
-    println("Try to acquire lock on env again")
-    Lock.onEnvironment(environment) {
-      println("Acquired lock on env again")
-    }
   }
+
+  def provisionKafkaZkElasticsearch(environment: Environment, terraform: TerraformContainer.type) = {
+    println("Provision Kafka, Zookeeper and Elasticsearch")
+    val elasticsearchModules =
+      if (environment.environmentType == EnvironmentType.Large)
+        "-target=module.elasticsearch_black -target=module.elasticsearch_white"
+      else "-target=module.elasticsearch"
+    val targets = Seq(
+      "module.kafka_zookeeper",
+      "data.terraform_remote_state.vpc", // @TODO to remove hacky bug fix
+      "data.terraform_remote_state.kafka_mirror" // @TODO to remove hacky fix
+    )
+    terraform.apply(s"$elasticsearchModules -var bootstrap_git_branch=master -target=${targets.mkString(" -target=")}")
+  }
+
 }

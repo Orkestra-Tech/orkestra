@@ -1,3 +1,4 @@
+version in ThisBuild ~= (_.replace('+', '-'))
 scalaVersion in ThisBuild := "2.12.2"
 scalacOptions in ThisBuild += "-deprecation"
 
