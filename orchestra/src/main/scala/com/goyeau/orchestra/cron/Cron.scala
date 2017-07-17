@@ -1,6 +1,6 @@
 package com.goyeau.orchestra.cron
 
-import com.goyeau.orchestra.kubernetes.CronJobScheduler
+import com.goyeau.orchestra.kubernetes.CronJob
 import com.goyeau.orchestra.{JVMApp, OrchestraConfig}
 import com.goyeau.orchestra.Implicits._
 
@@ -11,6 +11,6 @@ trait Cron extends JVMApp {
   override def main(args: Array[String]): Unit = {
     super.main(args)
 
-    if (OrchestraConfig.runInfo.isEmpty) cronTriggers.foreach(CronJobScheduler(_))
+    if (OrchestraConfig.runInfo.isEmpty) cronTriggers.foreach(CronJob.create)
   }
 }

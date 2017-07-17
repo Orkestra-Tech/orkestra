@@ -12,7 +12,7 @@ object ARunStatus {
   case class Scheduled(at: Long) extends ARunStatus[Nothing]
   case class Running(at: Long) extends ARunStatus[Nothing]
   case class Success[Result](at: Long, result: Result) extends ARunStatus[Result]
-  case class Failed(e: Throwable) extends ARunStatus[Nothing]
+  case class Failure(e: Throwable) extends ARunStatus[Nothing]
   case object Unknown extends ARunStatus[Nothing]
 
   // Circe encoders/decoders

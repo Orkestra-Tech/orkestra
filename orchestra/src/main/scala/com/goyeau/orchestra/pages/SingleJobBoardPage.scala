@@ -31,7 +31,7 @@ object SingleJobBoardPage {
       .render { $ =>
         def runJob = Callback.future {
           job.Api.client.run($.state._1, paramGetter.values(params, $.state._2)).call().map {
-            case ARunStatus.Failed(e) => Callback.alert(e.getMessage)
+            case ARunStatus.Failure(e) => Callback.alert(e.getMessage)
             case _ => ctrl.set(TaskLogsPage(job, $.state._1.runId))
           }
         }

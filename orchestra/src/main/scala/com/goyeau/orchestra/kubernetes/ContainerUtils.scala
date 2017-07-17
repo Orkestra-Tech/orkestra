@@ -4,7 +4,7 @@ import com.goyeau.orchestra.{AutowireServer, OrchestraConfig, RunInfo}
 import io.circe.Json
 import io.circe.generic.auto._
 
-object JobUtils {
+object ContainerUtils {
   private val homeDirMount = Json.obj(
     "mountPath" -> Json.fromString(OrchestraConfig.workspace),
     "name" -> Json.fromString("home")
@@ -34,8 +34,8 @@ object JobUtils {
       "name" -> Json.fromString("ORCHESTRA_RUN_INFO"),
       "value" -> Json.fromString(AutowireServer.write(runInfo))
     )
-    val volumeMounts = container.downField("volumeMounts").values.toVector.flatten :+ JobUtils.homeDirMount
-    val volumes = spec.downField("volumes").values.toVector.flatten :+ JobUtils.homeDirVolume
+    val volumeMounts = container.downField("volumeMounts").values.toVector.flatten :+ ContainerUtils.homeDirMount
+    val volumes = spec.downField("volumes").values.toVector.flatten :+ ContainerUtils.homeDirVolume
 
     Json.obj(
       "template" -> Json.obj(

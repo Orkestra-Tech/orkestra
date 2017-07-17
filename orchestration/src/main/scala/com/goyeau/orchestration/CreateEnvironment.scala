@@ -7,6 +7,7 @@ import com.goyeau.orchestra._
 import com.goyeau.orchestra.kubernetes._
 import com.goyeau.orchestra.Job
 import com.goyeau.orchestra.io.LocalFile
+import com.typesafe.scalalogging.{LazyLogging, Logger}
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider
 
@@ -19,6 +20,8 @@ object CreateEnvironment {
 
   def board(environment: Environment) =
     SingleJobBoard("Create", jobDefinition(environment))(Param[String]("sourceEnv", defaultValue = Some("staging")))
+
+  lazy val logger = Logger(getClass)
 
   def apply(environment: Environment)(ansible: AnsibleContainer.type,
                                       terraform: TerraformContainer.type)(sourceEnv: String): Unit = {

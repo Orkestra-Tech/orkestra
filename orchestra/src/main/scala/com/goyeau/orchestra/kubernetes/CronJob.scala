@@ -14,9 +14,9 @@ import com.goyeau.orchestra.RunInfo
 import com.typesafe.scalalogging.LazyLogging
 import io.circe.Json
 
-object CronJobScheduler extends LazyLogging {
+object CronJob extends LazyLogging {
 
-  def apply(
+  def create(
     cronTrigger: CronTrigger
   )(implicit ec: ExecutionContext, system: ActorSystem, mat: Materializer) =
     for {
@@ -36,7 +36,7 @@ object CronJobScheduler extends LazyLogging {
     } yield
       if (cronJobScheduleResponse.status.isFailure) {
         val message =
-          s"Scheduling cron job '${cronTrigger.job.definition.id}' on Kubernetes failed: ${jobScheduleEntity.utf8String}"
+          s"Scheduling Kubernetes cron job '${cronTrigger.job.definition.id}' failed: ${jobScheduleEntity.utf8String}"
         logger.error(message)
         throw new IOException(message)
       }
@@ -51,7 +51,7 @@ object CronJobScheduler extends LazyLogging {
       "spec" -> Json.obj(
         "schedule" -> Json.fromString(cronTrigger.schedule),
         "jobTemplate" -> Json.obj(
-          "spec" -> JobUtils.createSpec(masterPod, runInfo, cronTrigger.job.podConfig)
+          "spec" -> ContainerUtils.createSpec(masterPod, runInfo, cronTrigger.job.podConfig)
         )
       )
     )

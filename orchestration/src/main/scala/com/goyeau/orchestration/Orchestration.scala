@@ -15,7 +15,7 @@ object Orchestration extends Jobs with Boards with Github with Cron {
   lazy val deployBackend = deployBackendDef((version, runId) => println(version + runId))
 
   lazy val githubTriggers = Seq(
-//    BranchTrigger("drivetribe/backend", "toto", emptyTaskDef)
+//    BranchTrigger("drivetribe/backend", "toto", emptyTask)
   )
 
   lazy val cronTriggers = Seq(
