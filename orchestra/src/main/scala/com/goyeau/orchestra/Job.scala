@@ -62,12 +62,11 @@ object Job {
 
     def run(runInfo: RunInfo)(implicit ec: ExecutionContext, system: ActorSystem, mat: Materializer): Unit = {
       new File(OrchestraConfig.runDirPath(runInfo)).mkdirs()
-
       val logsOut = new PrintStream(new FileOutputStream(OrchestraConfig.logsFilePath(runInfo), true), true)
       val statusWriter = new PrintWriter(OrchestraConfig.statusFilePath(runInfo))
 
-      try {
-        Utils.withOutErr(logsOut) {
+      Utils.withOutErr(logsOut) {
+        try {
           statusWriter.append(
             AutowireServer.write[ARunStatus[Result]](ARunStatus.Running(Instant.now().toEpochMilli)) + "\n"
           )
@@ -76,15 +75,15 @@ object Job {
           statusWriter.append(
             AutowireServer.write[ARunStatus[Result]](ARunStatus.Success(Instant.now().toEpochMilli, result)) + "\n"
           )
+        } catch {
+          case e: Throwable =>
+            e.printStackTrace()
+            statusWriter.append(AutowireServer.write(ARunStatus.Failure(e)))
+        } finally {
+          statusWriter.close()
+          logsOut.close()
+          kubernetes.Job.delete(runInfo)
         }
-      } catch {
-        case e: Throwable =>
-          e.printStackTrace()
-          statusWriter.append(AutowireServer.write(ARunStatus.Failure(e)))
-      } finally {
-        statusWriter.close()
-        logsOut.close()
-        kubernetes.Job.delete(runInfo)
       }
     }
 

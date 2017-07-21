@@ -1,4 +1,4 @@
-package com.goyeau.orchestration
+package com.drivetribe.orchestration
 
 import java.util.UUID
 
@@ -25,7 +25,7 @@ object Orchestration extends Jobs with Boards with Github with Cron {
   lazy val jobs = Seq(
     emptyTask,
     deployBackend
-  ) ++ Environment.values.map(CreateEnvironment.job)
+  ) ++ Infrastructure.jobs
 
   lazy val board = FolderBoard("Drivetribe")(
     FolderBoard("Operation")(

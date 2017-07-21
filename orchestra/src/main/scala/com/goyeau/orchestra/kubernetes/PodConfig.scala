@@ -16,7 +16,7 @@ object PodConfig {
   ): PodConfig[Containers] =
     PodConfig(tupleToHList.to(containers))
 
-  def apply(container: Container): PodConfig[Container :: HNil] =
+  def apply[C <: Container](container: C): PodConfig[C :: HNil] =
     PodConfig(container :: HNil)
 }
 

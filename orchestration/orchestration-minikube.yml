@@ -81,6 +81,23 @@ spec:
                 secretKeyRef:
                   name: aws
                   key: secret-access-key
+            - name: ANSIBLE_VAULT_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: ansible
+                  key: vault-pass
+            - name: AURORA_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: aurora
+                  key: username
+            - name: AURORA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: aurora
+                  key: password
+            - name: KUBECONFIG
+              value: /opt/docker/secrets/kube/config
           ports:
             - name: ui
               containerPort: 8080
@@ -90,8 +107,11 @@ spec:
             - name: ansible-secrets
               mountPath: /opt/docker/secrets/ansible
               readOnly: true
-            - name: ssh-key
-              mountPath: /opt/docker/secrets/ssh-key.pem
+            - name: ssh-secrets
+              mountPath: /opt/docker/secrets/ssh
+              readOnly: true
+            - name: kube-secrets
+              mountPath: /opt/docker/secrets/kube
               readOnly: true
       volumes:
         - name: data
@@ -100,9 +120,13 @@ spec:
         - name: ansible-secrets
           secret:
             secretName: ansible
-        - name: ssh-key
+        - name: ssh-secrets
           secret:
-            secretName: ssh-key
+            secretName: ssh
+            defaultMode: 0600
+        - name: kube-secrets
+          secret:
+            secretName: kube
 
 ---
 apiVersion: v1
