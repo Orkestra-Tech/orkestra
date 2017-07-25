@@ -3,7 +3,7 @@ package com.goyeau.orchestra.github
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.server.Directives.{entity, _}
-import com.goyeau.orchestra.{JVMApp, OrchestraConfig}
+import com.goyeau.orchestra.{Config, JVMApp}
 import com.goyeau.orchestra.Implicits._
 import io.circe.parser._
 
@@ -27,9 +27,9 @@ trait Github extends JVMApp {
         }
       }
 
-    if (OrchestraConfig.runInfo.isEmpty) {
+    if (Config.runInfo.isEmpty) {
       val port =
-        OrchestraConfig.githubPort.getOrElse(throw new IllegalStateException("ORCHESTRA_GITHUB_PORT should be set"))
+        Config.githubPort.getOrElse(throw new IllegalStateException("ORCHESTRA_GITHUB_PORT should be set"))
       Http().bindAndHandle(routes, "0.0.0.0", port)
     }
   }

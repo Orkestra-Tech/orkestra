@@ -2,12 +2,12 @@ package com.drivetribe.orchestration
 
 import java.io.{File, RandomAccessFile}
 
-import com.goyeau.orchestra.OrchestraConfig
+import com.goyeau.orchestra.Config
 
 object Lock {
 
   private def deploymentChannel(environment: Environment, project: String) = {
-    val lockFile = new File(s"${OrchestraConfig.home}/locks/${environment.entryName.toLowerCase}/$project/deployment")
+    val lockFile = new File(s"${Config.home}/locks/${environment.entryName.toLowerCase}/$project/deployment")
     lockFile.getParentFile.mkdirs()
     new RandomAccessFile(lockFile, "rw").getChannel
   }

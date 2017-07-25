@@ -1,7 +1,8 @@
 package com.drivetribe.orchestration
 
+import com.goyeau.orchestra.Container
 import com.goyeau.orchestra.io.Directory
-import com.goyeau.orchestra.kubernetes._
+import com.goyeau.orchestra._
 
 object TerraformContainer extends Container("terraform", "hashicorp/terraform:0.9.8", tty = true, Seq("cat")) {
 

@@ -71,7 +71,8 @@ lazy val orchestra = crossProject
     libraryDependencies ++= Seq(
       "com.chuusai" %%% "shapeless" % "2.3.2",
       "com.vmunier" %% "scalajs-scripts" % "1.1.1",
-      "org.eclipse.jgit" % "org.eclipse.jgit" % "4.8.0.201706111038-r"
+      "org.eclipse.jgit" % "org.eclipse.jgit" % "4.8.0.201706111038-r",
+      "io.fabric8" % "kubernetes-client" % "2.5.7"
     ) ++ scalaJsReact.value ++ akkaHttp.value ++ scalaCss.value ++ autowire.value ++ logging.value,
     jsDependencies ++= Seq(
       "org.webjars.npm" % "ansi_up" % "2.0.2" / "ansi_up.js" commonJSName "ansi_up"

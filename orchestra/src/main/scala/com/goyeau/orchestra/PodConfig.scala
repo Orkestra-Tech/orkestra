@@ -1,7 +1,7 @@
-package com.goyeau.orchestra.kubernetes
+package com.goyeau.orchestra
 
-import shapeless.ops.hlist.ToTraversable
 import shapeless._
+import shapeless.ops.hlist.ToTraversable
 
 case class PodConfig[Containers <: HList](containers: Containers)(
   implicit toSeq: ToTraversable.Aux[Containers, Seq, Container]

@@ -1,13 +1,9 @@
 package com.drivetribe.orchestration
 
-import java.io.File
-import java.nio.file.Files
-
-import scala.concurrent.{Await, Future}
-import scala.concurrent.duration.Duration
+import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
 
 import com.goyeau.orchestra._
-import com.goyeau.orchestra.kubernetes._
 import com.goyeau.orchestra.Job
 import com.goyeau.orchestra.io.{Directory, LocalFile}
 import com.typesafe.scalalogging.Logger
@@ -76,7 +72,7 @@ object CreateEnvironment {
   }
 
   // @TODO Replace sleep either by bootstraping themself or checking that the hardware is there
-  val cloudProvisiongTime = 280000
+  val cloudProvisiongTime = 270000
 
   def provisionKafkaZookeeper(environment: Environment, sourceEnv: Environment, ansible: AnsibleContainer.type)(
     implicit workDir: Directory
