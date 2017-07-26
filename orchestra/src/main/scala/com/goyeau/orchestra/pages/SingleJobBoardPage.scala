@@ -8,7 +8,7 @@ import autowire._
 import com.goyeau.orchestra._
 import com.goyeau.orchestra.ARunStatus._
 import com.goyeau.orchestra.routes.WebRouter.{AppPage, TaskLogsPage}
-import _root_.io.circe.{Decoder, Encoder}
+import io.circe.{Decoder, Encoder}
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.router.RouterCtl
 import japgolly.scalajs.react.vdom.html_<^._

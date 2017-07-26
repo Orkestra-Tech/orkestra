@@ -1,4 +1,4 @@
-package com.goyeau.orchestra.io
+package com.goyeau.orchestra.filesystem
 
 import java.io.File
 

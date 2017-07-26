@@ -85,7 +85,12 @@ lazy val orchestraJS = orchestra.js
 lazy val orchestration = crossProject
   .crossType(CrossType.Pure)
   .dependsOn(orchestra)
-  .settings(libraryDependencies += "com.beachape" %%% "enumeratum" % "1.5.12")
+  .settings(
+    libraryDependencies ++= Seq(
+      "com.beachape" %%% "enumeratum" % "1.5.12",
+      "com.amazonaws" % "aws-java-sdk" % "1.11.167"
+    )
+  )
 
 lazy val orchestrationJVM = orchestration.jvm
   .enablePlugins(SbtWeb, JavaAppPackaging)
@@ -103,7 +108,7 @@ lazy val orchestrationJVM = orchestration.jvm
     scalaJSProjects := Seq(orchestrationJS),
     pipelineStages in Assets := Seq(scalaJSPipeline),
     maintainer in Docker := "github:joan38",
-    dockerRepository := Option("registry.drivetribe.com/tools"),
+    dockerRepository in publish := Option("registry.drivetribe.com/tools"),
     dockerUpdateLatest := true,
     dockerExposedPorts := Seq(8080, 8081),
     // Workaround the face that ENTRYPOINT is not absolute, so when we change the WORKDIR the won't start

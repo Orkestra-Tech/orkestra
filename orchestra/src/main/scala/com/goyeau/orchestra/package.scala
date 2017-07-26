@@ -1,6 +1,6 @@
 package com.goyeau
 
-import com.goyeau.orchestra.io.DirectoryHelpers
+import com.goyeau.orchestra.filesystem.DirectoryHelpers
 import io.circe.shapes.HListInstances
 import io.circe.generic.AutoDerivation
 

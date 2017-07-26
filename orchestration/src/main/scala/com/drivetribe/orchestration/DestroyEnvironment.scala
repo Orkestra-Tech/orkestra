@@ -1,12 +1,10 @@
 package com.drivetribe.orchestration
 
 import com.goyeau.orchestra._
-import com.goyeau.orchestra.io.{Directory, LocalFile}
-import com.goyeau.orchestra.kubernetes._
+import com.goyeau.orchestra.filesystem.Directory
 import com.goyeau.orchestra.Job
 import com.typesafe.scalalogging.Logger
-import org.eclipse.jgit.api.Git
-import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider
+import io.fabric8.kubernetes.client.DefaultKubernetesClient
 
 object DestroyEnvironment {
 
@@ -20,26 +18,24 @@ object DestroyEnvironment {
   lazy val logger = Logger(getClass)
 
   def apply(environment: Environment)(ansible: AnsibleContainer.type, terraform: TerraformContainer.type)(): Unit = {
-    val git = Git
-      .cloneRepository()
-      .setURI(s"https://github.com/drivetribe/infrastructure.git")
-      .setCredentialsProvider(
-        new UsernamePasswordCredentialsProvider(System.getenv("GITHUB_USERNAME"), System.getenv("GITHUB_TOKEN"))
-      )
-      .setDirectory(LocalFile("infrastructure"))
-      .setNoCheckout(true)
-      .call()
-    git.getRepository.getConfig.setBoolean("core", null, "fileMode", true)
-    git.checkout().setName("origin/master").call()
+    Git.checkoutInfrastructure()
 
     Lock.onEnvironment(environment) {
-      dir(s"infrastructure") { implicit workDir =>
-        // @TODO Clean Kubernetes
+      dir("infrastructure") { implicit workDir =>
+        // @TODO Remove this hack when federation can delete a namespaces
+        cleanKubernetes(environment)
         ansible.install
         Init(environment, ansible, terraform)
         destroy(environment, terraform)
       }
     }
+  }
+
+  def cleanKubernetes(environment: Environment) = {
+    println("Clean Kubernetes")
+    val client = new DefaultKubernetesClient()
+    client.services.inNamespace(environment.entryName).delete()
+    client.extensions.deployments.inNamespace(environment.entryName).delete()
   }
 
   def destroy(environment: Environment, terraform: TerraformContainer.type)(implicit workDir: Directory) = {

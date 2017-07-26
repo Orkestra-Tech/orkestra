@@ -5,11 +5,11 @@ import java.net.URLEncoder
 
 import scala.sys.process
 
-import _root_.io.fabric8.kubernetes.client.dsl.ExecListener
-import com.goyeau.orchestra.io.Directory
+import io.fabric8.kubernetes.client.dsl.ExecListener
+import com.goyeau.orchestra.filesystem.Directory
 import com.goyeau.orchestra.kubernetes.Kubernetes
 import okhttp3.Response
-import scala.collection.convert.ImplicitConversions._
+import scala.collection.convert.ImplicitConversionsToScala._
 
 trait ShellHelpers {
 
@@ -44,8 +44,15 @@ trait ShellHelpers {
     finally reader.close()
   }
 
-  def printMkString(stream: Iterable[String]) = stream.fold("") { (acc, line) =>
-    println(line)
-    s"$acc\n$line"
+  def printMkString(stream: Iterable[String]) = {
+    val exitCodeRegex = ".*command terminated with non-zero exit code: Error executing in Docker Container: (\\d+).*".r
+
+    stream.fold("") { (acc, line) =>
+      println(line)
+      line match {
+        case exitCodeRegex(exitCode) => throw new RuntimeException(s"Nonzero exit value: $exitCode")
+        case _ => s"$acc\n$line"
+      }
+    }
   }
 }

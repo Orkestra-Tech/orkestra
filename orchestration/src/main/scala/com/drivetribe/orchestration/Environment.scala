@@ -7,6 +7,7 @@ sealed abstract class Environment(val environmentType: EnvironmentType, val isPr
     extends EnumEntry
     with Lowercase {
   val nonProd = !isProd
+  val isBiColour = environmentType == EnvironmentType.Large
 }
 
 object Environment extends Enum[Environment] {
@@ -33,5 +34,21 @@ object EnvironmentType extends Enum[EnvironmentType] {
   case object Small extends EnvironmentType
   case object Medium extends EnvironmentType
   case object Large extends EnvironmentType
+  val values = findValues
+}
+
+sealed trait EnvironmentColour extends EnumEntry with Lowercase {
+  def opposite: EnvironmentColour
+}
+object EnvironmentColour extends Enum[EnvironmentColour] {
+  case object Black extends EnvironmentColour {
+    override lazy val opposite: EnvironmentColour = White
+  }
+  case object White extends EnvironmentColour {
+    override lazy val opposite: EnvironmentColour = Black
+  }
+  case object Common extends EnvironmentColour {
+    override lazy val opposite: EnvironmentColour = this
+  }
   val values = findValues
 }

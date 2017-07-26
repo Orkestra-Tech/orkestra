@@ -5,10 +5,8 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 import com.goyeau.orchestra._
 import com.goyeau.orchestra.Job
-import com.goyeau.orchestra.io.{Directory, LocalFile}
+import com.goyeau.orchestra.filesystem.Directory
 import com.typesafe.scalalogging.Logger
-import org.eclipse.jgit.api.Git
-import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider
 
 object CreateEnvironment {
 
@@ -24,17 +22,7 @@ object CreateEnvironment {
 
   def apply(environment: Environment)(ansible: AnsibleContainer.type,
                                       terraform: TerraformContainer.type)(sourceEnv: String): Unit = {
-    val git = Git
-      .cloneRepository()
-      .setURI(s"https://github.com/drivetribe/infrastructure.git")
-      .setCredentialsProvider(
-        new UsernamePasswordCredentialsProvider(System.getenv("GITHUB_USERNAME"), System.getenv("GITHUB_TOKEN"))
-      )
-      .setDirectory(LocalFile("infrastructure"))
-      .setNoCheckout(true)
-      .call()
-    git.getRepository.getConfig.setBoolean("core", null, "fileMode", true)
-    git.checkout().setName("origin/master").call()
+    Git.checkoutInfrastructure()
 
     Lock.onEnvironment(environment) {
       dir("infrastructure") { implicit workDir =>
@@ -64,15 +52,15 @@ object CreateEnvironment {
         "data.terraform_remote_state.kafka_mirror" // @TODO to remove hacky fix
       ) ++ elasticsearchModules
 
-      terraform.apply(s"-var bootstrap_git_branch=master${targets.map(t => s" -target=$t").mkString}")
+      terraform.apply(s"-var bootstrap_git_branch=master ${targets.map(t => s"-target=$t").mkString(" ")}")
       terraform.apply(
-        s"""-var ansible_key="${System.getenv("ANSIBLE_VAULT_PASS")}" -var bootstrap_git_branch=master"""
+        s"-var ansible_key=${System.getenv("ANSIBLE_VAULT_PASS")} -var bootstrap_git_branch=master"
       )
     }
   }
 
   // @TODO Replace sleep either by bootstraping themself or checking that the hardware is there
-  val cloudProvisiongTime = 270000
+  val cloudProvisiongTime = 280000
 
   def provisionKafkaZookeeper(environment: Environment, sourceEnv: Environment, ansible: AnsibleContainer.type)(
     implicit workDir: Directory

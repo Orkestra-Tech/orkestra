@@ -12,6 +12,7 @@ object Job {
 
   def create[Containers <: HList](runInfo: RunInfo, podConfig: PodConfig[Containers]) = {
     val job = new KubeJob()
+    job.setApiVersion("batch/v1") // @TODO Remove this together with the monkey patch of JobOperationsImpl
     job.setMetadata({
       val meta = new ObjectMeta()
       meta.setName(jobName(runInfo.runId))

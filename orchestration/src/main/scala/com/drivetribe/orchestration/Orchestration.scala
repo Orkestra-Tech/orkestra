@@ -25,14 +25,10 @@ object Orchestration extends Jobs with Boards with Github with Cron {
   lazy val jobs = Seq(
     emptyTask,
     deployBackend
-  ) ++ Infrastructure.jobs
+  ) ++ Operation.jobs ++ Infrastructure.jobs
 
   lazy val board = FolderBoard("Drivetribe")(
-    FolderBoard("Operation")(
-      FolderBoard("Staging")(
-        SingleJobBoard("DeployBackend", deployBackendDef)(Param[String]("version", defaultValue = Some("12")), RunId)
-      )
-    ),
+    Operation.board,
     Infrastructure.board
   )
 }

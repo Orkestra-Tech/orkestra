@@ -43,7 +43,8 @@ spec:
       serviceAccountName: orchestration
       containers:
         - name: orchestration
-          image: registry.drivetribe.com/tools/orchestration:latest
+          image: orchestration:latest
+          imagePullPolicy: IfNotPresent
           env:
             - name: ORCHESTRA_DATA
               value: /opt/docker/orchestra

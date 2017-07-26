@@ -13,8 +13,8 @@ import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import akka.stream.Materializer
 import autowire.Core
-import _root_.io.circe.{Decoder, Encoder}
-import _root_.io.circe.generic.auto._
+import io.circe.{Decoder, Encoder}
+import io.circe.generic.auto._
 import com.goyeau.orchestra.ARunStatus._
 import shapeless._
 import shapeless.ops.function.FnToProduct

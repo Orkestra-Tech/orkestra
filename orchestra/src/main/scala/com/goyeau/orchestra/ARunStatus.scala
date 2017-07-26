@@ -2,9 +2,9 @@ package com.goyeau.orchestra
 
 import java.util.UUID
 
-import _root_.io.circe._
-import _root_.io.circe.generic.auto._
-import _root_.io.circe.generic.semiauto._
+import io.circe._
+import io.circe.generic.auto._
+import io.circe.generic.semiauto._
 
 // Start with A because of a compiler bug
 sealed trait ARunStatus[+Result]

@@ -1,7 +1,7 @@
 package com.drivetribe.orchestration
 
 import com.goyeau.orchestra._
-import com.goyeau.orchestra.io.Directory
+import com.goyeau.orchestra.filesystem.Directory
 
 object Init {
 
