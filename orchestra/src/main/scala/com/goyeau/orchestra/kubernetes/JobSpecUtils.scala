@@ -3,6 +3,8 @@ package com.goyeau.orchestra.kubernetes
 import com.goyeau.orchestra.{AutowireServer, Config, Container, PodConfig, RunInfo}
 import io.fabric8.kubernetes.api.model._
 import scala.collection.convert.ImplicitConversions._
+import scala.language.reflectiveCalls
+
 import io.fabric8.kubernetes.api.model.{Container => KubeContainer}
 import io.circe.generic.auto._
 
@@ -36,24 +38,26 @@ object JobSpecUtils {
   def createJobSpec(masterPod: Pod, runInfo: RunInfo, podConfig: PodConfig[_]) = {
     val masterSpec = masterPod.getSpec
     val masterContainer = masterSpec.getContainers.head
-    masterContainer.setEnv(
-      masterContainer.getEnv :+ new EnvVar("ORCHESTRA_RUN_INFO", AutowireServer.write(runInfo), null)
-    )
+    val runInfoEnvVar = new EnvVar("ORCHESTRA_RUN_INFO", AutowireServer.write(runInfo), null)
+    masterContainer.setEnv(distinctOnName(runInfoEnvVar +: masterContainer.getEnv))
     masterContainer.setWorkingDir(Config.workspace)
-    masterContainer.setVolumeMounts(masterContainer.getVolumeMounts :+ JobSpecUtils.homeDirMount)
+    masterContainer.setVolumeMounts(distinctOnName(masterContainer.getVolumeMounts :+ JobSpecUtils.homeDirMount))
 
     val jobSpec = new JobSpec()
-    jobSpec.setTemplate({
+    jobSpec.setTemplate {
       val podTemplateSpec = new PodTemplateSpec()
-      podTemplateSpec.setSpec({
+      podTemplateSpec.setSpec {
         val podSpec = new PodSpec()
         podSpec.setContainers(masterContainer +: podConfig.containerSeq.map(createContainer(_, masterContainer)))
-        podSpec.setVolumes(masterSpec.getVolumes :+ JobSpecUtils.homeDirVolume)
+        podSpec.setVolumes(distinctOnName(masterSpec.getVolumes :+ JobSpecUtils.homeDirVolume))
         podSpec.setRestartPolicy("Never")
         podSpec
-      })
+      }
       podTemplateSpec
-    })
+    }
     jobSpec
   }
+
+  private def distinctOnName[A <: { def getName(): String }](list: Seq[A]): Seq[A] =
+    list.groupBy(_.getName()).values.map(_.head).toSeq
 }

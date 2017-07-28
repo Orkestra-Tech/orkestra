@@ -10,18 +10,23 @@ import com.typesafe.scalalogging.Logger
 
 object CreateEnvironment {
 
-  def jobDefinition(environment: Environment) = Job[String => Unit](Symbol(s"create${environment.entryName}"))
+  def jobDefinition(environment: Environment) = Job[(String, Boolean) => Unit](Symbol(s"create$environment"))
 
   def job(environment: Environment) =
     jobDefinition(environment)(PodConfig(AnsibleContainer, TerraformContainer))(apply(environment) _)
 
   def board(environment: Environment) =
-    SingleJobBoard("Create", jobDefinition(environment))(Param[String]("sourceEnv", defaultValue = Some("staging")))
+    SingleJobBoard("Create", jobDefinition(environment))(
+      Param[String]("sourceEnv", defaultValue = Some("staging")),
+      Param[Boolean]("deployBackend")
+    )
 
   lazy val logger = Logger(getClass)
 
-  def apply(environment: Environment)(ansible: AnsibleContainer.type,
-                                      terraform: TerraformContainer.type)(sourceEnv: String): Unit = {
+  def apply(environment: Environment)(
+    ansible: AnsibleContainer.type,
+    terraform: TerraformContainer.type
+  )(sourceEnv: String, deployBackend: Boolean): Unit = {
     Git.checkoutInfrastructure()
 
     Lock.onEnvironment(environment) {
@@ -35,6 +40,11 @@ object CreateEnvironment {
         ).parallel
       }
     }
+
+    Seq(
+      Future(SqlCopy.job.trigger(Environment.Staging.entryName, environment.entryName)),
+      Future(if (deployBackend) DeployEnvironment.job(environment).trigger(environment.entryName))
+    ).parallel
   }
 
   def provisionCloudResources(environment: Environment,

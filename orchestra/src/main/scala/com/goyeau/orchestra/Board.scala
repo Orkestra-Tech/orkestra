@@ -13,13 +13,12 @@ import shapeless.{::, Generic, HList, HNil, Poly}
 import shapeless.ops.hlist.{Comapped, Mapper}
 
 sealed trait Board {
-  def pathName: String
+  def pathName: String = name.toLowerCase.replaceAll("\\s", "")
   def name: String
   def route(implicit ec: ExecutionContext): StaticDsl.Rule[AppPage]
 }
 
 case class FolderBoard(name: String, childBoards: Seq[Board]) extends Board {
-  val pathName = name.toLowerCase
 
   def route(implicit ec: ExecutionContext) = RouterConfigDsl[AppPage].buildRule { dsl =>
     import dsl._
@@ -37,9 +36,8 @@ case class SingleJobBoard[ParamValues <: HList: Encoder, Params <: HList, Result
   name: String,
   job: Job.Definition[_, ParamValues, Result],
   params: Params
-)(implicit paramGetter: ParamGetter[Params, ParamValues])
+)(implicit paramGetter: ParameterGetter[Params, ParamValues])
     extends Board {
-  val pathName = name.toLowerCase.replaceAll(" ", "")
 
   def route(implicit ec: ExecutionContext) = RouterConfigDsl[AppPage].buildRule { dsl =>
     import dsl._
@@ -69,7 +67,7 @@ object SingleJobBoard {
   )(
     param: Param
   )(
-    implicit paramGetter: ParamGetter[Param :: HNil, ParamValue :: HNil]
+    implicit paramGetter: ParameterGetter[Param :: HNil, ParamValue :: HNil]
   ): SingleJobBoard[ParamValue :: HNil, Param :: HNil, Result] =
     SingleJobBoard(name, job, param :: HNil)
 
@@ -82,7 +80,7 @@ object SingleJobBoard {
     implicit tupleToHList: Generic.Aux[TupledParams, Params],
     unifier: Mapper.Aux[UnifyParameter.type, Params, UniParams],
     paramValuesExtractor: Comapped.Aux[UniParams, Parameter, ParamValues],
-    paramGetter: ParamGetter[Params, ParamValues]
+    paramGetter: ParameterGetter[Params, ParamValues]
   ): SingleJobBoard[ParamValues, Params, Result] =
     SingleJobBoard(name, job, tupleToHList.to(params))
 

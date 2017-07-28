@@ -8,7 +8,7 @@ object Infrastructure {
     Environment.values.filter(_.nonProd).map(environmentBoard): _*
   )
 
-  def environmentBoard(environment: Environment) = FolderBoard(environment.toString)(
+  private def environmentBoard(environment: Environment) = FolderBoard(environment.toString)(
     CreateEnvironment.board(environment),
     DestroyEnvironment.board(environment)
   )

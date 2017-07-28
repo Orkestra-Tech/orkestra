@@ -44,7 +44,7 @@ trait ShellHelpers {
     finally reader.close()
   }
 
-  def printMkString(stream: Iterable[String]) = {
+  private def printMkString(stream: Iterable[String]) = {
     val exitCodeRegex = ".*command terminated with non-zero exit code: Error executing in Docker Container: (\\d+).*".r
 
     stream.fold("") { (acc, line) =>

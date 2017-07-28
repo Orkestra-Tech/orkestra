@@ -5,10 +5,10 @@ import com.goyeau.orchestra.FolderBoard
 object Operation {
 
   lazy val board = FolderBoard("Operation")(
-    Environment.values.filter(_.nonProd).map(environmentBoard): _*
+    Environment.values.filter(_.nonProd).map(environmentBoard) :+ SqlCopy.board: _*
   )
 
-  def environmentBoard(environment: Environment) = FolderBoard(environment.toString)(
+  private def environmentBoard(environment: Environment) = FolderBoard(environment.toString)(
     DeployEnvironment.board(environment)
   )
 
@@ -16,5 +16,5 @@ object Operation {
     Seq(
       DeployEnvironment.job(environment)
     )
-  }
+  } :+ SqlCopy.job
 }

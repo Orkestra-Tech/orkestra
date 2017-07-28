@@ -8,7 +8,7 @@ import io.fabric8.kubernetes.client.DefaultKubernetesClient
 
 object DestroyEnvironment {
 
-  def jobDefinition(environment: Environment) = Job[() => Unit](Symbol(s"destroy${environment.entryName}"))
+  def jobDefinition(environment: Environment) = Job[() => Unit](Symbol(s"destroy$environment"))
 
   def job(environment: Environment) =
     jobDefinition(environment)(PodConfig(AnsibleContainer, TerraformContainer))(apply(environment) _)

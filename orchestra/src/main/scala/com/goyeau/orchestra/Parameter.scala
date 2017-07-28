@@ -3,7 +3,7 @@ package com.goyeau.orchestra
 import java.util.UUID
 
 trait Parameter[T] {
-  def name: String
+  def name: String // @TODO Make is support spaced names
   def defaultValue: Option[T]
   def getValue(valueMap: Map[String, Any]): T =
     valueMap

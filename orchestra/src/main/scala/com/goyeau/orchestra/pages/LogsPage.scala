@@ -21,12 +21,16 @@ object LogsPage {
       .builder[Props](getClass.getSimpleName)
       .initialState[(Seq[String], SetIntervalHandle)]((Seq.empty, null))
       .render { $ =>
+        val logs =
+          if ($.state._1.nonEmpty) $.state._1.mkString("\n")
+          else "No logged message yet"
+
         <.div(
           <.div("Logs: " + $.props.page.runId.toString),
           <.pre(
             ^.dangerouslySetInnerHtml :=
               newInstance(global.AnsiUp)()
-                .ansi_to_html($.state._1.mkString("\n"))
+                .ansi_to_html(logs)
                 .asInstanceOf[String]
           )
         )

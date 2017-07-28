@@ -21,12 +21,12 @@ object SingleJobBoardPage {
     job: Job.Definition[_, ParamValues, Result],
     params: Params,
     ctrl: RouterCtl[AppPage]
-  )(implicit ec: ExecutionContext, paramGetter: ParamGetter[Params, ParamValues]) =
+  )(implicit ec: ExecutionContext, paramGetter: ParameterGetter[Params, ParamValues]) =
     ScalaComponent
       .builder[Unit](getClass.getSimpleName)
       .initialState {
         val jobInfo = RunInfo(job.id, Option(UUID.randomUUID()))
-        (jobInfo, Map[String, Any](RunId.name -> jobInfo.runId), TagMod("Loading runs"))
+        (jobInfo, Map[String, Any](RunId.name -> jobInfo.runId), <.div("Loading runs"))
       }
       .render { $ =>
         def runJob = Callback.future {
@@ -36,13 +36,14 @@ object SingleJobBoardPage {
           }
         }
 
-        val displayState = Displayer.State(kv => $.modState(s => s.copy(_2 = s._2 + kv)), key => $.state._2.get(key))
+        val displayState =
+          ParameterDisplayer.State(kv => $.modState(s => s.copy(_2 = s._2 + kv)), key => $.state._2.get(key))
 
         <.div(
           <.div(name),
-          paramGetter.displays(params, displayState),
+          <.div(paramGetter.displays(params, displayState): _*),
           <.button(^.onClick --> runJob, "Run"),
-          <.div($.state._3)
+          $.state._3
         )
       }
       .componentDidMount { $ =>
@@ -53,7 +54,7 @@ object SingleJobBoardPage {
             .map { runs =>
               val runDisplays =
                 runs.map(uuid => <.div(<.button(^.onClick --> ctrl.set(TaskLogsPage(job, uuid)), uuid.toString)))
-              $.modState(_.copy(_3 = if (runDisplays.nonEmpty) TagMod(runDisplays: _*) else TagMod("No job ran yet")))
+              $.modState(_.copy(_3 = if (runDisplays.nonEmpty) <.div(runDisplays: _*) else <.div("No job ran yet")))
             }
         )
       }

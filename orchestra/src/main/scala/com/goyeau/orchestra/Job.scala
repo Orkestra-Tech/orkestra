@@ -8,10 +8,8 @@ import scala.concurrent.ExecutionContext
 import scala.io.Source
 import scala.language.{higherKinds, implicitConversions}
 
-import akka.actor.ActorSystem
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
-import akka.stream.Materializer
 import autowire.Core
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.auto._
@@ -58,7 +56,7 @@ object Job {
     job: ParamValues => Result
   ) {
 
-    def run(runInfo: RunInfo)(implicit ec: ExecutionContext, system: ActorSystem, mat: Materializer): Unit = {
+    def run(runInfo: RunInfo): Unit = {
       new File(Config.runDirPath(runInfo)).mkdirs()
       val logsOut = new PrintStream(new FileOutputStream(Config.logsFilePath(runInfo), true), true)
       val statusWriter = new PrintWriter(Config.statusFilePath(runInfo))
@@ -85,7 +83,7 @@ object Job {
       }
     }
 
-    def apiServer(implicit ec: ExecutionContext, system: ActorSystem, mat: Materializer) = new definition.Api {
+    val apiServer = new definition.Api {
       override def run(runInfo: RunInfo, params: ParamValues): ARunStatus[Result] = {
         val runDir = new File(Config.runDirPath(runInfo))
         val statusFile = new File(Config.statusFilePath(runInfo))
@@ -126,7 +124,7 @@ object Job {
           .map(runDir => UUID.fromString(runDir.getName))
     }
 
-    def apiRoute(implicit ec: ExecutionContext, system: ActorSystem, mat: Materializer): Route =
+    def apiRoute(implicit ec: ExecutionContext): Route =
       path(definition.id.name / Segments) { segments =>
         post {
           entity(as[String]) { entity =>

@@ -9,7 +9,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 object DeployEnvironment {
 
-  def jobDefinition(environment: Environment) = Job[String => Unit](Symbol(s"deploy${environment.entryName}"))
+  def jobDefinition(environment: Environment) = Job[String => Unit](Symbol(s"deploy$environment"))
 
   def job(environment: Environment) =
     jobDefinition(environment)(PodConfig(AnsibleContainer, TerraformContainer))(apply(environment) _)
@@ -68,9 +68,9 @@ object DeployEnvironment {
     dir(terraform.rootDir(environment)) { implicit workDir =>
       val moduleName = colour.fold("rest_api")(c => s"rest_api_$c")
       val stateVersions = StateVersions.template(version).replaceAll("\\{", "\\\\{").replaceAll("\\}", "\\\\}")
-      val modules = TerraformState.fromS3(environment)
+      val tfState = TerraformState.fromS3(environment)
       val capacity = AutoScaling.getDesiredCapacity(
-        modules.getResourceAttribute(Seq("root", moduleName), "aws_autoscaling_group.api", "name")
+        tfState.getResourceAttribute(Seq("root", moduleName), "aws_autoscaling_group.api", "name")
       )
 
       val params = Seq(
