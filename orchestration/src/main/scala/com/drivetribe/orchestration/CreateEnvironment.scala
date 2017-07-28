@@ -17,8 +17,8 @@ object CreateEnvironment {
 
   def board(environment: Environment) =
     SingleJobBoard("Create", jobDefinition(environment))(
-      Param[String]("sourceEnv", defaultValue = Some("staging")),
-      Param[Boolean]("deployBackend")
+      Param[String]("Source Environment", defaultValue = Some("staging")),
+      Param[Boolean]("Deploy Backend")
     )
 
   lazy val logger = Logger(getClass)

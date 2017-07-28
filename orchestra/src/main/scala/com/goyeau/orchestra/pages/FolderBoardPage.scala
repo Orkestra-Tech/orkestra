@@ -16,7 +16,7 @@ object FolderBoardPage {
         <.div(
           <.div(props.name),
           <.div(
-            props.childBoards.toTagMod(board => <.button(props.ctrl.setOnClick(BoardPage(board)), board.name))
+            props.childBoards.toTagMod(board => <.div(<.button(props.ctrl.setOnClick(BoardPage(board)), board.name)))
           )
         )
       }

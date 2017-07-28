@@ -2,8 +2,9 @@ package com.goyeau.orchestra
 
 import java.util.UUID
 
-trait Parameter[T] {
-  def name: String // @TODO Make is support spaced names
+sealed trait Parameter[T] {
+  lazy val id: String = name.toLowerCase.replaceAll("\\s", "")
+  def name: String
   def defaultValue: Option[T]
   def getValue(valueMap: Map[String, Any]): T =
     valueMap

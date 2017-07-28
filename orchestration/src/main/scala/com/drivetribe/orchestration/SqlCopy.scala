@@ -14,8 +14,8 @@ object SqlCopy {
   lazy val board =
     SingleJobBoard("SQL Copy", jobDefinition)(
       // @TODO Use Environment instead of String
-      Param[String]("SourceEnv", defaultValue = Some(Environment.Staging.entryName)),
-      Param[String]("DestinationEnv")
+      Param[String]("Source Environment", defaultValue = Some(Environment.Staging.entryName)),
+      Param[String]("Destination Environment")
     )
 
   lazy val logger = Logger(getClass)

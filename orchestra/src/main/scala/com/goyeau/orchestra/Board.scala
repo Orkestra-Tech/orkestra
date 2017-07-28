@@ -6,14 +6,13 @@ import com.goyeau.orchestra.pages.FolderBoardPage
 import com.goyeau.orchestra.routes.WebRouter.{AppPage, BoardPage, TaskLogsPage}
 import com.goyeau.orchestra.pages.{LogsPage, SingleJobBoardPage}
 import io.circe.{Decoder, Encoder}
-import io.circe.shapes._
 import japgolly.scalajs.react.extra.router.{RouterConfigDsl, StaticDsl}
 import japgolly.scalajs.react.vdom.html_<^._
 import shapeless.{::, Generic, HList, HNil, Poly}
 import shapeless.ops.hlist.{Comapped, Mapper}
 
 sealed trait Board {
-  def pathName: String = name.toLowerCase.replaceAll("\\s", "")
+  lazy val pathName: String = name.toLowerCase.replaceAll("\\s", "")
   def name: String
   def route(implicit ec: ExecutionContext): StaticDsl.Rule[AppPage]
 }
