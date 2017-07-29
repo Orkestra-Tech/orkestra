@@ -1,4 +1,4 @@
-package com.goyeau.orchestra.components
+package com.goyeau.orchestra.component
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.Reusability
@@ -8,8 +8,8 @@ import scalacss.DevDefaults._
 import scalacss.ProdDefaults._
 import scalacss.ScalaCssReact._
 
-import com.goyeau.orchestra.models.Menu
-import com.goyeau.orchestra.routes.WebRouter.AppPage
+import com.goyeau.orchestra.model.Menu
+import com.goyeau.orchestra.route.WebRouter.AppPage
 
 object TopNav {
   val CssSettings = scalacss.devOrProdDefaults; import CssSettings._

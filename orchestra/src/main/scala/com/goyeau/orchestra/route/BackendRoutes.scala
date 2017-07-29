@@ -1,4 +1,4 @@
-package com.goyeau.orchestra.routes
+package com.goyeau.orchestra.route
 
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.directives.RouteDirectives

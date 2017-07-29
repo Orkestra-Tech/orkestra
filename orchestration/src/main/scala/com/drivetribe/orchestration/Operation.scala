@@ -9,12 +9,14 @@ object Operation {
   )
 
   private def environmentBoard(environment: Environment) = FolderBoard(environment.toString)(
-    DeployEnvironment.board(environment)
+    DeployBackend.board(environment),
+    DeployFrontend.board(environment)
   )
 
   lazy val jobs = Environment.values.filter(_.nonProd).flatMap { environment =>
     Seq(
-      DeployEnvironment.job(environment)
+      DeployBackend.job(environment),
+      DeployFrontend.job(environment)
     )
   } :+ SqlCopy.job
 }

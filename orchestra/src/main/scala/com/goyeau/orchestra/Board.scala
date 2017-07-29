@@ -2,9 +2,9 @@ package com.goyeau.orchestra
 
 import scala.concurrent.ExecutionContext
 
-import com.goyeau.orchestra.pages.FolderBoardPage
-import com.goyeau.orchestra.routes.WebRouter.{AppPage, BoardPage, TaskLogsPage}
-import com.goyeau.orchestra.pages.{LogsPage, SingleJobBoardPage}
+import com.goyeau.orchestra.page.FolderBoardPage
+import com.goyeau.orchestra.route.WebRouter.{AppPage, BoardPage, TaskLogsPage}
+import com.goyeau.orchestra.page.{LogsPage, SingleJobBoardPage}
 import io.circe.{Decoder, Encoder}
 import japgolly.scalajs.react.extra.router.{RouterConfigDsl, StaticDsl}
 import japgolly.scalajs.react.vdom.html_<^._

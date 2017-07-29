@@ -10,7 +10,7 @@ import com.typesafe.scalalogging.Logger
 
 object CreateEnvironment {
 
-  def jobDefinition(environment: Environment) = Job[(String, Boolean) => Unit](Symbol(s"create$environment"))
+  def jobDefinition(environment: Environment) = Job[(String, Boolean, Boolean) => Unit](Symbol(s"create$environment"))
 
   def job(environment: Environment) =
     jobDefinition(environment)(PodConfig(AnsibleContainer, TerraformContainer))(apply(environment) _)
@@ -18,6 +18,7 @@ object CreateEnvironment {
   def board(environment: Environment) =
     SingleJobBoard("Create", jobDefinition(environment))(
       Param[String]("Source Environment", defaultValue = Some("staging")),
+      Param[Boolean]("Deploy Frontend"),
       Param[Boolean]("Deploy Backend")
     )
 
@@ -26,7 +27,7 @@ object CreateEnvironment {
   def apply(environment: Environment)(
     ansible: AnsibleContainer.type,
     terraform: TerraformContainer.type
-  )(sourceEnv: String, deployBackend: Boolean): Unit = {
+  )(sourceEnv: String, deployFrontend: Boolean, deployBackend: Boolean): Unit = {
     Git.checkoutInfrastructure()
 
     Lock.onEnvironment(environment) {
@@ -43,7 +44,8 @@ object CreateEnvironment {
 
     Seq(
       Future(SqlCopy.job.trigger(Environment.Staging.entryName, environment.entryName)),
-      Future(if (deployBackend) DeployEnvironment.job(environment).trigger(environment.entryName))
+      Future(if (deployFrontend) DeployFrontend.job(environment).trigger(environment.entryName)),
+      Future(if (deployBackend) DeployBackend.job(environment).trigger(environment.entryName))
     ).parallel
   }
 

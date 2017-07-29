@@ -6,7 +6,7 @@ import scalajs.html.scripts
 import akka.http.scaladsl.model.{ContentTypes, HttpEntity}
 import akka.http.scaladsl.server.Directives.{complete, pathSingleSlash, _}
 import com.goyeau.orchestra.css.AppCSS
-import com.goyeau.orchestra.routes.{BackendRoutes, WebRouter}
+import com.goyeau.orchestra.route.{BackendRoutes, WebRouter}
 import org.scalajs.dom
 
 trait Boards extends BackendRoutes with JSApp {

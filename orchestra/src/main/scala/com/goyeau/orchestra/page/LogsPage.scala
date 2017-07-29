@@ -1,4 +1,4 @@
-package com.goyeau.orchestra.pages
+package com.goyeau.orchestra.page
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
@@ -7,7 +7,7 @@ import scala.scalajs.js.Dynamic._
 import scala.scalajs.js.timers.SetIntervalHandle
 
 import autowire._
-import com.goyeau.orchestra.routes.WebRouter.TaskLogsPage
+import com.goyeau.orchestra.route.WebRouter.TaskLogsPage
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.component.builder.Lifecycle.ComponentDidMount
 import japgolly.scalajs.react.vdom.html_<^._

@@ -3,10 +3,9 @@ package com.goyeau.orchestra
 import java.util.UUID
 
 import io.circe._
-import io.circe.generic.auto._
-import io.circe.generic.semiauto._
 
 // Start with A because of a compiler bug
+// Should be in the model package
 sealed trait ARunStatus[+Result]
 object ARunStatus {
   case class Scheduled(at: Long) extends ARunStatus[Nothing]

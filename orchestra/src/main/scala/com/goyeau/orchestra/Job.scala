@@ -11,9 +11,10 @@ import scala.language.{higherKinds, implicitConversions}
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import autowire.Core
+import com.goyeau.orchestra.model.RunInfo
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.auto._
-import com.goyeau.orchestra.ARunStatus._
+import ARunStatus._
 import shapeless._
 import shapeless.ops.function.FnToProduct
 

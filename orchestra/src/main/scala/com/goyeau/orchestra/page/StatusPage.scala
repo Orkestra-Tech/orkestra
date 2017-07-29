@@ -1,4 +1,4 @@
-package com.goyeau.orchestra.pages
+package com.goyeau.orchestra.page
 
 import scalacss.ScalaCssReact._
 

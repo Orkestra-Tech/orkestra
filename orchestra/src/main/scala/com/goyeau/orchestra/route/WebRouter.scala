@@ -1,15 +1,15 @@
-package com.goyeau.orchestra.routes
+package com.goyeau.orchestra.route
 
 import java.util.UUID
 
 import japgolly.scalajs.react.extra.router.{Resolution, RouterConfigDsl, RouterCtl, _}
 import japgolly.scalajs.react.vdom.html_<^._
-import com.goyeau.orchestra.components.{Footer, TopNav}
-import com.goyeau.orchestra.models.Menu
+import com.goyeau.orchestra.component.{Footer, TopNav}
+import com.goyeau.orchestra.model.Menu
 import com.goyeau.orchestra._
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
-import com.goyeau.orchestra.pages.StatusPage
+import com.goyeau.orchestra.page.StatusPage
 import shapeless.HList
 
 object WebRouter {

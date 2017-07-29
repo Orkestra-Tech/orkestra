@@ -6,13 +6,13 @@ import com.goyeau.orchestra.Config
 
 object Lock {
 
-  private def deploymentChannel(environment: Environment, project: String) = {
+  private def deploymentChannel(environment: Environment, project: Project) = {
     val lockFile = new File(s"${Config.home}/locks/${environment.entryName.toLowerCase}/$project/deployment")
     lockFile.getParentFile.mkdirs()
     new RandomAccessFile(lockFile, "rw").getChannel
   }
 
-  def onDeployment[T](environment: Environment, project: String)(f: => T): T = {
+  def onDeployment[T](environment: Environment, project: Project)(f: => T): T = {
     val channel = deploymentChannel(environment, project)
     channel.lock() // Blocking
     try f
@@ -20,9 +20,16 @@ object Lock {
   }
 
   def onEnvironment[T](environment: Environment)(f: => T): T =
-    onDeployment(environment, "backend") {
-      onDeployment(environment, "frontend") {
-        onDeployment(environment, "studio")(f)
+    onDeployment(environment, Project.Backend) {
+      onDeployment(environment, Project.Frontend) {
+        onDeployment(environment, Project.Studio)(f)
       }
     }
+}
+
+trait Project
+object Project {
+  case object Backend extends Project
+  case object Frontend extends Project
+  case object Studio extends Project
 }

@@ -33,9 +33,9 @@ object DestroyEnvironment {
 
   def cleanKubernetes(environment: Environment) = {
     println("Clean Kubernetes")
-    val client = new DefaultKubernetesClient()
-    client.services.inNamespace(environment.entryName).delete()
-    client.extensions.deployments.inNamespace(environment.entryName).delete()
+    val kube = new DefaultKubernetesClient()
+    kube.services.inNamespace(environment.entryName).delete()
+    kube.extensions.deployments.inNamespace(environment.entryName).delete()
   }
 
   def destroy(environment: Environment, terraform: TerraformContainer.type)(implicit workDir: Directory) = {

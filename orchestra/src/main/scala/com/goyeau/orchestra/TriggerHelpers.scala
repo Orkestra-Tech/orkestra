@@ -1,5 +1,6 @@
 package com.goyeau.orchestra
 
+import RunInfo
 import shapeless._
 
 trait TriggerHelpers {

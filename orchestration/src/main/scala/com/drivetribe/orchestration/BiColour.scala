@@ -15,15 +15,15 @@ object BiColour {
     val activeLoadBalancer = tfState.getResourceAttribute(Seq("root"), "aws_alb_target_group.active", "arn")
 
     val elb = AmazonElasticLoadBalancingClientBuilder.standard().withRegion(Regions.EU_WEST_1).build
-    val eblRequest = new DescribeTargetHealthRequest()
-    eblRequest.setTargetGroupArn(activeLoadBalancer)
-    val instanceIds = elb.describeTargetHealth(eblRequest).getTargetHealthDescriptions.map(_.getTarget.getId)
+    val instanceIds = elb
+      .describeTargetHealth(new DescribeTargetHealthRequest().withTargetGroupArn(activeLoadBalancer))
+      .getTargetHealthDescriptions
+      .map(_.getTarget.getId)
 
     val ec2 = AmazonEC2ClientBuilder.standard().withRegion(Regions.EU_WEST_1).build
-    val ec2Request = new DescribeTagsRequest(
-      Seq(new Filter("key", Seq("Colour")), new Filter("resource-id", instanceIds))
+    val instances = ec2.describeTags(
+      new DescribeTagsRequest(Seq(new Filter("key", Seq("Colour")), new Filter("resource-id", instanceIds)))
     )
-    val instances = ec2.describeTags(ec2Request)
     val instanceColours = instances.getTags.map(_.getValue)
     assert(instanceColours.distinct.size == 1)
 

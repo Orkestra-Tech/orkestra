@@ -7,14 +7,15 @@ import com.goyeau.orchestra.filesystem.Directory
 import com.typesafe.scalalogging.Logger
 import scala.concurrent.ExecutionContext.Implicits.global
 
-object DeployEnvironment {
+object DeployBackend {
 
-  def jobDefinition(environment: Environment) = Job[String => Unit](Symbol(s"deploy$environment"))
+  def jobDefinition(environment: Environment) = Job[String => Unit](Symbol(s"deployBackend$environment"))
 
   def job(environment: Environment) =
     jobDefinition(environment)(PodConfig(AnsibleContainer, TerraformContainer))(apply(environment) _)
 
-  def board(environment: Environment) = SingleJobBoard("Deploy", jobDefinition(environment))(Param[String]("Version"))
+  def board(environment: Environment) =
+    SingleJobBoard("Deploy Backend", jobDefinition(environment))(Param[String]("Version"))
 
   lazy val logger = Logger(getClass)
 
@@ -22,7 +23,7 @@ object DeployEnvironment {
                                       terraform: TerraformContainer.type)(version: String): Unit = {
     Git.checkoutInfrastructure()
 
-    Lock.onDeployment(environment, "backend") {
+    Lock.onDeployment(environment, Project.Backend) {
       dir("infrastructure") { implicit workDir =>
         ansible.install
         Init(environment, ansible, terraform)
