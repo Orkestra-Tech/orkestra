@@ -1,4 +1,4 @@
-package com.goyeau.orchestra
+package com.goyeau.orchestra.kubernetes
 
 import shapeless._
 import shapeless.ops.hlist.ToTraversable

@@ -1,6 +1,6 @@
 package com.goyeau.orchestra.kubernetes
 
-import com.goyeau.orchestra.{AutowireServer, Config, Container, PodConfig, RunInfo}
+import com.goyeau.orchestra.{AutowireServer, Config, RunInfo}
 import io.fabric8.kubernetes.api.model._
 import scala.collection.convert.ImplicitConversions._
 import scala.language.reflectiveCalls

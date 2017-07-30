@@ -1,6 +1,6 @@
 package com.goyeau.orchestra.kubernetes
 
-import com.goyeau.orchestra.{Config, PodConfig, RunInfo}
+import com.goyeau.orchestra.{Config, RunInfo}
 import io.fabric8.kubernetes.api.model.{ObjectMeta, Job => KubeJob}
 import shapeless.HList
 

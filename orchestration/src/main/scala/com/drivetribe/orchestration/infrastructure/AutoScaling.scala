@@ -1,9 +1,10 @@
-package com.drivetribe.orchestration
+package com.drivetribe.orchestration.infrastructure
+
+import scala.collection.convert.ImplicitConversions._
 
 import com.amazonaws.regions.Regions
 import com.amazonaws.services.autoscaling.AmazonAutoScalingClientBuilder
 import com.amazonaws.services.autoscaling.model.DescribeAutoScalingGroupsRequest
-import scala.collection.convert.ImplicitConversions._
 
 object AutoScaling {
 

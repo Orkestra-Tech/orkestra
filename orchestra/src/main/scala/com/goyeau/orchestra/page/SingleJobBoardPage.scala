@@ -6,8 +6,7 @@ import scala.concurrent.ExecutionContext
 
 import autowire._
 import com.goyeau.orchestra._
-import com.goyeau.orchestra.model.RunInfo
-import ARunStatus._
+import com.goyeau.orchestra.ARunStatus._
 import com.goyeau.orchestra.route.WebRouter.{AppPage, TaskLogsPage}
 import io.circe.{Decoder, Encoder}
 import japgolly.scalajs.react._

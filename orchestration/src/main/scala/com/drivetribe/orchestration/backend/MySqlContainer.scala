@@ -1,7 +1,8 @@
-package com.drivetribe.orchestration
+package com.drivetribe.orchestration.backend
 
-import com.goyeau.orchestra.Container
+import com.drivetribe.orchestration.infrastructure.Environment
 import com.goyeau.orchestra._
+import com.goyeau.orchestra.kubernetes.Container
 
 object MySqlContainer extends Container("mysql", "mysql:5.7.18", tty = true, Seq("cat")) {
 

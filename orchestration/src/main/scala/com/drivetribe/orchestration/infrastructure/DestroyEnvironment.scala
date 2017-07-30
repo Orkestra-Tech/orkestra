@@ -1,8 +1,9 @@
-package com.drivetribe.orchestration
+package com.drivetribe.orchestration.infrastructure
 
-import com.goyeau.orchestra._
+import com.drivetribe.orchestration.{Git, Lock}
+import com.goyeau.orchestra.{Job, _}
 import com.goyeau.orchestra.filesystem.Directory
-import com.goyeau.orchestra.Job
+import com.goyeau.orchestra.kubernetes.PodConfig
 import com.typesafe.scalalogging.Logger
 import io.fabric8.kubernetes.client.DefaultKubernetesClient
 

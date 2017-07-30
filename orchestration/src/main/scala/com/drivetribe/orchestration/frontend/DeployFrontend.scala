@@ -1,19 +1,16 @@
-package com.drivetribe.orchestration
+package com.drivetribe.orchestration.frontend
 
 import java.io.File
 import java.time.Instant
 import java.time.temporal.ChronoUnit._
 import java.util.Date
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
 import scala.collection.convert.ImplicitConversionsToJava._
 
-import com.amazonaws.regions.Regions
-import com.amazonaws.services.s3.AmazonS3ClientBuilder
 import com.amazonaws.services.s3.model.ObjectMetadata
 import com.amazonaws.services.s3.transfer.{ObjectMetadataProvider, TransferManagerBuilder}
-import com.goyeau.orchestra.filesystem.Directory
+import com.drivetribe.orchestration.infrastructure._
+import com.drivetribe.orchestration.{Lock, Project}
 import com.goyeau.orchestra.{Job, _}
 import com.typesafe.scalalogging.Logger
 import io.fabric8.kubernetes.api.model._
@@ -76,6 +73,7 @@ object DeployFrontend {
 
   def deployOnKubernetes(version: String, environment: Environment) = {
     val kube = new DefaultKubernetesClient()
+
     val deployment = new Deployment()
     deployment.setMetadata {
       val meta = new ObjectMeta()
@@ -164,8 +162,32 @@ object DeployFrontend {
       )
       spec
     }
+
     kube.extensions.deployments.createOrReplace(deployment)
   }
 
-  def deployOnBeanstalk(version: String, environment: Environment) = ???
+  def deployOnBeanstalk(version: String, environment: Environment) = {
+    val tfState = TerraformState.fromS3(environment)
+    val applicationName =
+      tfState.getResourceAttribute(Seq("root", "web"), "aws_elastic_beanstalk_environment.backend", "application")
+    val beanstalkEnvironment =
+      tfState.getResourceAttribute(Seq("root", "web"), "aws_elastic_beanstalk_environment.backend", "name")
+
+    if (!ElasticBeanstalk.isAlreadyDeployed(applicationName, version, environment)) {
+      ElasticBeanstalk.createApplicationVersion(applicationName, version, environment)
+    }
+
+    // Waiting beanstalk to be ready
+    ElasticBeanstalk.waitEnvironmentToBeReady(applicationName, beanstalkEnvironment)
+
+    // Ask to beanstalk to update environment version
+    ElasticBeanstalk.updateEnvironmentVersion(applicationName, beanstalkEnvironment, version, environment)
+
+    // Waiting beanstalk to finish the update
+    ElasticBeanstalk.waitEnvironmentToBeReady(applicationName, beanstalkEnvironment)
+
+    // Check if deployment succeeded
+    if (ElasticBeanstalk.isDeploymentSuccess(applicationName, beanstalkEnvironment, version, environment))
+      throw new IllegalStateException("Web deployment failed on AWS ElasticBeanstalk")
+  }
 }

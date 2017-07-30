@@ -1,11 +1,15 @@
-package com.drivetribe.orchestration
+package com.drivetribe.orchestration.backend
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-import com.goyeau.orchestra.{Job, _}
+import com.drivetribe.orchestration._
+import com.drivetribe.orchestration.infrastructure._
+import com.drivetribe.orchestration.{Git, Lock, Project}
 import com.goyeau.orchestra.filesystem.Directory
+import com.goyeau.orchestra.kubernetes.PodConfig
+import com.goyeau.orchestra.{Job, _}
 import com.typesafe.scalalogging.Logger
-import scala.concurrent.ExecutionContext.Implicits.global
 
 object DeployBackend {
 
@@ -29,7 +33,7 @@ object DeployBackend {
         Init(environment, ansible, terraform)
 
         val activeColour =
-          if (environment.isBiColour) Some(BiColour.getActiveColour(environment))
+          if (environment.isBiColour) Some(Colour.getActive(environment))
           else None
         val inactiveColour = activeColour.map(_.opposite)
 

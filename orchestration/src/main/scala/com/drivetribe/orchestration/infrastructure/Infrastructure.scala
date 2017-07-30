@@ -1,4 +1,4 @@
-package com.drivetribe.orchestration
+package com.drivetribe.orchestration.infrastructure
 
 import com.goyeau.orchestra.FolderBoard
 

@@ -2,6 +2,7 @@ package com.drivetribe.orchestration
 
 import java.util.UUID
 
+import com.drivetribe.orchestration.infrastructure.Infrastructure
 import com.goyeau.orchestra.{Boards, _}
 import com.goyeau.orchestra.cron.Cron
 import com.goyeau.orchestra.github.Github

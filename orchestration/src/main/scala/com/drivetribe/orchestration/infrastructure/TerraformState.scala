@@ -1,12 +1,13 @@
-package com.drivetribe.orchestration
+package com.drivetribe.orchestration.infrastructure
 
 import java.io.{BufferedReader, InputStreamReader}
+
+import scala.collection.convert.ImplicitConversionsToScala._
 
 import com.amazonaws.regions.Regions
 import com.amazonaws.services.s3.AmazonS3ClientBuilder
 import io.circe.Json
 import io.circe.parser._
-import scala.collection.convert.ImplicitConversionsToScala._
 
 case class TerraformState(raw: Json) {
 

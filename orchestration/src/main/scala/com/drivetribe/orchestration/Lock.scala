@@ -2,6 +2,7 @@ package com.drivetribe.orchestration
 
 import java.io.{File, RandomAccessFile}
 
+import com.drivetribe.orchestration.infrastructure.Environment
 import com.goyeau.orchestra.Config
 
 object Lock {

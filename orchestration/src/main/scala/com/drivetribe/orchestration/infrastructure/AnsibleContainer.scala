@@ -1,8 +1,8 @@
-package com.drivetribe.orchestration
+package com.drivetribe.orchestration.infrastructure
 
-import com.goyeau.orchestra.Container
-import com.goyeau.orchestra.filesystem.Directory
 import com.goyeau.orchestra._
+import com.goyeau.orchestra.filesystem.Directory
+import com.goyeau.orchestra.kubernetes.Container
 
 object AnsibleContainer
     extends Container("ansible", "registry.drivetribe.com/tools/ansible:cached", tty = true, Seq("cat")) {

@@ -1,9 +1,9 @@
-package com.drivetribe.orchestration
+package com.drivetribe.orchestration.backend
 
+import com.drivetribe.orchestration.infrastructure.Environment
+import com.goyeau.orchestra.kubernetes.PodConfig
 import com.goyeau.orchestra.{Job, _}
-import com.goyeau.orchestra.filesystem.Directory
 import com.typesafe.scalalogging.Logger
-import io.fabric8.kubernetes.client.DefaultKubernetesClient
 
 object SqlCopy {
 

@@ -1,11 +1,15 @@
-package com.drivetribe.orchestration
+package com.drivetribe.orchestration.infrastructure
 
-import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
-import com.goyeau.orchestra._
-import com.goyeau.orchestra.Job
+import com.drivetribe.orchestration._
+import com.drivetribe.orchestration.backend.{DeployBackend, SqlCopy}
+import com.drivetribe.orchestration.frontend.DeployFrontend
+import com.drivetribe.orchestration.{Git, Lock}
+import com.goyeau.orchestra.{Job, _}
 import com.goyeau.orchestra.filesystem.Directory
+import com.goyeau.orchestra.kubernetes.PodConfig
 import com.typesafe.scalalogging.Logger
 
 object CreateEnvironment {
@@ -44,8 +48,8 @@ object CreateEnvironment {
 
     Seq(
       Future(SqlCopy.job.trigger(Environment.Staging.entryName, environment.entryName)),
-      Future(if (deployFrontend) DeployFrontend.job(environment).trigger(environment.entryName)),
-      Future(if (deployBackend) DeployBackend.job(environment).trigger(environment.entryName))
+      Future(if (deployFrontend) DeployFrontend.job(environment).trigger(backend.Version(Environment.Staging))),
+      Future(if (deployBackend) DeployBackend.job(environment).trigger(frontend.Version(Environment.Staging)))
     ).parallel
   }
 

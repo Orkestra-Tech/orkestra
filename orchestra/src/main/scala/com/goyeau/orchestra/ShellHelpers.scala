@@ -7,7 +7,7 @@ import scala.sys.process
 
 import io.fabric8.kubernetes.client.dsl.ExecListener
 import com.goyeau.orchestra.filesystem.Directory
-import com.goyeau.orchestra.kubernetes.Kubernetes
+import com.goyeau.orchestra.kubernetes.{Container, Kubernetes}
 import okhttp3.Response
 import scala.collection.convert.ImplicitConversionsToScala._
 

@@ -1,16 +1,16 @@
-package com.drivetribe.orchestration
+package com.drivetribe.orchestration.infrastructure
 
-import com.amazonaws.regions.Regions
-import com.amazonaws.services.elasticloadbalancingv2.AmazonElasticLoadBalancingClientBuilder
-import com.amazonaws.services.ec2.AmazonEC2ClientBuilder
-import com.amazonaws.services.elasticloadbalancingv2.model.DescribeTargetHealthRequest
 import scala.collection.convert.ImplicitConversions._
 
+import com.amazonaws.regions.Regions
+import com.amazonaws.services.ec2.AmazonEC2ClientBuilder
 import com.amazonaws.services.ec2.model.{DescribeTagsRequest, Filter}
+import com.amazonaws.services.elasticloadbalancingv2.AmazonElasticLoadBalancingClientBuilder
+import com.amazonaws.services.elasticloadbalancingv2.model.DescribeTargetHealthRequest
 
-object BiColour {
+object Colour {
 
-  def getActiveColour(environment: Environment): EnvironmentColour = {
+  def getActive(environment: Environment): EnvironmentColour = {
     val tfState = TerraformState.fromS3(environment)
     val activeLoadBalancer = tfState.getResourceAttribute(Seq("root"), "aws_alb_target_group.active", "arn")
 

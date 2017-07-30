@@ -1,7 +1,5 @@
 package com.goyeau.orchestra
 
-import RunInfo
-
 object Config {
   def apply(envVar: String) = Option(System.getenv(s"ORCHESTRA_$envVar")).filter(_.nonEmpty)
 

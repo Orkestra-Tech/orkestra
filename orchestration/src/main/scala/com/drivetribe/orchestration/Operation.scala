@@ -1,5 +1,8 @@
 package com.drivetribe.orchestration
 
+import com.drivetribe.orchestration.backend.{DeployBackend, SqlCopy}
+import com.drivetribe.orchestration.frontend.DeployFrontend
+import com.drivetribe.orchestration.infrastructure.Environment
 import com.goyeau.orchestra.FolderBoard
 
 object Operation {
