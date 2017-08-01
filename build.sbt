@@ -1,5 +1,5 @@
 version in ThisBuild ~= (_.replace('+', '-'))
-scalaVersion in ThisBuild := "2.12.2"
+scalaVersion in ThisBuild := "2.12.3"
 scalacOptions in ThisBuild += "-deprecation"
 
 val scalaJsReact = Def.setting {
