@@ -6,7 +6,8 @@ import shapeless.HList
 
 object Job {
 
-  private def jobName(runInfo: RunInfo) = s"orchestra-${runInfo.jobId.name.toLowerCase}-${runInfo.runId}"
+  private def jobName(runInfo: RunInfo) =
+    s"orchestra-${runInfo.jobId.name.toLowerCase}-${runInfo.runId.toString.split("-").head}"
 
   def create[Containers <: HList](runInfo: RunInfo, podConfig: PodConfig[Containers]) = {
     val job = new KubeJob()

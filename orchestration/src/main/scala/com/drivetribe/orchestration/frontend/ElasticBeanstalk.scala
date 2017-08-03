@@ -8,6 +8,7 @@ import scala.collection.convert.ImplicitConversions._
 import com.amazonaws.regions.Regions
 import com.amazonaws.services.elasticbeanstalk.AWSElasticBeanstalkClientBuilder
 import com.amazonaws.services.elasticbeanstalk.model._
+import com.amazonaws.services.s3.AmazonS3ClientBuilder
 import com.amazonaws.services.s3.transfer.TransferManagerBuilder
 import com.drivetribe.orchestration.infrastructure.Environment
 
@@ -26,7 +27,8 @@ object ElasticBeanstalk {
       .nonEmpty
 
   def createApplicationVersion(applicationName: String, version: String, environment: Environment) = {
-    val transferManager = TransferManagerBuilder.defaultTransferManager
+    val s3 = AmazonS3ClientBuilder.standard.withRegion(Regions.EU_WEST_1).build
+    val transferManager = TransferManagerBuilder.standard.withS3Client(s3).build
     val s3Bucket = "drivetribe-web-releases"
     val s3Key = s"web-backend-${version}_${environment.entryName}.json"
     Files.write(Paths.get(s3Key), beanstalkBundle(version, environment).lines.toSeq)

@@ -1,16 +1,19 @@
 package com.drivetribe.orchestration.frontend
 
 import java.io.File
-import java.time.Instant
+import java.time.{Instant, ZonedDateTime}
 import java.time.temporal.ChronoUnit._
 import java.util.Date
 
 import scala.collection.convert.ImplicitConversionsToJava._
 
+import com.amazonaws.regions.Regions
+import com.amazonaws.services.s3.AmazonS3ClientBuilder
 import com.amazonaws.services.s3.model.ObjectMetadata
 import com.amazonaws.services.s3.transfer.{ObjectMetadataProvider, TransferManagerBuilder}
 import com.drivetribe.orchestration.infrastructure._
 import com.drivetribe.orchestration.{Lock, Project}
+import com.goyeau.orchestra.filesystem.LocalFile
 import com.goyeau.orchestra.{Job, _}
 import com.typesafe.scalalogging.Logger
 import io.fabric8.kubernetes.api.model._
@@ -42,8 +45,10 @@ object DeployFrontend {
   def webFrontend(version: String) = {
     println("Deploy web frontend")
 
-    val transferManager = TransferManagerBuilder.defaultTransferManager
-    transferManager.download("drivetribe-web-releases", s"web-frontend-$version.zip", new File("."))
+    val s3 = AmazonS3ClientBuilder.standard.withRegion(Regions.EU_WEST_1).build
+    val transferManager = TransferManagerBuilder.standard.withS3Client(s3).build
+    val packageName = s"web-frontend-$version.zip"
+    transferManager.download("drivetribe-web-releases", packageName, LocalFile(s"./$packageName")).waitForCompletion()
 
     sh(s"""mkdir temp
           |unzip web-frontend-$version.zip -d temp
@@ -51,7 +56,7 @@ object DeployFrontend {
 
     val metadataProvider = new ObjectMetadataProvider {
       override def provideObjectMetadata(file: File, metadata: ObjectMetadata): Unit = {
-        metadata.setExpirationTime(Date.from(Instant.now().plus(1, YEARS)))
+        metadata.setExpirationTime(Date.from(ZonedDateTime.now().plusYears(1).toInstant))
         metadata.setCacheControl("max-age=31536000")
       }
     }
@@ -59,7 +64,7 @@ object DeployFrontend {
     transferManager.uploadDirectory(
       "drivetribe-live-frontend-application",
       version,
-      new File("temp"),
+      LocalFile("temp"),
       true,
       metadataProvider
     )
@@ -78,7 +83,7 @@ object DeployFrontend {
     deployment.setMetadata {
       val meta = new ObjectMeta()
       meta.setName("web-backend")
-      meta.setNamespace("environment")
+      meta.setNamespace(environment.entryName)
       meta
     }
     deployment.setSpec {
@@ -137,6 +142,7 @@ object DeployFrontend {
                     val source = new EnvVarSource()
                     source.setConfigMapKeyRef(new ConfigMapKeySelector("name", "env-vars"))
                     val envVar = new EnvVar()
+                    envVar.setName("configmap")
                     envVar.setValueFrom(source)
                     envVar
                   })
