@@ -40,17 +40,20 @@ trait ShellHelpers {
       .exec("sh", "-c", URLEncoder.encode(s"cd ${workDir.file.getAbsolutePath} && $script", "UTF-8"))
 
     val reader = new BufferedReader(new InputStreamReader(new PipedInputStream(outStream)))
-    try printMkString(reader.lines.iterator.toStream)
+    try printMkString(reader.lines.iterator.toStream, Option(container))
     finally reader.close()
   }
 
-  private def printMkString(stream: Iterable[String]) = {
+  private def printMkString(stream: Iterable[String], container: Option[Container] = None) = {
     val exitCodeRegex = ".*command terminated with non-zero exit code: Error executing in Docker Container: (\\d+).*".r
 
     stream.fold("") { (acc, line) =>
       println(line)
       line match {
-        case exitCodeRegex(exitCode) => throw new RuntimeException(s"Nonzero exit value: $exitCode")
+        case exitCodeRegex(exitCode) =>
+          throw new RuntimeException(
+            s"Nonzero exit value: $exitCode${container.fold("")(c => s" in container ${c.name}")}"
+          )
         case _ => s"$acc\n$line"
       }
     }

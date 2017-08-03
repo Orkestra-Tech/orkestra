@@ -2,7 +2,7 @@ package com.goyeau.orchestra.cron
 
 //import com.goyeau.orchestra.kubernetes.CronJob
 import com.goyeau.orchestra.{Config, JVMApp}
-import com.goyeau.orchestra.Implicits._
+import com.goyeau.orchestra.AkkaImplicits._
 import io.fabric8.kubernetes.api.model.Job
 import io.fabric8.kubernetes.client.DefaultKubernetesClient
 

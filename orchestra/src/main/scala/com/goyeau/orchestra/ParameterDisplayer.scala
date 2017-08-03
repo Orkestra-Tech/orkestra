@@ -10,23 +10,23 @@ trait ParameterDisplayer[P <: Parameter[_]] {
 }
 
 object ParameterDisplayer extends LowPriorityDisplayers {
-  case class State(updated: ((String, Any)) => Callback, get: String => Option[Any]) {
-    def +(kv: (String, Any)) = updated(kv)
+  case class State(updated: ((Symbol, Any)) => Callback, get: Symbol => Option[Any]) {
+    def +(kv: (Symbol, Any)) = updated(kv)
   }
 
   implicit val stringDisplayer = new ParameterDisplayer[Param[String]] {
     def apply(param: Param[String], state: State) = {
       def modValue(event: ReactEventFromInput) = {
         event.persist()
-        state + (param.name -> event.target.value)
+        state + (param.id -> event.target.value)
       }
 
       <.label(
         ^.display.block,
         <.span(param.name),
         <.input.text(
-          ^.key := param.id,
-          ^.value :=? state.get(param.name).flatMap(_.cast[String]).orElse(param.defaultValue),
+          ^.key := param.id.name,
+          ^.value :=? state.get(param.id).flatMap(_.cast[String]).orElse(param.defaultValue),
           ^.onChange ==> modValue
         )
       )
@@ -37,15 +37,15 @@ object ParameterDisplayer extends LowPriorityDisplayers {
     def apply(param: Param[Int], state: ParameterDisplayer.State) = {
       def modValue(event: ReactEventFromInput) = {
         event.persist()
-        state + (param.name -> event.target.value.toInt)
+        state + (param.id -> event.target.value.toInt)
       }
 
       <.label(
         ^.display.block,
         <.span(param.name),
         <.input.text(
-          ^.key := param.id,
-          ^.value :=? state.get(param.name).flatMap(_.cast[Int]).orElse(param.defaultValue).map(_.toString),
+          ^.key := param.id.name,
+          ^.value :=? state.get(param.id).flatMap(_.cast[Int]).orElse(param.defaultValue).map(_.toString),
           ^.onChange ==> modValue
         )
       )
@@ -56,14 +56,14 @@ object ParameterDisplayer extends LowPriorityDisplayers {
     def apply(param: Param[Boolean], state: ParameterDisplayer.State) = {
       def modValue(event: ReactEventFromInput) = {
         event.persist()
-        state + (param.name -> event.target.value.toBoolean)
+        state + (param.id -> event.target.checked)
       }
 
       <.label(
         ^.display.block,
         <.input.checkbox(
-          ^.key := param.id,
-          ^.value :=? state.get(param.name).flatMap(_.cast[Boolean]).orElse(param.defaultValue).map(_.toString),
+          ^.key := param.id.name,
+          ^.checked :=? state.get(param.id).flatMap(_.cast[Boolean]).orElse(param.defaultValue),
           ^.onChange ==> modValue
         ),
         <.span(param.name)

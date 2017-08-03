@@ -22,7 +22,7 @@ object CreateEnvironment {
   def board(environment: Environment) =
     SingleJobBoard("Create", jobDefinition(environment))(
       Param[String]("Source Environment", defaultValue = Some("staging")),
-      Param[Boolean]("Deploy Frontend"),
+      Param[Boolean]("Deploy Frontend", defaultValue = Some(true)),
       Param[Boolean]("Deploy Backend")
     )
 

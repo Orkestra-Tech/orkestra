@@ -33,7 +33,7 @@
 //          )
 //        )
 //      )
-//      jobScheduleEntity <- cronJobScheduleResponse.entity.dataBytes.runFold(ByteString(""))(_ ++ _)
+//      jobScheduleEntity <- cronJobScheduleResponse.entity.dataBytes.runFold(ByteString.empty)(_ ++ _)
 //    } yield
 //      if (cronJobScheduleResponse.status.isFailure) {
 //        val message =

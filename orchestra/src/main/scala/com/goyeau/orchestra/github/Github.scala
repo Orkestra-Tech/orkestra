@@ -4,7 +4,7 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.server.Directives.{entity, _}
 import com.goyeau.orchestra.{Config, JVMApp}
-import com.goyeau.orchestra.Implicits._
+import com.goyeau.orchestra.AkkaImplicits._
 import io.circe.parser._
 
 trait Github extends JVMApp {

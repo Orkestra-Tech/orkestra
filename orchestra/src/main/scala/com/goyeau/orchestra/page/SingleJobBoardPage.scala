@@ -26,7 +26,7 @@ object SingleJobBoardPage {
       .builder[Unit](getClass.getSimpleName)
       .initialState {
         val jobInfo = RunInfo(job.id, Option(UUID.randomUUID()))
-        (jobInfo, Map[String, Any](RunId.name -> jobInfo.runId), <.div("Loading runs"))
+        (jobInfo, Map[Symbol, Any](RunId.id -> jobInfo.runId), <.div("Loading runs"))
       }
       .render { $ =>
         def runJob = Callback.future {

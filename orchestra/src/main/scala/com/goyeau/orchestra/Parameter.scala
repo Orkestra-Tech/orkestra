@@ -3,12 +3,12 @@ package com.goyeau.orchestra
 import java.util.UUID
 
 sealed trait Parameter[T] {
-  lazy val id: String = name.toLowerCase.replaceAll("\\s", "")
+  lazy val id: Symbol = Symbol(name.toLowerCase.replaceAll("\\s", ""))
   def name: String
   def defaultValue: Option[T]
-  def getValue(valueMap: Map[String, Any]): T =
+  def getValue(valueMap: Map[Symbol, Any]): T =
     valueMap
-      .get(name)
+      .get(id)
       .map(_.asInstanceOf[T])
       .orElse(defaultValue)
       .getOrElse(throw new IllegalArgumentException(s"Can't get param $name"))
@@ -17,6 +17,6 @@ sealed trait Parameter[T] {
 case class Param[T](name: String, defaultValue: Option[T] = None) extends Parameter[T]
 
 object RunId extends Parameter[UUID] {
-  val name = "runId"
+  val name = "Run ID"
   def defaultValue = None
 }

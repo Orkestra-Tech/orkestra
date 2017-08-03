@@ -3,7 +3,7 @@ package com.goyeau.orchestra
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Directives._
 import com.goyeau.orchestra.route.BackendRoutes
-import com.goyeau.orchestra.Implicits._
+import com.goyeau.orchestra.AkkaImplicits._
 
 trait Jobs extends JVMApp with BackendRoutes {
 
