@@ -1,11 +1,8 @@
 package com.drivetribe.orchestration.frontend
 
 import java.io.File
-import java.time.{Instant, ZonedDateTime}
-import java.time.temporal.ChronoUnit._
+import java.time.ZonedDateTime
 import java.util.Date
-
-import scala.collection.convert.ImplicitConversionsToJava._
 
 import com.amazonaws.regions.Regions
 import com.amazonaws.services.s3.AmazonS3ClientBuilder
@@ -13,17 +10,16 @@ import com.amazonaws.services.s3.model.ObjectMetadata
 import com.amazonaws.services.s3.transfer.{ObjectMetadataProvider, TransferManagerBuilder}
 import com.drivetribe.orchestration.infrastructure._
 import com.drivetribe.orchestration.{Lock, Project}
+import com.goyeau.kubernetesclient.{KubeConfig, KubernetesClient}
 import com.goyeau.orchestra.filesystem.LocalFile
 import com.goyeau.orchestra.{Job, _}
+import com.goyeau.orchestra.AkkaImplicits._
 import com.typesafe.scalalogging.Logger
-import io.fabric8.kubernetes.api.model._
-import io.fabric8.kubernetes.api.model.extensions.{
-  Deployment,
-  DeploymentSpec,
-  DeploymentStrategy,
-  RollingUpdateDeployment
-}
-import io.fabric8.kubernetes.client.DefaultKubernetesClient
+import io.k8s.api.apps.v1beta1.{Deployment, DeploymentSpec, DeploymentStrategy, RollingUpdateDeployment}
+import io.k8s.api.core.v1._
+import io.k8s.apimachinery.pkg.api.resource.Quantity
+import io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta
+import io.k8s.apimachinery.pkg.util.intstr.IntOrString
 
 object DeployFrontend {
 
@@ -77,99 +73,68 @@ object DeployFrontend {
   }
 
   def deployOnKubernetes(version: String, environment: Environment) = {
-    val kube = new DefaultKubernetesClient()
+    val kube = KubernetesClient(KubeConfig(new File("/opt/docker/secrets/kube/config")))
 
-    val deployment = new Deployment()
-    deployment.setMetadata {
-      val meta = new ObjectMeta()
-      meta.setName("web-backend")
-      meta.setNamespace(environment.entryName)
-      meta
-    }
-    deployment.setSpec {
-      val spec = new DeploymentSpec()
-      spec.setReplicas(2)
-      spec.setStrategy {
-        val strategy = new DeploymentStrategy()
-        strategy.setType("RollingUpdate")
-        strategy.setRollingUpdate(new RollingUpdateDeployment(new IntOrString("10%"), new IntOrString("50%")))
-        strategy
-      }
-      spec.setTemplate(
-        new PodTemplateSpec(
-          {
-            val meta = new ObjectMeta()
-            meta.setLabels(Map("app" -> "web", "tier" -> "frontend", "environment" -> environment.entryName))
-            meta
-          }, {
-            val spec = new PodSpec()
-            spec.setContainers(
-              Seq(
-                {
-                  val container = new Container()
-                  container.setName("nginx")
-                  container.setImage("nginx")
-                  container.setResources(
-                    new ResourceRequirements(
-                      Map("cpu" -> new Quantity("100m"), "memory" -> new Quantity("128Mi")),
-                      Map("cpu" -> new Quantity("80m"), "memory" -> new Quantity("64Mi"))
+    val deployment = Deployment(
+      metadata = Option(ObjectMeta()),
+      spec = Option(
+        DeploymentSpec(
+          replicas = Option(2),
+          strategy = Option(
+            DeploymentStrategy(
+              `type` = Option("RollingUpdate"),
+              rollingUpdate = Option(RollingUpdateDeployment(Option(IntOrString("10%")), Option(IntOrString("50%"))))
+            )
+          ),
+          template = PodTemplateSpec(
+            metadata = Option(
+              ObjectMeta(
+                labels = Option(Map("app" -> "web", "tier" -> "frontend", "environment" -> environment.entryName))
+              )
+            ),
+            spec = Option(
+              PodSpec(
+                containers = Seq(
+                  Container(
+                    name = "nginx",
+                    image = "nginx",
+                    resources = Option(
+                      ResourceRequirements(
+                        Option(Map("cpu" -> Quantity("100m"), "memory" -> Quantity("128Mi"))),
+                        Option(Map("cpu" -> Quantity("80m"), "memory" -> Quantity("64Mi")))
+                      )
+                    ),
+                    volumeMounts = Option(Seq(VolumeMount(name = "nginx-config", mountPath = "/etc/nginx/conf.d"))),
+                    ports = Option(Seq(ContainerPort(name = Option("http"), containerPort = 8080)))
+                  ),
+                  Container(
+                    name = "web-backend",
+                    image = s"registry.drivetribe.com/app/web-backend:$version",
+                    resources = Option(
+                      ResourceRequirements(
+                        Option(Map("cpu" -> Quantity("125m"), "memory" -> Quantity("256Mi"))),
+                        Option(Map("cpu" -> Quantity("100m"), "memory" -> Quantity("256Mi")))
+                      )
+                    ),
+                    envFrom = Option(Seq(EnvFromSource(configMapRef = Option(ConfigMapEnvSource(Option("env-vars"))))))
+                  )
+                ),
+                volumes = Option(
+                  Seq(
+                    Volume(
+                      name = "nginx-config",
+                      configMap = Option(ConfigMapVolumeSource(name = Option("nginx-config")))
                     )
                   )
-                  container.setVolumeMounts(Seq {
-                    val volumeMount = new VolumeMount()
-                    volumeMount.setName("nginx-config")
-                    volumeMount.setMountPath("/etc/nginx/conf.d")
-                    volumeMount
-                  })
-                  container.setPorts(Seq {
-                    val port = new ContainerPort()
-                    port.setName("http")
-                    port.setContainerPort(8080)
-                    port
-                  })
-                  container
-                }, {
-                  val container = new Container()
-                  container.setName("web-backend")
-                  container.setImage(s"registry.drivetribe.com/app/web-backend:$version")
-                  container.setResources(
-                    new ResourceRequirements(
-                      Map("cpu" -> new Quantity("125m"), "memory" -> new Quantity("256Mi")),
-                      Map("cpu" -> new Quantity("100m"), "memory" -> new Quantity("256Mi"))
-                    )
-                  )
-                  container.setEnv(Seq {
-                    val source = new EnvVarSource()
-                    source.setConfigMapKeyRef(new ConfigMapKeySelector("name", "env-vars"))
-                    val envVar = new EnvVar()
-                    envVar.setName("configmap")
-                    envVar.setValueFrom(source)
-                    envVar
-                  })
-                  container
-                }
+                )
               )
             )
-            spec.setVolumes(
-              Seq {
-                val volume = new Volume()
-                volume.setName("nginx-config")
-                volume.setConfigMap {
-                  val configMap = new ConfigMapVolumeSource()
-                  configMap.setName("nginx-config")
-                  configMap
-                }
-                volume
-              }
-            )
-            spec
-          }
+          )
         )
       )
-      spec
-    }
+    )
 
-    kube.extensions.deployments.createOrReplace(deployment)
+    kube.namespaces(environment.entryName).deployments.create(deployment)
   }
 
   def deployOnBeanstalk(version: String, environment: Environment) = {

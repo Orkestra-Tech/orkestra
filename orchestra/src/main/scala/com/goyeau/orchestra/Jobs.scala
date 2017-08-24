@@ -22,8 +22,8 @@ trait Jobs extends JVMApp with BackendRoutes {
   override def main(args: Array[String]): Unit = {
     super.main(args)
 
-    Config.runInfo.fold[Unit] {
-      val port = Config.port.getOrElse(throw new IllegalStateException("ORCHESTRA_PORT should be set"))
+    OrchestraConfig.runInfo.fold[Unit] {
+      val port = OrchestraConfig.port.getOrElse(throw new IllegalStateException("ORCHESTRA_PORT should be set"))
       Http().bindAndHandle(routes, "0.0.0.0", port)
     } { runInfo =>
       jobs

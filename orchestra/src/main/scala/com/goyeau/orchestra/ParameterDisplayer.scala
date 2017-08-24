@@ -63,7 +63,7 @@ object ParameterDisplayer extends LowPriorityDisplayers {
         ^.display.block,
         <.input.checkbox(
           ^.key := param.id.name,
-          ^.checked :=? state.get(param.id).flatMap(_.cast[Boolean]).orElse(param.defaultValue),
+          ^.checked := state.get(param.id).flatMap(_.cast[Boolean]).orElse(param.defaultValue).getOrElse(false),
           ^.onChange ==> modValue
         ),
         <.span(param.name)

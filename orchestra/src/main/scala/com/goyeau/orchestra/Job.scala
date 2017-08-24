@@ -4,7 +4,8 @@ import java.io.{File, FileOutputStream, PrintStream, PrintWriter}
 import java.time.Instant
 import java.util.UUID
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{Await, ExecutionContext}
+import scala.concurrent.duration.Duration
 import scala.io.Source
 import scala.language.{higherKinds, implicitConversions}
 
@@ -14,7 +15,7 @@ import autowire.Core
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.auto._
 import ARunStatus._
-import com.goyeau.orchestra.kubernetes.PodConfig
+import com.goyeau.orchestra.kubernetes.{JobUtils, PodConfig}
 import shapeless._
 import shapeless.ops.function.FnToProduct
 
@@ -58,9 +59,9 @@ object Job {
   ) {
 
     def run(runInfo: RunInfo): Unit = {
-      new File(Config.runDirPath(runInfo)).mkdirs()
-      val logsOut = new PrintStream(new FileOutputStream(Config.logsFilePath(runInfo), true), true)
-      val statusWriter = new PrintWriter(Config.statusFilePath(runInfo))
+      new File(OrchestraConfig.runDirPath(runInfo)).mkdirs()
+      val logsOut = new PrintStream(new FileOutputStream(OrchestraConfig.logsFilePath(runInfo), true), true)
+      val statusWriter = new PrintWriter(OrchestraConfig.statusFilePath(runInfo))
 
       Utils.withOutErr(logsOut) {
         try {
@@ -68,7 +69,7 @@ object Job {
             AutowireServer.write[ARunStatus[Result]](ARunStatus.Running(Instant.now().toEpochMilli)) + "\n"
           )
           val result =
-            job(AutowireServer.read[ParamValues](Source.fromFile(Config.paramsFilePath(runInfo)).mkString))
+            job(AutowireServer.read[ParamValues](Source.fromFile(OrchestraConfig.paramsFilePath(runInfo)).mkString))
           statusWriter.append(
             AutowireServer.write[ARunStatus[Result]](ARunStatus.Success(Instant.now().toEpochMilli, result)) + "\n"
           )
@@ -79,26 +80,26 @@ object Job {
         } finally {
           statusWriter.close()
           logsOut.close()
-          kubernetes.Job.delete(runInfo)
+          JobUtils.delete(runInfo)
         }
       }
     }
 
     val apiServer = new definition.Api {
       override def run(runInfo: RunInfo, params: ParamValues): ARunStatus[Result] = {
-        val runDir = new File(Config.runDirPath(runInfo))
-        val statusFile = new File(Config.statusFilePath(runInfo))
+        val runDir = new File(OrchestraConfig.runDirPath(runInfo))
+        val statusFile = new File(OrchestraConfig.statusFilePath(runInfo))
 
         if (runDir.exists() && statusFile.exists())
           AutowireServer.read[ARunStatus[Result]](Source.fromFile(statusFile).getLines().toSeq.last)
         else if (runDir.exists() && !statusFile.exists()) ARunStatus.Unknown
         else {
           runDir.mkdirs()
-          val paramsWriter = new PrintWriter(Config.paramsFilePath(runInfo))
+          val paramsWriter = new PrintWriter(OrchestraConfig.paramsFilePath(runInfo))
           try paramsWriter.write(AutowireServer.write(params))
           finally paramsWriter.close()
 
-          kubernetes.Job.create(runInfo, podConfig)
+          JobUtils.create(runInfo, podConfig)
 
           val status = ARunStatus.Scheduled(Instant.now().toEpochMilli)
           val statusWriter = new PrintWriter(statusFile)
@@ -109,14 +110,14 @@ object Job {
       }
 
       override def logs(runId: UUID, from: Int): Seq[String] =
-        Option(new File(Config.logsFilePath(RunInfo(definition.id, Some(runId)))))
+        Option(new File(OrchestraConfig.logsFilePath(RunInfo(definition.id, Some(runId)))))
           .filter(_.exists)
           .fold(Seq.empty[String]) { a =>
             Source.fromFile(a).getLines().slice(from, Int.MaxValue).toSeq
           }
 
       def runs(): Seq[UUID] =
-        Seq(new File(Config.jobDirPath(definition.id)))
+        Seq(new File(OrchestraConfig.jobDirPath(definition.id)))
           .filter(_.exists())
           .flatMap(_.listFiles())
           .filter(_.isDirectory)

@@ -7,7 +7,7 @@ import com.goyeau.orchestra.kubernetes.Container
 object AnsibleContainer
     extends Container("ansible", "registry.drivetribe.com/tools/ansible:cached", tty = true, Seq("cat")) {
 
-  def install(implicit workDir: Directory) = {
+  def install()(implicit workDir: Directory) = {
     println("Install Ansible dependencies")
     sh("ansible-galaxy install -r ansible/requirements.yml", this)
   }

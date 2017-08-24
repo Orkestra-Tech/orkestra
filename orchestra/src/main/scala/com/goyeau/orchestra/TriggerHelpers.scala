@@ -20,5 +20,5 @@ trait TriggerHelpers {
       job.apiServer.run(runInfo(job), tupleToHList.to(params))
   }
 
-  private def runInfo(job: Job.Runner[_, _, _, _]) = RunInfo(job.definition.id, Config.runInfo.map(_.runId))
+  private def runInfo(job: Job.Runner[_, _, _, _]) = RunInfo(job.definition.id, OrchestraConfig.runInfo.map(_.runId))
 }

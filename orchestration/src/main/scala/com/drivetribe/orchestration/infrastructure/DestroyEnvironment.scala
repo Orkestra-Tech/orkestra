@@ -1,11 +1,14 @@
 package com.drivetribe.orchestration.infrastructure
 
+import java.io.File
+
 import com.drivetribe.orchestration.{Git, Lock}
+import com.goyeau.kubernetesclient.{KubeConfig, KubernetesClient}
 import com.goyeau.orchestra.{Job, _}
 import com.goyeau.orchestra.filesystem.Directory
 import com.goyeau.orchestra.kubernetes.PodConfig
 import com.typesafe.scalalogging.Logger
-import io.fabric8.kubernetes.client.DefaultKubernetesClient
+import com.goyeau.orchestra.AkkaImplicits._
 
 object DestroyEnvironment {
 
@@ -25,7 +28,7 @@ object DestroyEnvironment {
       dir("infrastructure") { implicit workDir =>
         // @TODO Remove this hack when federation can delete a namespaces
         cleanKubernetes(environment)
-        ansible.install
+        ansible.install()
         Init(environment, ansible, terraform)
         destroy(environment, terraform)
       }
@@ -34,9 +37,9 @@ object DestroyEnvironment {
 
   def cleanKubernetes(environment: Environment) = {
     println("Clean Kubernetes")
-    val kube = new DefaultKubernetesClient()
-    kube.services.inNamespace(environment.entryName).delete()
-    kube.extensions.deployments.inNamespace(environment.entryName).delete()
+    val kube = KubernetesClient(KubeConfig(new File("/opt/docker/secrets/kube/config")))
+    kube.namespaces(environment.entryName).services.delete()
+    kube.namespaces(environment.entryName).deployments.delete()
   }
 
   def destroy(environment: Environment, terraform: TerraformContainer.type)(implicit workDir: Directory) = {

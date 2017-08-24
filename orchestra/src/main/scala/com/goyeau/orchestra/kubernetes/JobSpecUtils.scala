@@ -1,63 +1,60 @@
 package com.goyeau.orchestra.kubernetes
 
-import com.goyeau.orchestra.{AutowireServer, Config, RunInfo}
-import io.fabric8.kubernetes.api.model._
-import scala.collection.convert.ImplicitConversions._
+import com.goyeau.orchestra.{AutowireServer, OrchestraConfig, RunInfo}
 import scala.language.reflectiveCalls
 
-import io.fabric8.kubernetes.api.model.{Container => KubeContainer}
 import io.circe.generic.auto._
+import io.k8s.api.batch.v1.JobSpec
+import io.k8s.api.core.v1.{
+  EmptyDirVolumeSource,
+  EnvVar,
+  Pod,
+  PodSpec,
+  PodTemplateSpec,
+  Volume,
+  VolumeMount,
+  Container => KubeContainer
+}
 
 object JobSpecUtils {
-  private val homeDirMount = {
-    val volumeMount = new VolumeMount()
-    volumeMount.setName("home")
-    volumeMount.setMountPath(Config.workspace)
-    volumeMount
-  }
-  private val homeDirVolume = {
-    val volume = new Volume()
-    volume.setName("home")
-    volume.setEmptyDir(new EmptyDirVolumeSource())
-    volume
-  }
+  private val homeDirMount = VolumeMount(name = "home", mountPath = OrchestraConfig.workspace)
+  private val homeDirVolume = Volume(name = "home", emptyDir = Option(EmptyDirVolumeSource()))
 
-  private def createContainer(container: Container, masterContainer: KubeContainer): KubeContainer = {
-    val kubeContainer = new KubeContainer()
-    kubeContainer.setName(container.name)
-    kubeContainer.setImage(container.image)
-    kubeContainer.setEnv(masterContainer.getEnv)
-    kubeContainer.setStdin(true)
-    kubeContainer.setTty(true)
-    kubeContainer.setCommand(container.command)
-    kubeContainer.setWorkingDir(Config.workspace)
-    kubeContainer.setVolumeMounts(masterContainer.getVolumeMounts)
-    kubeContainer
-  }
+  private def createContainer(container: Container, masterContainer: KubeContainer): KubeContainer =
+    KubeContainer(
+      name = container.name,
+      image = container.image,
+      env = masterContainer.env,
+      stdin = Option(true),
+      tty = Option(true),
+      command = Option(container.command),
+      workingDir = Option(OrchestraConfig.workspace),
+      volumeMounts = Option(distinctOnName(masterContainer.volumeMounts.toSeq.flatten :+ JobSpecUtils.homeDirMount))
+    )
 
   def createJobSpec(masterPod: Pod, runInfo: RunInfo, podConfig: PodConfig[_]) = {
-    val masterSpec = masterPod.getSpec
-    val masterContainer = masterSpec.getContainers.head
-    val runInfoEnvVar = new EnvVar("ORCHESTRA_RUN_INFO", AutowireServer.write(runInfo), null)
-    masterContainer.setEnv(distinctOnName(runInfoEnvVar +: masterContainer.getEnv))
-    masterContainer.setWorkingDir(Config.workspace)
-    masterContainer.setVolumeMounts(distinctOnName(masterContainer.getVolumeMounts :+ JobSpecUtils.homeDirMount))
+    val masterSpec = masterPod.spec.get
+    val masterContainer = masterSpec.containers.head
+    val runInfoEnvVar = EnvVar("ORCHESTRA_RUN_INFO", value = Option(AutowireServer.write(runInfo)))
+    val slaveContainer = masterContainer.copy(
+      env = Option(distinctOnName(runInfoEnvVar +: masterContainer.env.toSeq.flatten)),
+      workingDir = Option(OrchestraConfig.workspace),
+      volumeMounts = Option(distinctOnName(masterContainer.volumeMounts.toSeq.flatten :+ JobSpecUtils.homeDirMount))
+    )
 
-    val jobSpec = new JobSpec()
-    jobSpec.setTemplate {
-      val podTemplateSpec = new PodTemplateSpec()
-      podTemplateSpec.setSpec {
-        val podSpec = new PodSpec()
-        podSpec.setContainers(masterContainer +: podConfig.containerSeq.map(createContainer(_, masterContainer)))
-        podSpec.setVolumes(distinctOnName(masterSpec.getVolumes :+ JobSpecUtils.homeDirVolume))
-        podSpec.setRestartPolicy("Never")
-        podSpec
-      }
-      podTemplateSpec
-    }
-    jobSpec
+    JobSpec(
+      template = PodTemplateSpec(
+        spec = Option(
+          PodSpec(
+            containers = slaveContainer +: podConfig.containerSeq.map(createContainer(_, masterContainer)),
+            volumes = Option(distinctOnName(masterSpec.volumes.toSeq.flatten :+ JobSpecUtils.homeDirVolume)),
+            restartPolicy = Option("Never")
+          )
+        )
+      )
+    )
   }
 
-  private def distinctOnName[A <: { def getName(): String }](list: Seq[A]): Seq[A] =
-    list.groupBy(_.getName()).values.map(_.head).toSeq
+  private def distinctOnName[A <: { def name: String }](list: Seq[A]): Seq[A] =
+    list.groupBy(_.name).values.map(_.head).toSeq
 }

@@ -29,7 +29,7 @@ object DeployBackend {
 
     Lock.onDeployment(environment, Project.Backend) {
       dir("infrastructure") { implicit workDir =>
-        ansible.install
+        ansible.install()
         Init(environment, ansible, terraform)
 
         val activeColour =

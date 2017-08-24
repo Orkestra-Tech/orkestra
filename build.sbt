@@ -64,15 +64,16 @@ val circeJVM = Def.setting {
 lazy val orchestra = crossProject
   .crossType(CrossType.Pure)
   .enablePlugins(ScalaJSPlugin)
-  // For some reason we need to manually separate the JVM and JS version
+  // For some reason we need to manually separate the JVM and JS version of Circe
   .jsSettings(libraryDependencies ++= circeJS.value)
   .jvmSettings(libraryDependencies ++= circeJVM.value)
   .settings(
+    organization := "com.goyeau",
     libraryDependencies ++= Seq(
       "com.chuusai" %%% "shapeless" % "2.3.2",
       "com.vmunier" %% "scalajs-scripts" % "1.1.1",
       "org.eclipse.jgit" % "org.eclipse.jgit" % "4.8.0.201706111038-r",
-      "io.fabric8" % "kubernetes-client" % "2.5.7"
+      "com.goyeau" %% "kubernetes-client" % "HEAD+20170824-0037"
     ) ++ scalaJsReact.value ++ akkaHttp.value ++ scalaCss.value ++ autowire.value ++ logging.value,
     jsDependencies ++= Seq(
       "org.webjars.npm" % "ansi_up" % "2.0.2" / "ansi_up.js" commonJSName "ansi_up"
@@ -86,6 +87,7 @@ lazy val orchestration = crossProject
   .crossType(CrossType.Pure)
   .dependsOn(orchestra)
   .settings(
+    organization := "com.drivetribe",
     libraryDependencies ++= Seq(
       "com.beachape" %%% "enumeratum" % "1.5.12",
       "com.amazonaws" % "aws-java-sdk" % "1.11.167"

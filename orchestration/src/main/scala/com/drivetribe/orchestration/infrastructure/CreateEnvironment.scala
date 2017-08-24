@@ -36,7 +36,7 @@ object CreateEnvironment {
 
     Lock.onEnvironment(environment) {
       dir("infrastructure") { implicit workDir =>
-        ansible.install
+        ansible.install()
         Init(environment, ansible, terraform)
         Seq(
           provisionCloudResources(environment, terraform),

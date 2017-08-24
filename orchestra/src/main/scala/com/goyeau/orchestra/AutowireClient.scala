@@ -21,11 +21,11 @@ case class AutowireClient(jobId: Symbol) extends autowire.Client[String, Decoder
       )
       .map(_.responseText)
 
-  override def read[T: Decoder](json: String) =
-    decode[T](json) match {
+  override def read[T: Decoder](raw: String) =
+    decode[T](raw) match {
       case Left(e) => throw new Exception(e)
       case Right(result) => result
     }
 
-  override def write[T: Encoder](o: T) = o.asJson.noSpaces
+  override def write[T: Encoder](obj: T) = obj.asJson.noSpaces
 }
