@@ -27,7 +27,9 @@ trait ShellHelpers {
         data.utf8String match {
           case messageData @ exitCodeRegex(exitCode) =>
             println(messageData)
-            throw new RuntimeException(s"Nonzero exit value: $exitCode in container ${container.name}")
+            throw new RuntimeException(
+              s"Nonzero exit value: $exitCode for shell '$script' in container '${container.name}'"
+            )
           case messageData =>
             print(messageData)
             acc + messageData

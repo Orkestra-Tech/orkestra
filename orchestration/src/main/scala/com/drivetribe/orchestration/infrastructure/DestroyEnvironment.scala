@@ -1,6 +1,6 @@
 package com.drivetribe.orchestration.infrastructure
 
-import java.io.File
+import java.io.{File, IOException}
 
 import com.drivetribe.orchestration.{Git, Lock}
 import com.goyeau.kubernetesclient.{KubeConfig, KubernetesClient}
@@ -38,8 +38,14 @@ object DestroyEnvironment {
   def cleanKubernetes(environment: Environment) = {
     println("Clean Kubernetes")
     val kube = KubernetesClient(KubeConfig(new File("/opt/docker/secrets/kube/config")))
-    kube.namespaces(environment.entryName).services.delete()
-    kube.namespaces(environment.entryName).deployments.delete()
+    val deleteAll = for {
+      _ <- kube.namespaces(environment.entryName).services.delete()
+      _ <- kube.namespaces(environment.entryName).deployments.delete()
+    } yield ()
+    deleteAll.failed.foreach {
+      case e: IOException if e.getMessage.contains("""namespaces \"nardo\" not found""") =>
+      case e                                                                             => throw e
+    }
   }
 
   def destroy(environment: Environment, terraform: TerraformContainer.type)(implicit workDir: Directory) = {

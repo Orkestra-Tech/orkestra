@@ -4,6 +4,9 @@ import java.io.File
 import java.time.ZonedDateTime
 import java.util.Date
 
+import scala.concurrent.Await
+import scala.concurrent.duration.Duration
+
 import com.amazonaws.regions.Regions
 import com.amazonaws.services.s3.AmazonS3ClientBuilder
 import com.amazonaws.services.s3.model.ObjectMetadata
@@ -76,7 +79,7 @@ object DeployFrontend {
     val kube = KubernetesClient(KubeConfig(new File("/opt/docker/secrets/kube/config")))
 
     val deployment = Deployment(
-      metadata = Option(ObjectMeta()),
+      metadata = Option(ObjectMeta(name = Option("web-backend"), namespace = Option(environment.entryName))),
       spec = Option(
         DeploymentSpec(
           replicas = Option(2),
@@ -134,7 +137,7 @@ object DeployFrontend {
       )
     )
 
-    kube.namespaces(environment.entryName).deployments.create(deployment)
+    Await.result(kube.namespaces(environment.entryName).deployments.create(deployment), Duration.Inf)
   }
 
   def deployOnBeanstalk(version: String, environment: Environment) = {

@@ -48,8 +48,8 @@ object CreateEnvironment {
 
     Seq(
       Future(SqlCopy.job.trigger(Environment.Staging.entryName, environment.entryName)),
-      Future(if (deployFrontend) DeployFrontend.job(environment).trigger(backend.Version(Environment.Staging))),
-      Future(if (deployBackend) DeployBackend.job(environment).trigger(frontend.Version(Environment.Staging)))
+      Future(if (deployFrontend) DeployFrontend.job(environment).trigger(frontend.Version(Environment.Staging))),
+      Future(if (deployBackend) DeployBackend.job(environment).trigger(backend.Version(Environment.Staging)))
     ).parallel
   }
 

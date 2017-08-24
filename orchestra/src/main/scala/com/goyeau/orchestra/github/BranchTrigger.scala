@@ -15,14 +15,12 @@ case class BranchTrigger(repoName: String, branchRegex: String, job: Job.Runner[
               json: Json)(implicit ec: ExecutionContext, system: ActorSystem, mat: Materializer): Unit =
     eventType match {
       case "create" | "push" =>
-        for {
-          eventRepoNameJson <- json.hcursor.downField("repository").downField("full_name").focus
-          eventRepoName = eventRepoNameJson.as[String].fold(throw _, identity)
-          if eventRepoName == repoName
-          eventBranchJson <- json.hcursor.downField("ref").focus
-          eventBranch = eventBranchJson.as[String].fold(throw _, identity).replace("refs/heads/", "")
-          if branchRegex.r.findFirstIn(eventBranch).isDefined
-        } yield job.apiServer.run(RunInfo(job.definition.id, Option(UUID.randomUUID())), eventBranch :: HNil)
+        val eventRepoName =
+          json.hcursor.downField("repository").downField("full_name").as[String].fold(throw _, identity)
+        val eventBranch = json.hcursor.downField("ref").as[String].fold(throw _, identity).replace("refs/heads/", "")
+
+        if (eventRepoName == repoName && branchRegex.r.findFirstIn(eventBranch).isDefined)
+          job.apiServer.run(RunInfo(job.definition.id, Option(UUID.randomUUID())), eventBranch :: HNil)
       case _ =>
     }
 }

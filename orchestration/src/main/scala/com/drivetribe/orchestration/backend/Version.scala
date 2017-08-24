@@ -8,15 +8,16 @@ import akka.http.scaladsl.model.HttpRequest
 import akka.util.ByteString
 import com.drivetribe.orchestration.infrastructure.Environment
 import com.goyeau.orchestra.AkkaImplicits._
+import io.circe.parser._
 
 object Version {
 
   def apply(environment: Environment): String = {
-    val result = for {
+    val version = for {
       response <- Http().singleRequest(HttpRequest(uri = s"${environment.monitoringApi}/versions"))
       entity <- response.entity.dataBytes.runFold(ByteString.empty)(_ ++ _)
-    } yield entity.utf8String
+    } yield parse(entity.utf8String).flatMap(_.hcursor.downField("build").as[String]).fold(throw _, identity)
 
-    Await.result(result, Duration.Inf)
+    Await.result(version, Duration.Inf)
   }
 }
