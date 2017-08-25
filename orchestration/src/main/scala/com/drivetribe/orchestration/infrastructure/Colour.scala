@@ -12,6 +12,8 @@ import com.drivetribe.orchestration.{Environment, EnvironmentColour}
 object Colour {
 
   def getActive(environment: Environment): EnvironmentColour = {
+    require(environment.isBiColour, s"$environment is not a bicolour environment")
+
     val tfState = TerraformState.fromS3(environment)
     val activeLoadBalancer = tfState.getResourceAttribute(Seq("root"), "aws_alb_target_group.active", "arn")
 

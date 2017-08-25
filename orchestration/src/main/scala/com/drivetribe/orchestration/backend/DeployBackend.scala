@@ -1,7 +1,6 @@
 package com.drivetribe.orchestration.backend
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
 
 import com.drivetribe.orchestration._
 import com.drivetribe.orchestration.infrastructure._
@@ -39,7 +38,7 @@ object DeployBackend {
         dtTools(environment, version, inactiveColour, ansible)
         Seq(
           DeployRestApi.deploy(environment, version, inactiveColour, terraform, ansible),
-          deployFlink(environment, version, inactiveColour, ansible)
+          DeployFlinkJob.deploy(environment, version, inactiveColour, ansible)
         ).parallel
       }
     }
@@ -64,32 +63,5 @@ object DeployBackend {
     }
   }
 
-  def deployFlink(environment: Environment,
-                  version: String,
-                  colour: Option[EnvironmentColour],
-                  ansible: AnsibleContainer.type)(
-    implicit workDir: Directory
-  ) = Future {
-    println("Deploy Flink")
-    dir("ansible") { implicit workDir =>
-      val flinkJobEnvParam =
-        if (environment.isProd) s"flink_job_list=default"
-        else "single_flink_job=all-jobs"
-
-      val envParams = Seq(
-        s"env_name=${environment.entryName}",
-        s"data_processing_version=$version",
-        s"dt_tools_version=$version",
-        flinkJobEnvParam,
-        StateVersions.template(version)
-      ) ++ ansibleColourEnvParam(colour)
-
-      ansible.playbook(
-        "deploy-flink.yml",
-        envParams.map(p => s"-e $p").mkString(" ")
-      )
-    }
-  }
-
-  private def ansibleColourEnvParam(colour: Option[EnvironmentColour]) = colour.map(c => s"colour=${c.entryName}")
+  def ansibleColourEnvParam(colour: Option[EnvironmentColour]) = colour.map(c => s"colour=${c.entryName}")
 }

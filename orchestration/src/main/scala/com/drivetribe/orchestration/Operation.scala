@@ -1,6 +1,6 @@
 package com.drivetribe.orchestration
 
-import com.drivetribe.orchestration.backend.{DeployBackend, DeployRestApi, SqlCopy}
+import com.drivetribe.orchestration.backend.{DeployBackend, DeployFlinkJob, DeployRestApi, SqlCopy}
 import com.drivetribe.orchestration.frontend.DeployFrontend
 import com.goyeau.orchestra.FolderBoard
 
@@ -13,6 +13,7 @@ object Operation {
   private def environmentBoard(environment: Environment) = FolderBoard(environment.toString)(
     DeployBackend.board(environment),
     DeployRestApi.board(environment),
+    DeployFlinkJob.board(environment),
     DeployFrontend.board(environment)
   )
 
@@ -20,6 +21,7 @@ object Operation {
     Seq(
       DeployBackend.job(environment),
       DeployRestApi.job(environment),
+      DeployFlinkJob.job(environment),
       DeployFrontend.job(environment)
     )
   } :+ SqlCopy.job
