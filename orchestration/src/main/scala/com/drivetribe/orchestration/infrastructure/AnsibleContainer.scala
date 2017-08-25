@@ -1,5 +1,6 @@
 package com.drivetribe.orchestration.infrastructure
 
+import com.drivetribe.orchestration.Environment
 import com.goyeau.orchestra._
 import com.goyeau.orchestra.filesystem.Directory
 import com.goyeau.orchestra.kubernetes.Container

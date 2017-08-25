@@ -6,6 +6,7 @@ import scala.collection.convert.ImplicitConversionsToScala._
 
 import com.amazonaws.regions.Regions
 import com.amazonaws.services.s3.AmazonS3ClientBuilder
+import com.drivetribe.orchestration.Environment
 import io.circe.Json
 import io.circe.parser._
 

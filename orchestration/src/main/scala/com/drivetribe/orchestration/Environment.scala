@@ -1,8 +1,7 @@
-package com.drivetribe.orchestration.infrastructure
+package com.drivetribe.orchestration
 
 import java.net.URI
 
-import akka.http.scaladsl.model.Uri
 import enumeratum.EnumEntry.Lowercase
 import enumeratum._
 
@@ -122,29 +121,5 @@ object Environment extends Enum[Environment] {
         URI.create("https://suzuka.drivetribe.com"),
         URI.create("https://suzuka-api.drivetribe.com:6443")
       )
-  val values = findValues
-}
-
-sealed trait EnvironmentType extends EnumEntry with Lowercase
-object EnvironmentType extends Enum[EnvironmentType] {
-  case object Small extends EnvironmentType
-  case object Medium extends EnvironmentType
-  case object Large extends EnvironmentType
-  val values = findValues
-}
-
-sealed trait EnvironmentColour extends EnumEntry with Lowercase {
-  def opposite: EnvironmentColour
-}
-object EnvironmentColour extends Enum[EnvironmentColour] {
-  case object Black extends EnvironmentColour {
-    override lazy val opposite: EnvironmentColour = White
-  }
-  case object White extends EnvironmentColour {
-    override lazy val opposite: EnvironmentColour = Black
-  }
-  case object Common extends EnvironmentColour {
-    override lazy val opposite: EnvironmentColour = this
-  }
   val values = findValues
 }

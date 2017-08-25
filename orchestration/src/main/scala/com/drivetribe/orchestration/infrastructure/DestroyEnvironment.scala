@@ -2,7 +2,7 @@ package com.drivetribe.orchestration.infrastructure
 
 import java.io.{File, IOException}
 
-import com.drivetribe.orchestration.{Git, Lock}
+import com.drivetribe.orchestration.{Environment, Git, Lock}
 import com.goyeau.kubernetesclient.{KubeConfig, KubernetesClient}
 import com.goyeau.orchestra.{Job, _}
 import com.goyeau.orchestra.filesystem.Directory

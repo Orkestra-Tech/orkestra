@@ -6,7 +6,7 @@ import scala.concurrent.duration.Duration
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.HttpRequest
 import akka.util.ByteString
-import com.drivetribe.orchestration.infrastructure.Environment
+import com.drivetribe.orchestration.Environment
 import com.goyeau.orchestra.AkkaImplicits._
 import io.circe.parser._
 

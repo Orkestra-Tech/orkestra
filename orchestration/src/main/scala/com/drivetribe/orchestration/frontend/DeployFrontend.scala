@@ -12,7 +12,7 @@ import com.amazonaws.services.s3.AmazonS3ClientBuilder
 import com.amazonaws.services.s3.model.ObjectMetadata
 import com.amazonaws.services.s3.transfer.{ObjectMetadataProvider, TransferManagerBuilder}
 import com.drivetribe.orchestration.infrastructure._
-import com.drivetribe.orchestration.{Lock, Project}
+import com.drivetribe.orchestration.{Environment, EnvironmentType, Lock, Project}
 import com.goyeau.kubernetesclient.{KubeConfig, KubernetesClient}
 import com.goyeau.orchestra.filesystem.LocalFile
 import com.goyeau.orchestra.{Job, _}

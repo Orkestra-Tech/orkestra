@@ -7,6 +7,7 @@ import com.amazonaws.services.ec2.AmazonEC2ClientBuilder
 import com.amazonaws.services.ec2.model.{DescribeTagsRequest, Filter}
 import com.amazonaws.services.elasticloadbalancingv2.AmazonElasticLoadBalancingClientBuilder
 import com.amazonaws.services.elasticloadbalancingv2.model.DescribeTargetHealthRequest
+import com.drivetribe.orchestration.{Environment, EnvironmentColour}
 
 object Colour {
 

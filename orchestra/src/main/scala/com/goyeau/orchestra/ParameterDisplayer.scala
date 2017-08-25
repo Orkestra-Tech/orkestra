@@ -4,6 +4,7 @@ import japgolly.scalajs.react.{Callback, ReactEventFromInput}
 import japgolly.scalajs.react.vdom.TagMod
 import japgolly.scalajs.react.vdom.html_<^._
 import shapeless.syntax.typeable._
+import enumeratum.EnumEntry
 
 trait ParameterDisplayer[P <: Parameter[_]] {
   def apply(param: P, state: ParameterDisplayer.State): TagMod
@@ -67,6 +68,28 @@ object ParameterDisplayer extends LowPriorityDisplayers {
           ^.onChange ==> modValue
         ),
         <.span(param.name)
+      )
+    }
+  }
+
+  implicit def enumDisplayer[Entry <: EnumEntry] = new ParameterDisplayer[EnumParam[Entry]] {
+    def apply(param: EnumParam[Entry], state: ParameterDisplayer.State) = {
+      def modValue(event: ReactEventFromInput) = {
+        event.persist()
+        state + (param.id -> param.enum.withNameInsensitive(event.target.value))
+      }
+
+      <.label(
+        ^.display.block,
+        <.span(param.name),
+        <.select(
+          ^.key := param.id.name,
+          ^.value :=? state.get(param.id).flatMap(_.cast[EnumEntry]).orElse(param.defaultValue).map(_.entryName),
+          ^.onChange ==> modValue
+        )(
+          <.option(^.disabled := true, ^.selected := "selected")(param.name) +:
+            param.enum.values.map(o => <.option(^.value := o.entryName)(o.toString)): _*
+        )
       )
     }
   }

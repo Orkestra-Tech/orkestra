@@ -72,7 +72,7 @@ lazy val orchestra = crossProject
     libraryDependencies ++= Seq(
       "com.chuusai" %%% "shapeless" % "2.3.2",
       "com.vmunier" %% "scalajs-scripts" % "1.1.1",
-      "org.eclipse.jgit" % "org.eclipse.jgit" % "4.8.0.201706111038-r",
+      "com.beachape" %%% "enumeratum" % "1.5.12" % Provided,
       "com.goyeau" %% "kubernetes-client" % "HEAD+20170824-0037"
     ) ++ scalaJsReact.value ++ akkaHttp.value ++ scalaCss.value ++ autowire.value ++ logging.value,
     jsDependencies ++= Seq(
@@ -89,6 +89,7 @@ lazy val orchestration = crossProject
   .settings(
     organization := "com.drivetribe",
     libraryDependencies ++= Seq(
+      "org.eclipse.jgit" % "org.eclipse.jgit" % "4.8.0.201706111038-r",
       "com.beachape" %%% "enumeratum" % "1.5.12",
       "com.amazonaws" % "aws-java-sdk" % "1.11.167"
     )

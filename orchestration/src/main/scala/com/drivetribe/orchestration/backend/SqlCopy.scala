@@ -1,6 +1,6 @@
 package com.drivetribe.orchestration.backend
 
-import com.drivetribe.orchestration.infrastructure.Environment
+import com.drivetribe.orchestration.Environment
 import com.goyeau.orchestra.kubernetes.PodConfig
 import com.goyeau.orchestra.{Job, _}
 import com.typesafe.scalalogging.Logger

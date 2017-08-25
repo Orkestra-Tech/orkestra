@@ -14,14 +14,15 @@ import com.typesafe.scalalogging.Logger
 
 object CreateEnvironment {
 
-  def jobDefinition(environment: Environment) = Job[(String, Boolean, Boolean) => Unit](Symbol(s"create$environment"))
+  def jobDefinition(environment: Environment) =
+    Job[(Environment, Boolean, Boolean) => Unit](Symbol(s"create$environment"))
 
   def job(environment: Environment) =
     jobDefinition(environment)(PodConfig(AnsibleContainer, TerraformContainer))(apply(environment) _)
 
   def board(environment: Environment) =
     SingleJobBoard("Create", jobDefinition(environment))(
-      Param[String]("Source Environment", defaultValue = Some("staging")),
+      EnumParam("Source Environment", Environment, defaultValue = Some(Environment.Staging)),
       Param[Boolean]("Deploy Frontend", defaultValue = Some(true)),
       Param[Boolean]("Deploy Backend")
     )
@@ -31,7 +32,7 @@ object CreateEnvironment {
   def apply(environment: Environment)(
     ansible: AnsibleContainer.type,
     terraform: TerraformContainer.type
-  )(sourceEnv: String, deployFrontend: Boolean, deployBackend: Boolean): Unit = {
+  )(sourceEnv: Environment, deployFrontend: Boolean, deployBackend: Boolean): Unit = {
     Git.checkoutInfrastructure()
 
     Lock.onEnvironment(environment) {
@@ -40,7 +41,7 @@ object CreateEnvironment {
         Init(environment, ansible, terraform)
         Seq(
           provisionCloudResources(environment, terraform),
-          provisionKafkaZookeeper(environment, Environment.withNameInsensitive(sourceEnv), ansible),
+          provisionKafkaZookeeper(environment, sourceEnv, ansible),
           provisionElasticsearch(environment, ansible)
         ).parallel
       }

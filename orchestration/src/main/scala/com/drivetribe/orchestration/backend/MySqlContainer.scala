@@ -1,6 +1,6 @@
 package com.drivetribe.orchestration.backend
 
-import com.drivetribe.orchestration.infrastructure.Environment
+import com.drivetribe.orchestration.Environment
 import com.goyeau.orchestra._
 import com.goyeau.orchestra.kubernetes.Container
 

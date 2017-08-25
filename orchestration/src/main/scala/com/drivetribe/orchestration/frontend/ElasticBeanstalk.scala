@@ -10,7 +10,7 @@ import com.amazonaws.services.elasticbeanstalk.AWSElasticBeanstalkClientBuilder
 import com.amazonaws.services.elasticbeanstalk.model._
 import com.amazonaws.services.s3.AmazonS3ClientBuilder
 import com.amazonaws.services.s3.transfer.TransferManagerBuilder
-import com.drivetribe.orchestration.infrastructure.Environment
+import com.drivetribe.orchestration.Environment
 
 object ElasticBeanstalk {
   private lazy val elasticBeanstalk = AWSElasticBeanstalkClientBuilder.standard.withRegion(Regions.EU_WEST_1).build

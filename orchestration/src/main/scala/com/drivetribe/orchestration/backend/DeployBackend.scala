@@ -30,7 +30,6 @@ object DeployBackend {
     Lock.onDeployment(environment, Project.Backend) {
       dir("infrastructure") { implicit workDir =>
         ansible.install()
-        Init(environment, ansible, terraform)
 
         val activeColour =
           if (environment.isBiColour) Some(Colour.getActive(environment))
@@ -39,7 +38,7 @@ object DeployBackend {
 
         dtTools(environment, version, inactiveColour, ansible)
         Seq(
-          deployRestApi(environment, version, inactiveColour, terraform),
+          DeployRestApi.deploy(environment, version, inactiveColour, terraform, ansible),
           deployFlink(environment, version, inactiveColour, ansible)
         ).parallel
       }
@@ -62,33 +61,6 @@ object DeployBackend {
         "dt-tools.yml",
         envParams.map(p => s"-e $p").mkString(" ")
       )
-    }
-  }
-
-  def deployRestApi(environment: Environment,
-                    version: String,
-                    colour: Option[EnvironmentColour],
-                    terraform: TerraformContainer.type)(implicit workDir: Directory) = Future {
-    println("Deploy REST API")
-    dir(terraform.rootDir(environment)) { implicit workDir =>
-      val moduleName = colour.fold("rest_api")(c => s"rest_api_$c")
-      val stateVersions = StateVersions.template(version).replaceAll("\\{", "\\\\{").replaceAll("\\}", "\\\\}")
-      val tfState = TerraformState.fromS3(environment)
-      val capacity = AutoScaling.getDesiredCapacity(
-        tfState.getResourceAttribute(Seq("root", moduleName), "aws_autoscaling_group.api", "name")
-      )
-
-      val params = Seq(
-        s"-target=module.$moduleName",
-        s"-target=data.terraform_remote_state.vpc", // @TODO to remove hacky bug fix
-        s"-var ansible_key=${System.getenv("ANSIBLE_VAULT_PASS")}",
-        s"-var api_version=$version",
-        s"-var state_versions=$stateVersions",
-        s"-var bootstrap_git_branch=master",
-        s"-var api_desired_instances_count=$capacity"
-      ) ++ colour.map(c => s"-var active_colour=${c.entryName}")
-
-      terraform.apply(params.mkString(" "))
     }
   }
 
