@@ -11,13 +11,14 @@ import com.drivetribe.orchestration.{Environment, EnvironmentColour}
 
 object Colour {
 
+  lazy val elb = AmazonElasticLoadBalancingClientBuilder.standard().withRegion(Regions.EU_WEST_1).build
+
   def getActive(environment: Environment): EnvironmentColour = {
     require(environment.isBiColour, s"$environment is not a bicolour environment")
 
     val tfState = TerraformState.fromS3(environment)
     val activeLoadBalancer = tfState.getResourceAttribute(Seq("root"), "aws_alb_target_group.active", "arn")
 
-    val elb = AmazonElasticLoadBalancingClientBuilder.standard().withRegion(Regions.EU_WEST_1).build
     val instanceIds = elb
       .describeTargetHealth(new DescribeTargetHealthRequest().withTargetGroupArn(activeLoadBalancer))
       .getTargetHealthDescriptions
@@ -32,4 +33,15 @@ object Colour {
 
     EnvironmentColour.withNameInsensitive(instanceColours.head)
   }
+
+  def isHealthy(targetGroupArn: String) =
+    elb
+      .describeTargetHealth(new DescribeTargetHealthRequest().withTargetGroupArn(targetGroupArn))
+      .getTargetHealthDescriptions
+      .map(_.getTargetHealth.getState)
+      .forall {
+        case "healthy"   => true
+        case "unhealthy" => throw new IllegalStateException("Switching process aborted due to health check failing")
+        case _           => false
+      }
 }

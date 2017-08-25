@@ -17,7 +17,7 @@ import com.goyeau.kubernetesclient.{KubeConfig, KubernetesClient}
 import com.goyeau.orchestra.filesystem.LocalFile
 import com.goyeau.orchestra.{Job, _}
 import com.goyeau.orchestra.AkkaImplicits._
-import com.typesafe.scalalogging.Logger
+import com.typesafe.scalalogging.{LazyLogging, Logger}
 import io.k8s.api.apps.v1beta1.{Deployment, DeploymentSpec, DeploymentStrategy, RollingUpdateDeployment}
 import io.k8s.api.core.v1._
 import io.k8s.apimachinery.pkg.api.resource.Quantity
@@ -42,7 +42,7 @@ object DeployFrontend {
     }
 
   def webFrontend(version: String) = {
-    println("Deploy web frontend")
+    logger.info("Deploy web frontend")
 
     val s3 = AmazonS3ClientBuilder.standard.withRegion(Regions.EU_WEST_1).build
     val transferManager = TransferManagerBuilder.standard.withS3Client(s3).build
@@ -70,7 +70,7 @@ object DeployFrontend {
   }
 
   def webBackend(version: String, environment: Environment) = {
-    println("Deploy web backend")
+    logger.info("Deploy web backend")
     if (environment.environmentType == EnvironmentType.Medium) deployOnKubernetes(version, environment)
     else deployOnBeanstalk(version, environment)
   }

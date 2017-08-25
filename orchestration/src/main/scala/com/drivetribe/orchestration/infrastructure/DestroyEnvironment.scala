@@ -36,7 +36,7 @@ object DestroyEnvironment {
   }
 
   def cleanKubernetes(environment: Environment) = {
-    println("Clean Kubernetes")
+    logger.info("Clean Kubernetes")
     val kube = KubernetesClient(KubeConfig(new File("/opt/docker/secrets/kube/config")))
     val deleteAll = for {
       _ <- kube.namespaces(environment.entryName).services.delete()
@@ -49,7 +49,7 @@ object DestroyEnvironment {
   }
 
   def destroy(environment: Environment, terraform: TerraformContainer.type)(implicit workDir: Directory) = {
-    println("Destroying")
+    logger.info("Destroying")
     // Remove prevent_destroy security
     sh("find terraform -type f -name '*.tf' -exec sed -i 's/prevent_destroy *= .*/prevent_destroy = false/g' {} +")
     dir(terraform.rootDir(environment)) { implicit workDir =>

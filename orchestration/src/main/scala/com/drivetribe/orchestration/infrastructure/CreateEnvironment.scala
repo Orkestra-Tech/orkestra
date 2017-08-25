@@ -57,7 +57,7 @@ object CreateEnvironment {
   def provisionCloudResources(environment: Environment,
                               terraform: TerraformContainer.type)(implicit workDir: Directory) = Future {
     dir(terraform.rootDir(environment)) { implicit workDir =>
-      println("Provision cloud resources")
+      logger.info("Provision cloud resources")
       val elasticsearchModules =
         if (environment.environmentType == EnvironmentType.Large)
           Seq("module.elasticsearch_black", "module.elasticsearch_white")
@@ -84,7 +84,7 @@ object CreateEnvironment {
   ) = Future {
     dir("ansible") { implicit workDir =>
       Thread.sleep(cloudProvisiongTime)
-      println("Provision Kafka and Zookeeper")
+      logger.info("Provision Kafka and Zookeeper")
       ansible
         .playbook("kafka-zookeeper.yml", s"-e env_name=${environment.entryName} -e from_env=${sourceEnv.entryName}")
     }
@@ -94,7 +94,7 @@ object CreateEnvironment {
     Future {
       dir("ansible") { implicit workDir =>
         Thread.sleep(cloudProvisiongTime)
-        println("Provision Elasticsearch")
+        logger.info("Provision Elasticsearch")
         ansible.playbook("elasticsearch.yml", s"-e env_name=${environment.entryName}")
       }
     }

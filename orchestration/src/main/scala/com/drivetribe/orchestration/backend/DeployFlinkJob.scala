@@ -58,7 +58,7 @@ object DeployFlinkJob {
              ansible: AnsibleContainer.type,
              jobName: String = "all-jobs",
              killExistingJob: Boolean = false)(implicit workDir: Directory) = Future {
-    println("Deploy Flink")
+    logger.info("Deploy Flink")
     dir("ansible") { implicit workDir =>
       val flinkJobEnvParam =
         if (environment.isProd && jobName == "all-jobs") s"flink_job_list=default"

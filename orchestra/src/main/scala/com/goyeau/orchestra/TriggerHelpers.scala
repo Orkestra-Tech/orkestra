@@ -1,6 +1,5 @@
 package com.goyeau.orchestra
 
-import com.goyeau.orchestra.ARunStatus._
 import shapeless._
 
 trait TriggerHelpers {

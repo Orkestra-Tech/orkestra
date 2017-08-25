@@ -55,7 +55,7 @@ object DeployRestApi {
              colour: Option[EnvironmentColour],
              terraform: TerraformContainer.type,
              ansible: AnsibleContainer.type)(implicit workDir: Directory) = Future {
-    println("Deploy REST API")
+    logger.info("Deploy REST API")
     Init(environment, ansible, terraform)
 
     dir(terraform.rootDir(environment)) { implicit workDir =>

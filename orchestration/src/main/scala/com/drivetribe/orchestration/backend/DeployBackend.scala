@@ -48,7 +48,7 @@ object DeployBackend {
               version: String,
               colour: Option[EnvironmentColour],
               ansible: AnsibleContainer.type)(implicit workDir: Directory) = {
-    println("DT Tools")
+    logger.info("DT Tools")
     dir("ansible") { implicit workDir =>
       val envParams = Seq(
         s"env_name=${environment.entryName}",
