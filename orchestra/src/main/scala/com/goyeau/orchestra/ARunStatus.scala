@@ -1,6 +1,9 @@
 package com.goyeau.orchestra
 
+import java.time.Instant
 import java.util.UUID
+
+import scala.io.Source
 
 import io.circe._
 
@@ -8,9 +11,9 @@ import io.circe._
 // Should be in the model package
 sealed trait ARunStatus[+Result]
 object ARunStatus {
-  case class Scheduled(at: Long) extends ARunStatus[Nothing]
-  case class Running(at: Long) extends ARunStatus[Nothing]
-  case class Success[Result](at: Long, result: Result) extends ARunStatus[Result]
+  case class Scheduled(at: Instant) extends ARunStatus[Nothing]
+  case class Running(at: Instant) extends ARunStatus[Nothing]
+  case class Success[Result](at: Instant, result: Result) extends ARunStatus[Result]
   case class Failure(e: Throwable) extends ARunStatus[Nothing]
   case object Unknown extends ARunStatus[Nothing]
 
@@ -27,6 +30,15 @@ object ARunStatus {
         message <- c.downField("message").as[String]
       } yield new Throwable(message)
   }
+}
+
+object RunStatusUtils {
+  def load[Result](runInfo: RunInfo)(implicit decoder: Decoder[ARunStatus[Result]]): Seq[ARunStatus[Result]] =
+    Source
+      .fromFile(OrchestraConfig.statusFilePath(runInfo))
+      .getLines()
+      .map(AutowireServer.read[ARunStatus[Result]])
+      .toSeq
 }
 
 case class RunInfo(jobId: Symbol, runIdMaybe: Option[UUID]) {

@@ -49,7 +49,8 @@ val circeJS = Def.setting {
     "io.circe" %%% "circe-core" % circeVersion,
     "io.circe" %%% "circe-generic" % circeVersion,
     "io.circe" %%% "circe-parser" % circeVersion,
-    "io.circe" %%% "circe-shapes" % circeVersion
+    "io.circe" %%% "circe-shapes" % circeVersion,
+    "io.circe" %%% "circe-java8" % circeVersion
   )
 }
 val circeJVM = Def.setting {
@@ -57,7 +58,8 @@ val circeJVM = Def.setting {
     "io.circe" %% "circe-core" % circeVersion,
     "io.circe" %% "circe-generic" % circeVersion,
     "io.circe" %% "circe-parser" % circeVersion,
-    "io.circe" %% "circe-shapes" % circeVersion
+    "io.circe" %% "circe-shapes" % circeVersion,
+    "io.circe" %% "circe-java8" % circeVersion
   )
 }
 
@@ -98,8 +100,8 @@ lazy val orchestration = crossProject
 lazy val orchestrationJVM = orchestration.jvm
   .enablePlugins(SbtWeb, JavaAppPackaging)
   .settings(
-    reForkOptions := reForkOptions.value.copy(
-      envVars = reForkOptions.value.envVars ++ Map(
+    reForkOptions := reForkOptions.value.withEnvVars(
+      reForkOptions.value.envVars ++ Map(
         "ORCHESTRA_HOME" -> "target/orchestra",
         "ORCHESTRA_PORT" -> "8080",
         "ORCHESTRA_GITHUB_PORT" -> "8081",

@@ -1,11 +1,12 @@
 package com.goyeau.orchestra
 
 import java.io.{File, FileOutputStream, PrintStream, PrintWriter}
+import java.nio.file.{Files, Paths, StandardOpenOption}
+import java.nio.file.attribute.BasicFileAttributes
 import java.time.Instant
 import java.util.UUID
 
-import scala.concurrent.{Await, ExecutionContext}
-import scala.concurrent.duration.Duration
+import scala.concurrent.ExecutionContext
 import scala.io.Source
 import scala.language.{higherKinds, implicitConversions}
 
@@ -13,7 +14,10 @@ import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import autowire.Core
 import io.circe.{Decoder, Encoder}
+import io.circe.syntax._
+import io.circe.parser._
 import io.circe.generic.auto._
+import io.circe.java8.time._
 import ARunStatus._
 import com.goyeau.orchestra.kubernetes.{JobUtils, PodConfig}
 import shapeless._
@@ -41,12 +45,11 @@ object Job {
     trait Api {
       def run(runInfo: RunInfo, params: ParamValues): ARunStatus[Result]
       def logs(runId: UUID, from: Int): Seq[String]
-      def runs(): Seq[UUID]
+      def runs(): Seq[(UUID, Instant)]
     }
 
     object Api {
-      def router(apiServer: Api)(implicit ec: ExecutionContext) =
-        AutowireServer.route[Api](apiServer)
+      def router(apiServer: Api)(implicit ec: ExecutionContext) = AutowireServer.route[Api](apiServer)
 
       val client = AutowireClient(id)[Api]
     }
@@ -61,24 +64,32 @@ object Job {
     def run(runInfo: RunInfo): Unit = {
       new File(OrchestraConfig.runDirPath(runInfo)).mkdirs()
       val logsOut = new PrintStream(new FileOutputStream(OrchestraConfig.logsFilePath(runInfo), true), true)
-      val statusWriter = new PrintWriter(OrchestraConfig.statusFilePath(runInfo))
 
       Utils.withOutErr(logsOut) {
+        val statusPath = OrchestraConfig.statusFilePath(runInfo)
         try {
-          statusWriter.append(
-            AutowireServer.write[ARunStatus[Result]](ARunStatus.Running(Instant.now().toEpochMilli)) + "\n"
+          Files.write(
+            Paths.get(statusPath),
+            s"${AutowireServer.write[ARunStatus[Result]](ARunStatus.Running(Instant.now()))}\n".getBytes,
+            StandardOpenOption.APPEND
           )
           val result =
             job(AutowireServer.read[ParamValues](Source.fromFile(OrchestraConfig.paramsFilePath(runInfo)).mkString))
-          statusWriter.append(
-            AutowireServer.write[ARunStatus[Result]](ARunStatus.Success(Instant.now().toEpochMilli, result)) + "\n"
+          println("Job completed")
+          Files.write(
+            Paths.get(statusPath),
+            s"${AutowireServer.write[ARunStatus[Result]](ARunStatus.Success(Instant.now(), result))}\n".getBytes,
+            StandardOpenOption.APPEND
           )
         } catch {
           case e: Throwable =>
             e.printStackTrace()
-            statusWriter.append(AutowireServer.write(ARunStatus.Failure(e)))
+            Files.write(
+              Paths.get(statusPath),
+              s"${AutowireServer.write[ARunStatus[Result]](ARunStatus.Failure(e))}\n".getBytes,
+              StandardOpenOption.APPEND
+            )
         } finally {
-          statusWriter.close()
           logsOut.close()
           JobUtils.delete(runInfo)
         }
@@ -90,40 +101,40 @@ object Job {
         val runDir = new File(OrchestraConfig.runDirPath(runInfo))
         val statusFile = new File(OrchestraConfig.statusFilePath(runInfo))
 
-        if (runDir.exists() && statusFile.exists())
-          AutowireServer.read[ARunStatus[Result]](Source.fromFile(statusFile).getLines().toSeq.last)
+        if (runDir.exists() && statusFile.exists()) RunStatusUtils.load[Result](runInfo).last
         else if (runDir.exists() && !statusFile.exists()) ARunStatus.Unknown
         else {
           runDir.mkdirs()
-          val paramsWriter = new PrintWriter(OrchestraConfig.paramsFilePath(runInfo))
-          try paramsWriter.write(AutowireServer.write(params))
-          finally paramsWriter.close()
+          Files.write(Paths.get(OrchestraConfig.paramsFilePath(runInfo)), AutowireServer.write(params).getBytes)
 
           JobUtils.create(runInfo, podConfig)
 
-          val status = ARunStatus.Scheduled(Instant.now().toEpochMilli)
-          val statusWriter = new PrintWriter(statusFile)
-          try statusWriter.append(AutowireServer.write(status) + "\n")
-          finally statusWriter.close()
+          val status = ARunStatus.Scheduled(Instant.now())
+          Files.write(statusFile.toPath, s"${AutowireServer.write[ARunStatus[Result]](status)}\n".getBytes)
           status
         }
       }
 
       override def logs(runId: UUID, from: Int): Seq[String] =
-        Option(new File(OrchestraConfig.logsFilePath(RunInfo(definition.id, Some(runId)))))
-          .filter(_.exists)
-          .fold(Seq.empty[String]) { a =>
-            Source.fromFile(a).getLines().slice(from, Int.MaxValue).toSeq
-          }
+        Seq(new File(OrchestraConfig.logsFilePath(RunInfo(definition.id, Some(runId)))))
+          .filter(_.exists())
+          .flatMap(Source.fromFile(_).getLines().slice(from, Int.MaxValue).toSeq)
 
-      def runs(): Seq[UUID] =
+      override def runs(): Seq[(UUID, Instant)] =
         Seq(new File(OrchestraConfig.jobDirPath(definition.id)))
           .filter(_.exists())
           .flatMap(_.listFiles())
-          .filter(_.isDirectory)
-          .sortBy(_.lastModified)
+          .filter(_.isDirectory())
+          .flatMap { runDir =>
+            val runInfo = RunInfo(definition.id, Option(UUID.fromString(runDir.getName)))
+            RunStatusUtils.load[Result](runInfo).headOption.map {
+              case status: Scheduled => (runInfo.runId, status.at)
+              case status =>
+                throw new IllegalStateException(s"$status is not of status type ${classOf[Scheduled].getName}")
+            }
+          }
+          .sortBy(_._2)
           .reverse
-          .map(runDir => UUID.fromString(runDir.getName))
     }
 
     def apiRoute(implicit ec: ExecutionContext): Route =
