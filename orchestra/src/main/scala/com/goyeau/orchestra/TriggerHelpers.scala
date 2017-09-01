@@ -25,7 +25,7 @@ trait TriggerHelpers {
     }
   }
 
-  private def triggerMessage(job: Job.Runner[_, _, _, _]) = println(s"Triggering ${job.definition.id}")
+  private def triggerMessage(job: Job.Runner[_, _, _, _]) = println(s"Triggering ${job.definition.id.name}")
 
   private def runInfo(job: Job.Runner[_, _, _, _]) = RunInfo(job.definition.id, OrchestraConfig.runInfo.map(_.runId))
 }

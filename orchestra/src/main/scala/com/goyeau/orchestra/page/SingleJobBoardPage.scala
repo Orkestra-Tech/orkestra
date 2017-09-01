@@ -22,7 +22,7 @@ object SingleJobBoardPage {
     job: Job.Definition[_, ParamValues, Result],
     params: Params,
     ctrl: RouterCtl[AppPage]
-  )(implicit ec: ExecutionContext, paramGetter: ParameterGetter[Params, ParamValues]) =
+  )(implicit ec: ExecutionContext, paramGetter: ParameterOperations[Params, ParamValues]) =
     ScalaComponent
       .builder[Unit](getClass.getSimpleName)
       .initialState {
@@ -30,7 +30,8 @@ object SingleJobBoardPage {
         (jobInfo, Map[Symbol, Any](RunId.id -> jobInfo.runId), <.div("Loading runs"))
       }
       .render { $ =>
-        val runJob = Callback.future {
+        def runJob(event: ReactEventFromInput) = Callback.future {
+          event.preventDefault()
           job.Api.client.run($.state._1, paramGetter.values(params, $.state._2)).call().map {
             case ARunStatus.Failure(e) => Callback.alert(e.getMessage)
             case _                     => ctrl.set(TaskLogsPage(job, $.state._1.runId))
@@ -42,8 +43,10 @@ object SingleJobBoardPage {
 
         <.div(
           <.div(name),
-          <.div(paramGetter.displays(params, displayState): _*),
-          <.button(^.onClick --> runJob, "Run"),
+          <.form(^.onSubmit ==> runJob)(
+            paramGetter.displays(params, displayState) :+
+              <.button(^.`type` := "submit")("Run"): _*
+          ),
           $.state._3
         )
       }

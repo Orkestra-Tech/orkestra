@@ -115,8 +115,8 @@ lazy val orchestrationJVM = orchestration.jvm
     managedClasspath in Runtime += (packageBin in Assets).value,
     scalaJSProjects := Seq(orchestrationJS),
     pipelineStages in Assets := Seq(scalaJSPipeline),
-    maintainer in Docker := "github:joan38",
-    dockerRepository in publish := Option("registry.drivetribe.com/tools"),
+    maintainer in Docker := "Drivetribe",
+    dockerRepository := Option("registry.drivetribe.com/tools"),
     dockerUpdateLatest := true,
     dockerExposedPorts := Seq(8080, 8081),
     // Workaround the face that ENTRYPOINT is not absolute, so when we change the WORKDIR the won't start

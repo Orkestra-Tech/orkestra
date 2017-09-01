@@ -35,7 +35,7 @@ case class SingleJobBoard[ParamValues <: HList: Encoder, Params <: HList, Result
   name: String,
   job: Job.Definition[_, ParamValues, Result],
   params: Params
-)(implicit paramGetter: ParameterGetter[Params, ParamValues])
+)(implicit paramGetter: ParameterOperations[Params, ParamValues])
     extends Board {
 
   def route(implicit ec: ExecutionContext) = RouterConfigDsl[AppPage].buildRule { dsl =>
@@ -66,7 +66,7 @@ object SingleJobBoard {
   )(
     param: Param
   )(
-    implicit paramGetter: ParameterGetter[Param :: HNil, ParamValue :: HNil]
+    implicit paramGetter: ParameterOperations[Param :: HNil, ParamValue :: HNil]
   ): SingleJobBoard[ParamValue :: HNil, Param :: HNil, Result] =
     SingleJobBoard(name, job, param :: HNil)
 
@@ -79,7 +79,7 @@ object SingleJobBoard {
     implicit tupleToHList: Generic.Aux[TupledParams, Params],
     unifier: Mapper.Aux[UnifyParameter.type, Params, UniParams],
     paramValuesExtractor: Comapped.Aux[UniParams, Parameter, ParamValues],
-    paramGetter: ParameterGetter[Params, ParamValues]
+    paramGetter: ParameterOperations[Params, ParamValues]
   ): SingleJobBoard[ParamValues, Params, Result] =
     SingleJobBoard(name, job, tupleToHList.to(params))
 

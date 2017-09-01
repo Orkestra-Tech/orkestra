@@ -15,17 +15,20 @@ trait Github extends JVMApp {
     super.main(args)
 
     lazy val routes =
-      pathPrefix("webhooks") {
-        post {
-          headerValueByName("X-GitHub-Event") { eventType =>
-            entity(as[String]) { entity =>
-              val json = parse(entity).fold(throw _, identity)
-              githubTriggers.foreach(_.trigger(eventType, json))
-              complete(OK)
+      path("health") {
+        complete(OK)
+      } ~
+        path("webhooks") {
+          post {
+            headerValueByName("X-GitHub-Event") { eventType =>
+              entity(as[String]) { entity =>
+                val json = parse(entity).fold(throw _, identity)
+                githubTriggers.foreach(_.trigger(eventType, json))
+                complete(OK)
+              }
             }
           }
         }
-      }
 
     if (OrchestraConfig.runInfo.isEmpty) {
       val port =

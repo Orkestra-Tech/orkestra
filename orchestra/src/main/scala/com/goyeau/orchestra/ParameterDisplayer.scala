@@ -11,6 +11,7 @@ trait ParameterDisplayer[P <: Parameter[_]] {
 }
 
 object ParameterDisplayer extends LowPriorityDisplayers {
+
   case class State(updated: ((Symbol, Any)) => Callback, get: Symbol => Option[Any]) {
     def +(kv: (Symbol, Any)) = updated(kv)
   }
@@ -22,8 +23,7 @@ object ParameterDisplayer extends LowPriorityDisplayers {
         state + (param.id -> event.target.value)
       }
 
-      <.label(
-        ^.display.block,
+      <.label(^.display.block)(
         <.span(param.name),
         <.input.text(
           ^.key := param.id.name,
@@ -41,8 +41,7 @@ object ParameterDisplayer extends LowPriorityDisplayers {
         state + (param.id -> event.target.value.toInt)
       }
 
-      <.label(
-        ^.display.block,
+      <.label(^.display.block)(
         <.span(param.name),
         <.input.text(
           ^.key := param.id.name,
@@ -60,11 +59,10 @@ object ParameterDisplayer extends LowPriorityDisplayers {
         state + (param.id -> event.target.checked)
       }
 
-      <.label(
-        ^.display.block,
+      <.label(^.display.block)(
         <.input.checkbox(
           ^.key := param.id.name,
-          ^.checked := state.get(param.id).flatMap(_.cast[Boolean]).orElse(param.defaultValue).getOrElse(false),
+          ^.checked :=? state.get(param.id).flatMap(_.cast[Boolean]).orElse(param.defaultValue),
           ^.onChange ==> modValue
         ),
         <.span(param.name)
@@ -79,8 +77,7 @@ object ParameterDisplayer extends LowPriorityDisplayers {
         state + (param.id -> param.enum.withNameInsensitive(event.target.value))
       }
 
-      <.label(
-        ^.display.block,
+      <.label(^.display.block)(
         <.span(param.name),
         <.select(
           ^.key := param.id.name,

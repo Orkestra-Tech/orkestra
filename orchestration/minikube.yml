@@ -1,14 +1,22 @@
 ---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: orchestra
+
+---
 kind: ServiceAccount
 apiVersion: v1
 metadata:
   name: orchestration
+  namespace: orchestra
 
 ---
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1beta1
 metadata:
   name: orchestration
+  namespace: orchestra
 rules:
   - apiGroups: ["*"]
     resources: ["*"]
@@ -19,6 +27,7 @@ kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1beta1
 metadata:
   name: orchestration
+  namespace: orchestra
 roleRef:
   kind: ClusterRole
   name: orchestration
@@ -33,6 +42,7 @@ apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
   name: orchestration-master
+  namespace: orchestra
 spec:
   replicas: 1
   template:
@@ -131,7 +141,8 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: orchestration-ui
+  name: orchestration
+  namespace: orchestra
 spec:
   type: NodePort
   selector:
@@ -142,3 +153,8 @@ spec:
       port: 80
       nodePort: 31010
       targetPort: 8080
+    - name: github-webhooks
+      protocol: TCP
+      port: 81
+      nodePort: 31011
+      targetPort: 8081

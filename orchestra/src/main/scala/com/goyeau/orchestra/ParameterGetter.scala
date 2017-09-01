@@ -1,28 +1,25 @@
 package com.goyeau.orchestra
 
-import japgolly.scalajs.react.vdom.TagMod
-import shapeless.{::, HList, HNil}
-
-trait ParameterGetter[Params <: HList, ParamValues <: HList] {
-  def displays(params: Params, state: ParameterDisplayer.State): Seq[TagMod]
-  def values(params: Params, valueMap: Map[Symbol, Any]): ParamValues
+trait ParameterGetter[T, P <: Parameter[T]] {
+  def apply(param: P, valueMap: Map[Symbol, Any]): T
 }
 
-object ParameterGetter {
+object ParameterGetter extends LowPriorityGetters {
 
-  implicit val hNil = new ParameterGetter[HNil, HNil] {
-    override def displays(params: HNil, state: ParameterDisplayer.State) = Seq.empty
-    override def values(params: HNil, map: Map[Symbol, Any]) = HNil
+  implicit val booleanValue = new ParameterGetter[Boolean, Param[Boolean]] {
+    def apply(param: Param[Boolean], valueMap: Map[Symbol, Any]) =
+      valueMap.get(param.id).fold(false)(_.isInstanceOf[Boolean])
   }
+}
 
-  implicit def hCons[HeadParam <: Parameter[HeadParamValue], TailParams <: HList, HeadParamValue, TailParamValues <: HList](
-    implicit displayer: ParameterDisplayer[HeadParam],
-    paramGetter: ParameterGetter[TailParams, TailParamValues]
-  ) = new ParameterGetter[HeadParam :: TailParams, HeadParamValue :: TailParamValues] {
-    override def displays(params: HeadParam :: TailParams, state: ParameterDisplayer.State) =
-      displayer(params.head, state) +: paramGetter.displays(params.tail, state)
+trait LowPriorityGetters {
 
-    override def values(params: HeadParam :: TailParams, valueMap: Map[Symbol, Any]) =
-      params.head.getValue(valueMap) :: paramGetter.values(params.tail, valueMap)
+  implicit def default[T, P <: Parameter[T]] = new ParameterGetter[T, P] {
+    def apply(param: P, valueMap: Map[Symbol, Any]) =
+      valueMap
+        .get(param.id)
+        .map(_.asInstanceOf[T])
+        .orElse(param.defaultValue)
+        .getOrElse(throw new IllegalArgumentException(s"Can't get param ${param.id.name}"))
   }
 }
