@@ -21,7 +21,7 @@ object DeployBackend {
   def board(environment: Environment) =
     SingleJobBoard("Deploy Backend", jobDefinition(environment))(Input[String]("Version"))
 
-  lazy val logger = Logger(getClass)
+  private lazy val logger = Logger(getClass)
 
   def apply(environment: Environment)(ansible: AnsibleContainer.type,
                                       terraform: TerraformContainer.type)(version: String): Unit = {

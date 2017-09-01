@@ -34,7 +34,7 @@ object DeployFrontend {
   def board(environment: Environment) =
     SingleJobBoard("Deploy Frontend", jobDefinition(environment))(Input[String]("Version"))
 
-  lazy val logger = Logger(getClass)
+  private lazy val logger = Logger(getClass)
 
   def apply(environment: Environment)(version: String): Unit =
     Lock.onDeployment(environment, Project.Frontend) {

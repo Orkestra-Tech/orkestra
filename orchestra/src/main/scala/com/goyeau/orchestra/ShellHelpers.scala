@@ -10,25 +10,32 @@ import scala.concurrent.duration.Duration
 
 import akka.http.scaladsl.model.ws.{BinaryMessage, Message}
 import akka.stream.scaladsl.{Flow, Keep, Sink, Source}
+import com.typesafe.scalalogging.Logger
 
 trait ShellHelpers {
+  private lazy val logger = Logger(getClass)
+  private def runningMessage(script: String) = logger.info(s"Running: $script")
 
-  def sh(script: String)(implicit workDir: Directory): String =
+  def sh(script: String)(implicit workDir: Directory): String = {
+    runningMessage(script)
     process.Process(Seq("sh", "-c", script), workDir.file).lineStream.fold("") { (acc, line) =>
       println(line)
       s"$acc\n$line"
     }
+  }
 
   def sh(script: String, container: Container)(implicit workDir: Directory): String = {
-    val exitCodeRegex = ".*command terminated with non-zero exit code: Error executing in Docker Container: (\\d+).*".r
+    runningMessage(script)
 
     val sink = Sink.fold[String, Message]("") {
       case (acc, BinaryMessage.Strict(data)) =>
+        val exitCodeRegex =
+          """.*command terminated with non-zero exit code: Error executing in Docker Container: (\d+).*""".r
         data.utf8String match {
           case messageData @ exitCodeRegex(exitCode) =>
             println(messageData)
             throw new RuntimeException(
-              s"Nonzero exit value: $exitCode for shell '$script' in container '${container.name}'"
+              s"Nonzero exit value: $exitCode for script '$script' in container ${container.name}"
             )
           case messageData =>
             print(messageData)

@@ -28,7 +28,7 @@ object CreateEnvironment {
       Checkbox("Deploy Backend")
     )
 
-  lazy val logger = Logger(getClass)
+  private lazy val logger = Logger(getClass)
 
   def apply(environment: Environment)(
     ansible: AnsibleContainer.type,

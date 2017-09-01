@@ -19,11 +19,13 @@ object LogsPage {
   val component =
     ScalaComponent
       .builder[Props](getClass.getSimpleName)
-      .initialState[(Seq[String], SetIntervalHandle)]((Seq.empty, null))
+      .initialState[(Option[Seq[String]], SetIntervalHandle)]((None, null))
       .render { $ =>
-        val logs =
-          if ($.state._1.nonEmpty) $.state._1.mkString("\n")
-          else "No logged message yet"
+        val logs = $.state._1 match {
+          case Some(log) if log.nonEmpty => log.mkString("\n")
+          case Some(log) if log.isEmpty  => "No logged message yet"
+          case None                      => "Loading log"
+        }
 
         <.div(
           <.div("Logs: " + $.props.page.runId.toString),
@@ -42,14 +44,14 @@ object LogsPage {
       .componentWillUnmount($ => Callback(js.timers.clearInterval($.state._2)))
       .build
 
-  private def pullLogs($ : ComponentDidMount[Props, (Seq[String], SetIntervalHandle), Unit]) = {
+  private def pullLogs($ : ComponentDidMount[Props, (Option[Seq[String]], SetIntervalHandle), Unit]) = {
     implicit val ec = $.props.ec
     $.props.page.job.Api.client
-      .logs($.props.page.runId, $.state._1.size)
+      .logs($.props.page.runId, $.state._1.fold(0)(_.size))
       .call()
       .foreach { logs =>
         val isScrolledToBottom = window.innerHeight + window.pageYOffset + 1 >= document.body.scrollHeight
-        $.modState(_.copy(_1 = $.state._1 ++ logs)).runNow()
+        $.modState(_.copy(_1 = Option($.state._1.toSeq.flatten ++ logs))).runNow()
         if (isScrolledToBottom) window.scrollTo(window.pageXOffset.toInt, document.body.scrollHeight)
       }
   }

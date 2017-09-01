@@ -107,6 +107,8 @@ spec:
                 secretKeyRef:
                   name: aurora
                   key: password
+            - name: KUBECONFIG
+              value: /opt/docker/secrets/kube/config
           ports:
             - name: ui
               containerPort: 8080

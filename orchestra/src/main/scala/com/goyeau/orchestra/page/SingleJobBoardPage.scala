@@ -48,6 +48,7 @@ object SingleJobBoardPage {
             paramOperations.displays(params, displayState) :+
               <.button(^.`type` := "submit")("Run"): _*
           ),
+          <.div("History"),
           $.state._3
         )
       }

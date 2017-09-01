@@ -14,7 +14,7 @@ object SwitchActiveColour {
 
   def board(environment: Environment) = SingleJobBoard("Switch Active Colour", jobDefinition(environment))
 
-  lazy val logger = Logger(getClass)
+  private lazy val logger = Logger(getClass)
 
   def apply(environment: Environment)(): Unit = {
     val activeColour = getActive(environment)

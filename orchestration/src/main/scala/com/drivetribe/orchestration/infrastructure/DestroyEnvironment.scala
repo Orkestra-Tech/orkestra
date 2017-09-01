@@ -19,7 +19,7 @@ object DestroyEnvironment {
 
   def board(environment: Environment) = SingleJobBoard("Destroy", jobDefinition(environment))
 
-  lazy val logger = Logger(getClass)
+  private lazy val logger = Logger(getClass)
 
   def apply(environment: Environment)(ansible: AnsibleContainer.type, terraform: TerraformContainer.type)(): Unit = {
     Git.checkoutInfrastructure()

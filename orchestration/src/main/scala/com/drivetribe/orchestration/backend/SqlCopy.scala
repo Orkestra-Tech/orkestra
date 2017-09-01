@@ -19,7 +19,7 @@ object SqlCopy {
       Input[String]("Destination Environment")
     )
 
-  lazy val logger = Logger(getClass)
+  private lazy val logger = Logger(getClass)
 
   def apply(mySql: MySqlContainer.type)(source: String, destination: String): Unit =
     mySql.dump(Environment.withNameInsensitive(source), Environment.withNameInsensitive(destination))
