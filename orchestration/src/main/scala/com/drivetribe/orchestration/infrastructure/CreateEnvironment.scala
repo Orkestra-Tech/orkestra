@@ -10,6 +10,7 @@ import com.drivetribe.orchestration.{Git, Lock}
 import com.goyeau.orchestra.{Job, _}
 import com.goyeau.orchestra.filesystem.Directory
 import com.goyeau.orchestra.kubernetes.PodConfig
+import com.goyeau.orchestra.parameter.{Checkbox, EnumParam, Input}
 import com.typesafe.scalalogging.Logger
 
 object CreateEnvironment {
@@ -23,8 +24,8 @@ object CreateEnvironment {
   def board(environment: Environment) =
     SingleJobBoard("Create", jobDefinition(environment))(
       EnumParam("Source Environment", Environment, defaultValue = Some(Environment.Staging)),
-      Param[Boolean]("Deploy Frontend", defaultValue = Some(true)),
-      Param[Boolean]("Deploy Backend")
+      Checkbox("Deploy Frontend", checked = true),
+      Checkbox("Deploy Backend")
     )
 
   lazy val logger = Logger(getClass)

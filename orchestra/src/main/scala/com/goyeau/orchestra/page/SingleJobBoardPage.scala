@@ -7,6 +7,8 @@ import scala.concurrent.ExecutionContext
 import autowire._
 import com.goyeau.orchestra._
 import com.goyeau.orchestra.ARunStatus._
+import com.goyeau.orchestra.parameter.Parameter.State
+import com.goyeau.orchestra.parameter.{ParameterOperations, RunId}
 import com.goyeau.orchestra.route.WebRouter.{AppPage, TaskLogsPage}
 import io.circe._
 import io.circe.java8.time._
@@ -22,7 +24,7 @@ object SingleJobBoardPage {
     job: Job.Definition[_, ParamValues, Result],
     params: Params,
     ctrl: RouterCtl[AppPage]
-  )(implicit ec: ExecutionContext, paramGetter: ParameterOperations[Params, ParamValues]) =
+  )(implicit ec: ExecutionContext, paramOperations: ParameterOperations[Params, ParamValues]) =
     ScalaComponent
       .builder[Unit](getClass.getSimpleName)
       .initialState {
@@ -32,19 +34,18 @@ object SingleJobBoardPage {
       .render { $ =>
         def runJob(event: ReactEventFromInput) = Callback.future {
           event.preventDefault()
-          job.Api.client.run($.state._1, paramGetter.values(params, $.state._2)).call().map {
+          job.Api.client.run($.state._1, paramOperations.values(params, $.state._2)).call().map {
             case ARunStatus.Failure(e) => Callback.alert(e.getMessage)
             case _                     => ctrl.set(TaskLogsPage(job, $.state._1.runId))
           }
         }
 
-        val displayState =
-          ParameterDisplayer.State(kv => $.modState(s => s.copy(_2 = s._2 + kv)), key => $.state._2.get(key))
+        val displayState = State(kv => $.modState(s => s.copy(_2 = s._2 + kv)), key => $.state._2.get(key))
 
         <.div(
           <.div(name),
           <.form(^.onSubmit ==> runJob)(
-            paramGetter.displays(params, displayState) :+
+            paramOperations.displays(params, displayState) :+
               <.button(^.`type` := "submit")("Run"): _*
           ),
           $.state._3

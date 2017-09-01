@@ -14,7 +14,7 @@ object StatusPage {
   }
 
   val component =
-    ScalaComponent.builder.static("StatusPage")(<.div(Style.content, "ScalaJS-React Template ")).build
+    ScalaComponent.builder.static("StatusPage")(<.div(Style.content, "Status")).build
 
   def apply() = component()
 }

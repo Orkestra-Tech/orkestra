@@ -17,6 +17,7 @@ import com.goyeau.kubernetesclient.{KubeConfig, KubernetesClient}
 import com.goyeau.orchestra.filesystem.LocalFile
 import com.goyeau.orchestra.{Job, _}
 import com.goyeau.orchestra.AkkaImplicits._
+import com.goyeau.orchestra.parameter.Input
 import com.typesafe.scalalogging.{LazyLogging, Logger}
 import io.k8s.api.apps.v1beta1.{Deployment, DeploymentSpec, DeploymentStrategy, RollingUpdateDeployment}
 import io.k8s.api.core.v1._
@@ -31,7 +32,7 @@ object DeployFrontend {
   def job(environment: Environment) = jobDefinition(environment)(apply(environment) _)
 
   def board(environment: Environment) =
-    SingleJobBoard("Deploy Frontend", jobDefinition(environment))(Param[String]("Version"))
+    SingleJobBoard("Deploy Frontend", jobDefinition(environment))(Input[String]("Version"))
 
   lazy val logger = Logger(getClass)
 

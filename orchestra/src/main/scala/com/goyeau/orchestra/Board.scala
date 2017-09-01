@@ -5,6 +5,7 @@ import scala.concurrent.ExecutionContext
 import com.goyeau.orchestra.page.FolderBoardPage
 import com.goyeau.orchestra.route.WebRouter.{AppPage, BoardPage, TaskLogsPage}
 import com.goyeau.orchestra.page.{LogsPage, SingleJobBoardPage}
+import com.goyeau.orchestra.parameter.{Parameter, ParameterOperations}
 import io.circe.{Decoder, Encoder}
 import japgolly.scalajs.react.extra.router.{RouterConfigDsl, StaticDsl}
 import japgolly.scalajs.react.vdom.html_<^._

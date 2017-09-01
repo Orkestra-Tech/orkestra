@@ -7,6 +7,7 @@ import com.drivetribe.orchestration.infrastructure._
 import com.drivetribe.orchestration.{Git, Lock, Project}
 import com.goyeau.orchestra.filesystem.Directory
 import com.goyeau.orchestra.kubernetes.PodConfig
+import com.goyeau.orchestra.parameter.Input
 import com.goyeau.orchestra.{Job, _}
 import com.typesafe.scalalogging.Logger
 
@@ -18,7 +19,7 @@ object DeployBackend {
     jobDefinition(environment)(PodConfig(AnsibleContainer, TerraformContainer))(apply(environment) _)
 
   def board(environment: Environment) =
-    SingleJobBoard("Deploy Backend", jobDefinition(environment))(Param[String]("Version"))
+    SingleJobBoard("Deploy Backend", jobDefinition(environment))(Input[String]("Version"))
 
   lazy val logger = Logger(getClass)
 
