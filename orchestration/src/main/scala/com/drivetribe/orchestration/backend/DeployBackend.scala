@@ -1,5 +1,7 @@
 package com.drivetribe.orchestration.backend
 
+import java.time.Instant
+
 import scala.concurrent.ExecutionContext.Implicits.global
 
 import com.drivetribe.orchestration._
@@ -35,11 +37,12 @@ object DeployBackend {
           if (environment.isBiColour) Some(Colour.getActive(environment))
           else None
         val inactiveColour = activeColour.map(_.opposite)
+        val stateVersion = Instant.now().getEpochSecond.toString
 
-        dtTools(environment, version, inactiveColour, ansible)
+        dtTools(environment, version, stateVersion, inactiveColour, ansible)
         Seq(
-          DeployRestApi.deploy(environment, version, inactiveColour, terraform, ansible),
-          DeployFlinkJob.deploy(environment, version, inactiveColour, ansible)
+          DeployRestApi.deploy(environment, version, stateVersion, inactiveColour, terraform, ansible),
+          DeployFlinkJob.deploy(environment, version, stateVersion, inactiveColour, ansible)
         ).parallel
       }
     }
@@ -47,6 +50,7 @@ object DeployBackend {
 
   def dtTools(environment: Environment,
               version: String,
+              stateVersion: String,
               colour: Option[EnvironmentColour],
               ansible: AnsibleContainer.type)(implicit workDir: Directory) = {
     logger.info("DT Tools")
@@ -54,7 +58,7 @@ object DeployBackend {
       val envParams = Seq(
         s"env_name=${environment.entryName}",
         s"dt_tools_version=$version",
-        StateVersions.template(version)
+        StateVersions.template(stateVersion)
       ) ++ ansibleColourEnvParam(colour)
 
       ansible.playbook(

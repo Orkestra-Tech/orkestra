@@ -1,5 +1,7 @@
 package com.drivetribe.orchestration.backend
 
+import java.time.Instant
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
@@ -47,14 +49,19 @@ object DeployFlinkJob {
             throw new IllegalArgumentException(s"$side is not an applicable side to deploy REST API")
           case (false, _) => None
         }
+        val stateVersion = Version(environment).state
 
-        Await.result(deploy(environment, version, colour, ansible, jobName, killExistingJob), Duration.Inf)
+        Await.result(
+          deploy(environment, version, stateVersion, colour, ansible, jobName, killExistingJob),
+          Duration.Inf
+        )
       }
     }
   }
 
   def deploy(environment: Environment,
              version: String,
+             stateVersion: String,
              colour: Option[EnvironmentColour],
              ansible: AnsibleContainer.type,
              jobName: String = "all-jobs",
@@ -69,8 +76,9 @@ object DeployFlinkJob {
         s"env_name=${environment.entryName}",
         s"data_processing_version=$version",
         s"dt_tools_version=$version",
+        s"kill_existing_job=$killExistingJob",
         flinkJobEnvParam,
-        StateVersions.template(version)
+        StateVersions.template(stateVersion)
       ) ++ ansibleColourEnvParam(colour)
 
       ansible.playbook(

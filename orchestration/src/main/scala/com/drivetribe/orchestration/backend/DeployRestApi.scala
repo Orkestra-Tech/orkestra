@@ -45,14 +45,16 @@ object DeployRestApi {
             throw new IllegalArgumentException(s"$side is not an applicable side to deploy REST API")
           case (false, _) => None
         }
+        val stateVersion = Version(environment).state
 
-        Await.result(deploy(environment, version, colour, terraform, ansible), Duration.Inf)
+        Await.result(deploy(environment, version, stateVersion, colour, terraform, ansible), Duration.Inf)
       }
     }
   }
 
   def deploy(environment: Environment,
              version: String,
+             stateVersion: String,
              colour: Option[EnvironmentColour],
              terraform: TerraformContainer.type,
              ansible: AnsibleContainer.type)(implicit workDir: Directory) = Future {
@@ -61,7 +63,7 @@ object DeployRestApi {
 
     dir(terraform.rootDir(environment)) { implicit workDir =>
       val moduleName = colour.fold("rest_api")(c => s"rest_api_$c")
-      val stateVersions = StateVersions.template(version).replaceAll("\\{", "\\\\{").replaceAll("\\}", "\\\\}")
+      val stateVersions = StateVersions.template(stateVersion).replaceAll("\\{", "\\\\{").replaceAll("\\}", "\\\\}")
       val tfState = TerraformState.fromS3(environment)
       val capacity = AutoScaling.getDesiredCapacity(
         tfState.getResourceAttribute(Seq("root", moduleName), "aws_autoscaling_group.api", "name")

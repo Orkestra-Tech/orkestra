@@ -9,14 +9,17 @@ import akka.util.ByteString
 import com.drivetribe.orchestration.Environment
 import com.goyeau.orchestra.AkkaImplicits._
 import io.circe.parser._
+import io.circe.generic.auto._
+
+case class Version(build: String, commitId: String, state: String, colour: String)
 
 object Version {
 
-  def apply(environment: Environment): String = {
+  def apply(environment: Environment): Version = {
     val version = for {
       response <- Http().singleRequest(HttpRequest(uri = s"${environment.monitoringApi}/versions"))
       entity <- response.entity.dataBytes.runFold(ByteString.empty)(_ ++ _)
-    } yield parse(entity.utf8String).flatMap(_.hcursor.downField("build").as[String]).fold(throw _, identity)
+    } yield decode[Version](entity.utf8String).fold(throw _, identity)
 
     Await.result(version, Duration.Inf)
   }
