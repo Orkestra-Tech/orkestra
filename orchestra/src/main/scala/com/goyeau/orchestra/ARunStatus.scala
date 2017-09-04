@@ -1,21 +1,25 @@
 package com.goyeau.orchestra
 
+import java.nio.file.{Files, Paths, StandardOpenOption}
 import java.time.Instant
 import java.util.UUID
 
+import scala.concurrent.Await
+import scala.concurrent.duration.Duration
 import scala.io.Source
 
+import com.goyeau.orchestra.AkkaImplicits._
+import com.goyeau.orchestra.kubernetes.{JobUtils, Kubernetes}
 import io.circe._
 
 // Start with A because of a compiler bug
 // Should be in the model package
-sealed trait ARunStatus[+Result]
+sealed trait ARunStatus
 object ARunStatus {
-  case class Scheduled(at: Instant) extends ARunStatus[Nothing]
-  case class Running(at: Instant) extends ARunStatus[Nothing]
-  case class Success[Result](at: Instant, result: Result) extends ARunStatus[Result]
-  case class Failure(e: Throwable) extends ARunStatus[Nothing]
-  case object Unknown extends ARunStatus[Nothing]
+  case class Triggered(at: Instant) extends ARunStatus
+  case class Running(at: Instant) extends ARunStatus
+  case class Success(at: Instant) extends ARunStatus
+  case class Failure(e: Throwable) extends ARunStatus
 
   // Circe encoders/decoders
   implicit val encodeThrowable = new Encoder[Throwable] {
@@ -33,12 +37,39 @@ object ARunStatus {
 }
 
 object RunStatusUtils {
-  def load[Result](runInfo: RunInfo)(implicit decoder: Decoder[ARunStatus[Result]]): Seq[ARunStatus[Result]] =
+  def current(runInfo: RunInfo)(implicit decoder: Decoder[ARunStatus], encoder: Encoder[ARunStatus]): ARunStatus =
+    history(runInfo).lastOption match {
+      case Some(s: ARunStatus.Running) =>
+        // Check if this job is still running or a ghost
+        val kubeJob = Kubernetes.client
+          .namespaces(OrchestraConfig.namespace)
+          .jobs(JobUtils.jobName(runInfo))
+          .get()
+
+        val jobStillRunning = kubeJob.map(_ => s)
+        val jobNotRunning =
+          kubeJob.failed.map(_ => save(runInfo, ARunStatus.Failure(new InterruptedException("Job interrupted"))))
+        Await.result(jobStillRunning.fallbackTo(jobNotRunning), Duration.Inf)
+      case Some(s) => s
+      case None    => throw new IllegalStateException(s"No status found for job ${runInfo.jobId} ${runInfo.runId}")
+    }
+
+  def history(runInfo: RunInfo)(implicit decoder: Decoder[ARunStatus]): Seq[ARunStatus] =
     Source
-      .fromFile(OrchestraConfig.statusFilePath(runInfo))
+      .fromFile(OrchestraConfig.statusFilePath(runInfo).toFile)
       .getLines()
-      .map(AutowireServer.read[ARunStatus[Result]])
+      .map(AutowireServer.read[ARunStatus])
       .toSeq
+
+  def save(runInfo: RunInfo, status: ARunStatus)(implicit encoder: Encoder[ARunStatus]): ARunStatus = {
+    Files.write(
+      OrchestraConfig.statusFilePath(runInfo),
+      s"${AutowireServer.write[ARunStatus](status)}\n".getBytes,
+      StandardOpenOption.APPEND,
+      StandardOpenOption.CREATE
+    )
+    status
+  }
 }
 
 case class RunInfo(jobId: Symbol, runIdMaybe: Option[UUID]) {

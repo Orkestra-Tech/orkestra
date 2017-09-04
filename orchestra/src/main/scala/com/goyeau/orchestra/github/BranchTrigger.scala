@@ -20,7 +20,7 @@ case class BranchTrigger(repoName: String, branchRegex: String, job: Job.Runner[
         val eventBranch = json.hcursor.downField("ref").as[String].fold(throw _, identity).replace("refs/heads/", "")
 
         if (eventRepoName == repoName && branchRegex.r.findFirstIn(eventBranch).isDefined)
-          job.apiServer.run(RunInfo(job.definition.id, Option(UUID.randomUUID())), eventBranch :: HNil)
+          job.apiServer.trigger(RunInfo(job.definition.id, Option(UUID.randomUUID())), eventBranch :: HNil)
       case _ =>
     }
 }

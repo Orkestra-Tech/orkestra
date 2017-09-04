@@ -7,21 +7,21 @@ trait TriggerHelpers {
   implicit class TiggerableNoParamJob(job: Job.Runner[_, HNil, _, _]) {
     def trigger(job: Job.Runner[_, HNil, _, _]) = {
       triggerMessage(job)
-      job.apiServer.run(runInfo(job), HNil)
+      job.apiServer.trigger(runInfo(job), HNil)
     }
   }
 
   implicit class TiggerableOneParamJob[ParamValue](job: Job.Runner[_, ParamValue :: HNil, _, _]) {
     def trigger(params: ParamValue) = {
       triggerMessage(job)
-      job.apiServer.run(runInfo(job), params :: HNil)
+      job.apiServer.trigger(runInfo(job), params :: HNil)
     }
   }
 
   implicit class TiggerableMultipleParamJob[ParamValues <: HList](job: Job.Runner[_, ParamValues, _, _]) {
     def trigger[TupledValues](params: TupledValues)(implicit tupleToHList: Generic.Aux[TupledValues, ParamValues]) = {
       triggerMessage(job)
-      job.apiServer.run(runInfo(job), tupleToHList.to(params))
+      job.apiServer.trigger(runInfo(job), tupleToHList.to(params))
     }
   }
 

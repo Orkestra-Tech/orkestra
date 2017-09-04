@@ -73,15 +73,16 @@ case class EnumParam[Entry <: EnumEntry](name: String, enum: Enum[Entry], defaul
       event.persist()
       state + (id -> enum.withNameInsensitive(event.target.value))
     }
+    val disabled = "disabled"
 
     <.label(^.display.block)(
       <.span(name),
       <.select(
         ^.key := id.name,
-        ^.value :=? state.get(id).map(_.asInstanceOf[Entry]).orElse(defaultValue).map(_.entryName),
+        ^.value := state.get(id).map(_.asInstanceOf[Entry]).orElse(defaultValue).map(_.entryName).getOrElse(disabled),
         ^.onChange ==> modValue
       )(
-        <.option(^.disabled := true, ^.selected := "selected")(name) +:
+        <.option(^.disabled := true, ^.value := disabled)(name) +:
           enum.values.map(o => <.option(^.value := o.entryName)(o.toString)): _*
       )
     )

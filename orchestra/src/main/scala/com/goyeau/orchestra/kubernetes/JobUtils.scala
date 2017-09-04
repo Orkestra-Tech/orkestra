@@ -8,7 +8,7 @@ import shapeless.HList
 
 object JobUtils {
 
-  private def jobName(runInfo: RunInfo) =
+  def jobName(runInfo: RunInfo) =
     s"orchestra-${runInfo.jobId.name.toLowerCase}-${runInfo.runId.toString.split("-").head}"
 
   def create[Containers <: HList](runInfo: RunInfo, podConfig: PodConfig[Containers]) =

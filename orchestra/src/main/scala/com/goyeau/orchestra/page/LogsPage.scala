@@ -38,8 +38,8 @@ object LogsPage {
         )
       }
       .componentDidMount { $ =>
-        pullLogs($)
         $.setState($.state.copy(_2 = js.timers.setInterval(1.second)(pullLogs($))))
+          .map(_ => pullLogs($))
       }
       .componentWillUnmount($ => Callback(js.timers.clearInterval($.state._2)))
       .build

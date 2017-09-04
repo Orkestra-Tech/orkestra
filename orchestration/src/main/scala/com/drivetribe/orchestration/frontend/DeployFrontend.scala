@@ -18,7 +18,7 @@ import com.goyeau.orchestra.filesystem.LocalFile
 import com.goyeau.orchestra.{Job, _}
 import com.goyeau.orchestra.AkkaImplicits._
 import com.goyeau.orchestra.parameter.Input
-import com.typesafe.scalalogging.{LazyLogging, Logger}
+import com.typesafe.scalalogging.Logger
 import io.k8s.api.apps.v1beta1.{Deployment, DeploymentSpec, DeploymentStrategy, RollingUpdateDeployment}
 import io.k8s.api.core.v1._
 import io.k8s.apimachinery.pkg.api.resource.Quantity

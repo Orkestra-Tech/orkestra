@@ -117,6 +117,7 @@ lazy val orchestrationJVM = orchestration.jvm
     pipelineStages in Assets := Seq(scalaJSPipeline),
     maintainer in Docker := "Drivetribe",
     dockerRepository := Option("registry.drivetribe.com/tools"),
+    devCommands in scalaJSPipeline ++= Seq("publishLocal", "console"),
     dockerUpdateLatest := true,
     dockerExposedPorts := Seq(8080, 8081),
     // Workaround the face that ENTRYPOINT is not absolute, so when we change the WORKDIR the won't start

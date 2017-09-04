@@ -43,7 +43,7 @@ case class SingleJobBoard[ParamValues <: HList: Encoder, Params <: HList, Result
     import dsl._
     (
       staticRoute(root, BoardPage(this)) ~> renderR { ctrl =>
-        SingleJobBoardPage.component(name, job, params, ctrl)
+        SingleJobBoardPage.component(SingleJobBoardPage.Props(name, job, params, ctrl))
       } |
         dynamicRoute(uuid.xmap(TaskLogsPage(job, _))(_.runId) / "logs") { case p @ TaskLogsPage(`job`, _) => p } ~>
           dynRender { page =>

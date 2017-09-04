@@ -1,5 +1,7 @@
 package com.goyeau.orchestra
 
+import java.nio.file.Paths
+
 object OrchestraConfig {
   def apply(envVar: String) = Option(System.getenv(s"ORCHESTRA_$envVar")).filter(_.nonEmpty)
 
@@ -16,9 +18,9 @@ object OrchestraConfig {
     OrchestraConfig("NAMESPACE").getOrElse(throw new IllegalStateException("ORCHESTRA_NAMESPACE should be set"))
 
   val jobsDirName = "jobs"
-  def jobDirPath(jobId: Symbol) = s"$home/$jobsDirName/${jobId.name}"
-  def runDirPath(runInfo: RunInfo) = s"${jobDirPath(runInfo.jobId)}/${runInfo.runId}"
-  def statusFilePath(runInfo: RunInfo) = s"${runDirPath(runInfo)}/status"
-  def paramsFilePath(runInfo: RunInfo) = s"${runDirPath(runInfo)}/params"
-  def logsFilePath(runInfo: RunInfo) = s"${runDirPath(runInfo)}/logs"
+  def jobDirPath(jobId: Symbol) = Paths.get(home, jobsDirName, jobId.name)
+  def runDirPath(runInfo: RunInfo) = Paths.get(jobDirPath(runInfo.jobId).toString, runInfo.runId.toString)
+  def statusFilePath(runInfo: RunInfo) = Paths.get(runDirPath(runInfo).toString, "status")
+  def paramsFilePath(runInfo: RunInfo) = Paths.get(runDirPath(runInfo).toString, "params")
+  def logsFilePath(runInfo: RunInfo) = Paths.get(runDirPath(runInfo).toString, "logs")
 }

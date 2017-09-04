@@ -1,8 +1,7 @@
 package com.goyeau.orchestra
 
-import java.io.{File, FileOutputStream, PrintStream, PrintWriter}
-import java.nio.file.{Files, Paths, StandardOpenOption}
-import java.nio.file.attribute.BasicFileAttributes
+import java.io.{File, FileOutputStream, PrintStream}
+import java.nio.file.{Files, Paths}
 import java.time.Instant
 import java.util.UUID
 
@@ -22,6 +21,8 @@ import ARunStatus._
 import com.goyeau.orchestra.kubernetes.{JobUtils, PodConfig}
 import shapeless._
 import shapeless.ops.function.FnToProduct
+
+import com.goyeau.orchestra.ARunStatus._
 
 object Job {
   case class Definition[JobFn, ParamValues <: HList: Encoder: Decoder, Result: Encoder: Decoder](id: Symbol) {
@@ -43,9 +44,9 @@ object Job {
     }
 
     trait Api {
-      def run(runInfo: RunInfo, params: ParamValues): ARunStatus[Result]
+      def trigger(runInfo: RunInfo, params: ParamValues): ARunStatus
       def logs(runId: UUID, from: Int): Seq[String]
-      def runs(): Seq[(UUID, Instant)]
+      def runs(): Seq[(UUID, Instant, ARunStatus)]
     }
 
     object Api {
@@ -61,76 +62,63 @@ object Job {
     job: ParamValues => Result
   ) {
 
-    def run(runInfo: RunInfo): Unit = {
-      new File(OrchestraConfig.runDirPath(runInfo)).mkdirs()
-      val logsOut = new PrintStream(new FileOutputStream(OrchestraConfig.logsFilePath(runInfo), true), true)
+    def run(runInfo: RunInfo): Unit =
+      if (OrchestraConfig.paramsFilePath(runInfo).toFile.exists()) {
+        val logsOut = new PrintStream(new FileOutputStream(OrchestraConfig.logsFilePath(runInfo).toFile, true), true)
 
-      Utils.withOutErr(logsOut) {
-        val statusPath = OrchestraConfig.statusFilePath(runInfo)
-        try {
-          Files.write(
-            Paths.get(statusPath),
-            s"${AutowireServer.write[ARunStatus[Result]](ARunStatus.Running(Instant.now()))}\n".getBytes,
-            StandardOpenOption.APPEND
-          )
-          val result =
-            job(AutowireServer.read[ParamValues](Source.fromFile(OrchestraConfig.paramsFilePath(runInfo)).mkString))
-          println("Job completed")
-          Files.write(
-            Paths.get(statusPath),
-            s"${AutowireServer.write[ARunStatus[Result]](ARunStatus.Success(Instant.now(), result))}\n".getBytes,
-            StandardOpenOption.APPEND
-          )
-        } catch {
-          case e: Throwable =>
-            e.printStackTrace()
-            Files.write(
-              Paths.get(statusPath),
-              s"${AutowireServer.write[ARunStatus[Result]](ARunStatus.Failure(e))}\n".getBytes,
-              StandardOpenOption.APPEND
+        Utils.withOutErr(logsOut) {
+          try {
+            RunStatusUtils.save(runInfo, ARunStatus.Running(Instant.now()))
+
+            job(
+              AutowireServer.read[ParamValues](Source.fromFile(OrchestraConfig.paramsFilePath(runInfo).toFile).mkString)
             )
-        } finally {
-          logsOut.close()
-          JobUtils.delete(runInfo)
+            println("Job completed")
+
+            RunStatusUtils.save(runInfo, ARunStatus.Success(Instant.now()))
+          } catch {
+            case e: Throwable =>
+              e.printStackTrace()
+              RunStatusUtils.save(runInfo, ARunStatus.Failure(e))
+          } finally {
+            logsOut.close()
+            JobUtils.delete(runInfo)
+          }
         }
       }
-    }
 
     val apiServer = new definition.Api {
-      override def run(runInfo: RunInfo, params: ParamValues): ARunStatus[Result] = {
-        val runDir = new File(OrchestraConfig.runDirPath(runInfo))
-        val statusFile = new File(OrchestraConfig.statusFilePath(runInfo))
+      private val triggerLock = new Object
 
-        if (runDir.exists() && statusFile.exists()) RunStatusUtils.load[Result](runInfo).last
-        else if (runDir.exists() && !statusFile.exists()) ARunStatus.Unknown
+      override def trigger(runInfo: RunInfo, params: ParamValues): ARunStatus = triggerLock.synchronized {
+        if (OrchestraConfig.statusFilePath(runInfo).toFile.exists()) RunStatusUtils.current(runInfo)
         else {
-          runDir.mkdirs()
-          Files.write(Paths.get(OrchestraConfig.paramsFilePath(runInfo)), AutowireServer.write(params).getBytes)
+          OrchestraConfig.runDirPath(runInfo).toFile.mkdirs()
+
+          val triggered = RunStatusUtils.save(runInfo, ARunStatus.Triggered(Instant.now()))
+          Files.write(OrchestraConfig.paramsFilePath(runInfo), AutowireServer.write(params).getBytes)
 
           JobUtils.create(runInfo, podConfig)
-
-          val status = ARunStatus.Scheduled(Instant.now())
-          Files.write(statusFile.toPath, s"${AutowireServer.write[ARunStatus[Result]](status)}\n".getBytes)
-          status
+          triggered
         }
       }
 
       override def logs(runId: UUID, from: Int): Seq[String] =
-        Seq(new File(OrchestraConfig.logsFilePath(RunInfo(definition.id, Some(runId)))))
+        Seq(OrchestraConfig.logsFilePath(RunInfo(definition.id, Some(runId))).toFile)
           .filter(_.exists())
           .flatMap(Source.fromFile(_).getLines().slice(from, Int.MaxValue).toSeq)
 
-      override def runs(): Seq[(UUID, Instant)] =
-        Seq(new File(OrchestraConfig.jobDirPath(definition.id)))
+      override def runs(): Seq[(UUID, Instant, ARunStatus)] =
+        Seq(OrchestraConfig.jobDirPath(definition.id).toFile)
           .filter(_.exists())
           .flatMap(_.listFiles())
-          .filter(_.isDirectory())
-          .flatMap { runDir =>
-            val runInfo = RunInfo(definition.id, Option(UUID.fromString(runDir.getName)))
-            RunStatusUtils.load[Result](runInfo).headOption.map {
-              case status: Scheduled => (runInfo.runId, status.at)
+          .map(runDir => RunInfo(definition.id, Option(UUID.fromString(runDir.getName))))
+          .filter(OrchestraConfig.statusFilePath(_).toFile.exists())
+          .flatMap { runInfo =>
+            RunStatusUtils.history(runInfo).headOption.map {
+              case status: Triggered => (runInfo.runId, status.at, RunStatusUtils.current(runInfo))
               case status =>
-                throw new IllegalStateException(s"$status is not of status type ${classOf[Scheduled].getName}")
+                throw new IllegalStateException(s"$status is not of status type ${classOf[Triggered].getName}")
             }
           }
           .sortBy(_._2)
