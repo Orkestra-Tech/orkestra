@@ -10,12 +10,12 @@ object MySqlContainer extends Container("mysql", "mysql:5.7.18", tty = true, Seq
     mysql(destination, "", s"CREATE DATABASE IF NOT EXISTS $dbName")
     sh(
       s"""mysqldump \\
-         |  -h $source-aurora-ro.drivetribe.com \\
+         |  -h ${source.entryName}-aurora-ro.drivetribe.com \\
          |  -u${System.getenv("AURORA_USERNAME")} -p${System.getenv("AURORA_PASSWORD")} \\
          |  --single-transaction \\
          |  --compress $params $dbName | \\
          |  mysql \\
-         |    -h $destination-aurora.drivetribe.com \\
+         |    -h ${destination.entryName}-aurora.drivetribe.com \\
          |    -u${System.getenv("AURORA_USERNAME")} -p${System.getenv("AURORA_PASSWORD")} $dbName""".stripMargin,
       this
     )
@@ -30,7 +30,7 @@ object MySqlContainer extends Container("mysql", "mysql:5.7.18", tty = true, Seq
   def mysql(environment: Environment, dbName: String, command: String) =
     sh(
       s"""mysql \\
-         |  -h $environment-aurora.drivetribe.com -u${System.getenv("AURORA_USERNAME")} \\
+         |  -h ${environment.entryName}-aurora.drivetribe.com -u${System.getenv("AURORA_USERNAME")} \\
          |  -p${System.getenv("AURORA_PASSWORD")} \\
          |  -e '$command' $dbName""".stripMargin,
       this

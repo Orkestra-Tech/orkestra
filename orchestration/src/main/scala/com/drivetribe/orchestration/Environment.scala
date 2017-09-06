@@ -93,7 +93,7 @@ object Environment extends Enum[Environment] {
         URI.create("https://ovale.drivetribe.com"),
         URI.create("https://ovale-api.drivetribe.com:6443")
       )
-  case object Sakir
+  case object Sakhir
       extends Environment(
         EnvironmentType.Medium,
         false,

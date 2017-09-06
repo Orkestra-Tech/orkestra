@@ -8,7 +8,7 @@ import com.drivetribe.orchestration.infrastructure._
 import com.drivetribe.orchestration.{Git, Lock, Project, _}
 import com.goyeau.orchestra.filesystem.Directory
 import com.goyeau.orchestra.kubernetes.PodConfig
-import com.goyeau.orchestra.parameter.{EnumParam, Input}
+import com.goyeau.orchestra.parameter.{Input, Select}
 import com.goyeau.orchestra.{Job, _}
 import com.typesafe.scalalogging.Logger
 
@@ -22,7 +22,7 @@ object DeployRestApi {
 
   def board(environment: Environment) =
     SingleJobBoard("Deploy REST API", jobDefinition(environment))(
-      EnumParam("Side", EnvironmentSide, Option(EnvironmentSide.Inactive)),
+      Select("Side", EnvironmentSide, Option(EnvironmentSide.Inactive)),
       Input[String]("Version")
     )
 

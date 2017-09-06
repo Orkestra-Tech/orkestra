@@ -1,6 +1,6 @@
 package com.goyeau.orchestra
 
-import java.nio.file.{Files, Paths, StandardOpenOption}
+import java.nio.file.{Files, StandardOpenOption}
 import java.time.Instant
 import java.util.UUID
 
@@ -19,7 +19,8 @@ object ARunStatus {
   case class Triggered(at: Instant) extends ARunStatus
   case class Running(at: Instant) extends ARunStatus
   case class Success(at: Instant) extends ARunStatus
-  case class Failure(e: Throwable) extends ARunStatus
+  case class Failure(at: Instant, e: Throwable) extends ARunStatus
+  case object Stopped extends ARunStatus
 
   // Circe encoders/decoders
   implicit val encodeThrowable = new Encoder[Throwable] {
@@ -46,10 +47,9 @@ object RunStatusUtils {
           .jobs(JobUtils.jobName(runInfo))
           .get()
 
-        val jobStillRunning = kubeJob.map(_ => s)
-        val jobNotRunning =
-          kubeJob.failed.map(_ => save(runInfo, ARunStatus.Failure(new InterruptedException("Job interrupted"))))
-        Await.result(jobStillRunning.fallbackTo(jobNotRunning), Duration.Inf)
+        val jobRunning = kubeJob.map(_ => s)
+        val jobStopped = kubeJob.failed.map(_ => ARunStatus.Stopped)
+        Await.result(jobRunning.fallbackTo(jobStopped), Duration.Inf)
       case Some(s) => s
       case None    => throw new IllegalStateException(s"No status found for job ${runInfo.jobId} ${runInfo.runId}")
     }

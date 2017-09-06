@@ -1,12 +1,14 @@
 package com.goyeau.orchestra
 
+import java.io.IOException
+
 import scala.sys.process
 
 import com.goyeau.orchestra.AkkaImplicits._
 import com.goyeau.orchestra.filesystem.Directory
 import com.goyeau.orchestra.kubernetes.{Container, Kubernetes}
-import scala.concurrent.Await
-import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, Future}
+import scala.concurrent.duration._
 
 import akka.http.scaladsl.model.ws.{BinaryMessage, Message}
 import akka.stream.scaladsl.{Flow, Keep, Sink, Source}
@@ -43,10 +45,9 @@ trait ShellHelpers {
         }
       case (_, message) => throw new IllegalStateException(s"Unexpected message type received: $message")
     }
-
     val flow = Flow.fromSinkAndSourceMat(sink, Source.maybe[Message])(Keep.left)
 
-    Await.result(
+    def exec(timeout: Duration = 20.seconds, interval: Duration = 200.millis): Future[String] =
       Kubernetes.client
         .namespaces(OrchestraConfig.namespace)
         .pods(OrchestraConfig.podName)
@@ -56,8 +57,13 @@ trait ShellHelpers {
           Seq("sh", "-c", s"cd ${workDir.file.getAbsolutePath} && $script"),
           stdin = true,
           tty = true
-        ),
-      Duration.Inf
-    )
+        )
+        .recoverWith {
+          case _: IOException if timeout > 0.milli =>
+            Thread.sleep(interval.toMillis)
+            exec(timeout - interval, interval)
+        }
+
+    Await.result(exec(), Duration.Inf)
   }
 }

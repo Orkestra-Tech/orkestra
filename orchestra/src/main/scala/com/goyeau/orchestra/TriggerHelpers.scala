@@ -1,6 +1,7 @@
 package com.goyeau.orchestra
 
 import shapeless._
+import shapeless.ops.hlist.Tupler
 
 trait TriggerHelpers {
 
@@ -18,8 +19,11 @@ trait TriggerHelpers {
     }
   }
 
-  implicit class TiggerableMultipleParamJob[ParamValues <: HList](job: Job.Runner[_, ParamValues, _, _]) {
-    def trigger[TupledValues](params: TupledValues)(implicit tupleToHList: Generic.Aux[TupledValues, ParamValues]) = {
+  implicit class TiggerableMultipleParamJob[ParamValues <: HList, TupledValues](job: Job.Runner[_, ParamValues, _, _])(
+    implicit tupler: Tupler.Aux[ParamValues, TupledValues],
+    tupleToHList: Generic.Aux[TupledValues, ParamValues]
+  ) {
+    def trigger(params: TupledValues) = {
       triggerMessage(job)
       job.apiServer.trigger(runInfo(job), tupleToHList.to(params))
     }

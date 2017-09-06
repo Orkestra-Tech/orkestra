@@ -77,7 +77,7 @@ lazy val orchestra = crossProject
       "com.chuusai" %%% "shapeless" % "2.3.2",
       "com.vmunier" %% "scalajs-scripts" % "1.1.1",
       "com.beachape" %%% "enumeratum" % "1.5.12" % Provided,
-      "com.goyeau" %% "kubernetes-client" % "14efb383+20170901-1507"
+      "com.goyeau" %% "kubernetes-client" % "14efb383+20170906-1149"
     ) ++ scalaJsReact.value ++ akkaHttp.value ++ scalaCss.value ++ autowire.value ++ logging.value,
     jsDependencies ++= Seq(
       "org.webjars.npm" % "ansi_up" % "2.0.2" / "ansi_up.js" commonJSName "ansi_up"
@@ -117,10 +117,10 @@ lazy val orchestrationJVM = orchestration.jvm
     pipelineStages in Assets := Seq(scalaJSPipeline),
     maintainer in Docker := "Drivetribe",
     dockerRepository := Option("registry.drivetribe.com/tools"),
-    devCommands in scalaJSPipeline ++= Seq("publishLocal", "console"),
+    devCommands in scalaJSPipeline ++= Seq("publishLocal", "console", "reload"),
     dockerUpdateLatest := true,
     dockerExposedPorts := Seq(8080, 8081),
-    // Workaround the face that ENTRYPOINT is not absolute, so when we change the WORKDIR the won't start
+    // Workaround the face that ENTRYPOINT is not absolute, so when we change the WORKDIR it won't start
     dockerEntrypoint := Seq(s"${(defaultLinuxInstallLocation in Docker).value}/bin/${executableScriptName.value}"),
     daemonUser in Docker := "root" // Workaround minikube volume rights
   )

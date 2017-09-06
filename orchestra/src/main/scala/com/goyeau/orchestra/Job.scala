@@ -5,7 +5,8 @@ import java.nio.file.{Files, Paths}
 import java.time.Instant
 import java.util.UUID
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, ExecutionContext}
 import scala.io.Source
 import scala.language.{higherKinds, implicitConversions}
 
@@ -21,7 +22,6 @@ import ARunStatus._
 import com.goyeau.orchestra.kubernetes.{JobUtils, PodConfig}
 import shapeless._
 import shapeless.ops.function.FnToProduct
-
 import com.goyeau.orchestra.ARunStatus._
 
 object Job {
@@ -71,7 +71,9 @@ object Job {
             RunStatusUtils.save(runInfo, ARunStatus.Running(Instant.now()))
 
             job(
-              AutowireServer.read[ParamValues](Source.fromFile(OrchestraConfig.paramsFilePath(runInfo).toFile).mkString)
+              AutowireServer.read[ParamValues](
+                Source.fromFile(OrchestraConfig.paramsFilePath(runInfo).toFile).mkString
+              )
             )
             println("Job completed")
 
@@ -79,7 +81,7 @@ object Job {
           } catch {
             case e: Throwable =>
               e.printStackTrace()
-              RunStatusUtils.save(runInfo, ARunStatus.Failure(e))
+              RunStatusUtils.save(runInfo, ARunStatus.Failure(Instant.now(), e))
           } finally {
             logsOut.close()
             JobUtils.delete(runInfo)
@@ -88,9 +90,7 @@ object Job {
       }
 
     val apiServer = new definition.Api {
-      private val triggerLock = new Object
-
-      override def trigger(runInfo: RunInfo, params: ParamValues): ARunStatus = triggerLock.synchronized {
+      override def trigger(runInfo: RunInfo, params: ParamValues): ARunStatus =
         if (OrchestraConfig.statusFilePath(runInfo).toFile.exists()) RunStatusUtils.current(runInfo)
         else {
           OrchestraConfig.runDirPath(runInfo).toFile.mkdirs()
@@ -98,10 +98,9 @@ object Job {
           val triggered = RunStatusUtils.save(runInfo, ARunStatus.Triggered(Instant.now()))
           Files.write(OrchestraConfig.paramsFilePath(runInfo), AutowireServer.write(params).getBytes)
 
-          JobUtils.create(runInfo, podConfig)
+          Await.result(JobUtils.create(runInfo, podConfig), Duration.Inf)
           triggered
         }
-      }
 
       override def logs(runId: UUID, from: Int): Seq[String] =
         Seq(OrchestraConfig.logsFilePath(RunInfo(definition.id, Some(runId))).toFile)

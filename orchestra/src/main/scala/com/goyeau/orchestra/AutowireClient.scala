@@ -23,7 +23,7 @@ case class AutowireClient(jobId: Symbol) extends autowire.Client[String, Decoder
 
   override def read[T: Decoder](raw: String) =
     decode[T](raw) match {
-      case Left(e) => throw new Exception(e)
+      case Left(e)       => throw new Exception(e)
       case Right(result) => result
     }
 

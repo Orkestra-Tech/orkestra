@@ -66,7 +66,7 @@ case class Checkbox(name: String, checked: Boolean = false) extends Parameter[Bo
   }
 }
 
-case class EnumParam[Entry <: EnumEntry](name: String, enum: Enum[Entry], defaultValue: Option[Entry] = None)
+case class Select[Entry <: EnumEntry](name: String, enum: Enum[Entry], defaultValue: Option[Entry] = None)
     extends Parameter[Entry] {
   override def display(state: State) = {
     def modValue(event: ReactEventFromInput) = {

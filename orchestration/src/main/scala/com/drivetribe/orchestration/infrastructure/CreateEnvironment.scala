@@ -10,8 +10,9 @@ import com.drivetribe.orchestration.{Git, Lock}
 import com.goyeau.orchestra.{Job, _}
 import com.goyeau.orchestra.filesystem.Directory
 import com.goyeau.orchestra.kubernetes.PodConfig
-import com.goyeau.orchestra.parameter.{Checkbox, EnumParam, Input}
+import com.goyeau.orchestra.parameter.{Checkbox, Select}
 import com.typesafe.scalalogging.Logger
+import shapeless._
 
 object CreateEnvironment {
 
@@ -23,7 +24,7 @@ object CreateEnvironment {
 
   def board(environment: Environment) =
     SingleJobBoard("Create", jobDefinition(environment))(
-      EnumParam("Source Environment", Environment, defaultValue = Some(Environment.Staging)),
+      Select("Source Environment", Environment, defaultValue = Some(Environment.Staging)),
       Checkbox("Deploy Frontend", checked = true),
       Checkbox("Deploy Backend")
     )
@@ -49,7 +50,7 @@ object CreateEnvironment {
     }
 
     Seq(
-      Future(SqlCopy.job.trigger(Environment.Staging.entryName, environment.entryName)),
+      Future(SqlCopy.job.trigger(Environment.Staging, environment)),
       Future(if (deployFrontend) DeployFrontend.job(environment).trigger(frontend.Version(Environment.Staging))),
       Future(if (deployBackend) DeployBackend.job(environment).trigger(backend.Version(Environment.Staging).build))
     ).parallel

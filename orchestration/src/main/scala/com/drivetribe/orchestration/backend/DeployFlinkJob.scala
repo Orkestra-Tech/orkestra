@@ -11,7 +11,7 @@ import com.drivetribe.orchestration.infrastructure._
 import com.drivetribe.orchestration.{Git, Lock, Project, _}
 import com.goyeau.orchestra.filesystem.Directory
 import com.goyeau.orchestra.kubernetes.PodConfig
-import com.goyeau.orchestra.parameter.{Checkbox, EnumParam, Input}
+import com.goyeau.orchestra.parameter.{Checkbox, Input, Select}
 import com.goyeau.orchestra.{Job, _}
 import com.typesafe.scalalogging.Logger
 
@@ -25,7 +25,7 @@ object DeployFlinkJob {
 
   def board(environment: Environment) =
     SingleJobBoard("Deploy Flink job", jobDefinition(environment))(
-      EnumParam("Side", EnvironmentSide, Option(EnvironmentSide.Inactive)),
+      Select("Side", EnvironmentSide, Option(EnvironmentSide.Inactive)),
       Input[String]("Version"),
       Input[String]("Job name"),
       Checkbox("Kill existing job", checked = true)

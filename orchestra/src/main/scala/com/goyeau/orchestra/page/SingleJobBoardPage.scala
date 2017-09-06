@@ -37,8 +37,8 @@ object SingleJobBoardPage {
       Callback.future {
         event.preventDefault()
         job.Api.client.trigger(state._1, paramOperations.values(params, state._2)).call().map {
-          case ARunStatus.Failure(e) => Callback.alert(e.getMessage)
-          case _                     => ctrl.set(TaskLogsPage(job, state._1.runId))
+          case ARunStatus.Failure(_, e) => Callback.alert(e.getMessage)
+          case _                        => ctrl.set(TaskLogsPage(job, state._1.runId))
         }
       }
 
@@ -87,10 +87,11 @@ object SingleJobBoardPage {
           val runDisplays = runs.map {
             case (uuid, createdAt, runStatus) =>
               val statusDisplay = runStatus match {
-                case _: Triggered => "Scheduled"
-                case _: Running   => "Running"
-                case _: Success   => "Success"
-                case _: Failure   => "Failure"
+                case _: Triggered    => "Triggered"
+                case _: Running      => "Running"
+                case _: Success      => "Success"
+                case _: Failure      => "Failure"
+                case _: Stopped.type => "Stopped"
               }
 
               <.tr(

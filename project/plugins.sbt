@@ -1,4 +1,4 @@
-addSbtPlugin("io.get-coursier" % "sbt-coursier" % "1.0.0-RC10")
+addSbtPlugin("io.get-coursier" % "sbt-coursier" % "1.0.0-RC11")
 addSbtPlugin("io.spray" % "sbt-revolver" % "0.9.0")
 addSbtPlugin("org.scala-js" % "sbt-scalajs" % "0.6.19")
 addSbtPlugin("com.vmunier" % "sbt-web-scalajs" % "1.0.6")
