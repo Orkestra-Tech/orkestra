@@ -5,10 +5,11 @@ import com.goyeau.orchestra.kubernetes.PodConfig
 import com.goyeau.orchestra.parameter.Select
 import com.goyeau.orchestra.{Job, _}
 import com.typesafe.scalalogging.Logger
+import shapeless.{::, HNil}
 
 object SqlCopy {
 
-  lazy val jobDefinition = Job[(Environment, Environment) => Unit](Symbol("sqlCopy"))
+  lazy val jobDefinition = Job[Environment :: Environment :: HNil]('sqlCopy)
 
   lazy val job = jobDefinition(PodConfig(MySqlContainer))(apply _)
 

@@ -14,8 +14,6 @@ import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import autowire.Core
 import io.circe.{Decoder, Encoder}
-import io.circe.syntax._
-import io.circe.parser._
 import io.circe.generic.auto._
 import io.circe.java8.time._
 import ARunStatus._
@@ -25,18 +23,29 @@ import shapeless.ops.function.FnToProduct
 import com.goyeau.orchestra.ARunStatus._
 
 object Job {
-  case class Definition[JobFn, ParamValues <: HList: Encoder: Decoder, Result: Encoder: Decoder](id: Symbol) {
 
-    def apply(job: JobFn)(implicit fnToProd: FnToProduct.Aux[JobFn, ParamValues => Result]) =
-      Runner(this, PodConfig(HNil), fnToProd(job))
+  def apply[ParamValues <: HList] = new DefinitionBuilder[ParamValues]
+
+  class DefinitionBuilder[ParamValues <: HList] {
+    def apply[JobFn](id: Symbol)(
+      implicit fnToProd: FnToProduct.Aux[JobFn, ParamValues => Unit],
+      encoder: Encoder[ParamValues],
+      decoder: Decoder[ParamValues]
+    ) = Definition[ParamValues, JobFn](id)
+  }
+
+  case class Definition[ParamValues <: HList: Encoder: Decoder, JobFn](id: Symbol)(
+    implicit fnToProd: FnToProduct.Aux[JobFn, ParamValues => Unit]
+  ) {
+
+    def apply(job: JobFn) = Runner(this, PodConfig(HNil), fnToProd(job))
 
     def apply[Containers <: HList](podConfig: PodConfig[Containers]) = new RunnerBuilder[Containers](podConfig)
 
     class RunnerBuilder[Containers <: HList](podConfig: PodConfig[Containers]) {
       def apply[PodJobFn](job: PodJobFn)(
-        implicit fnToProd: FnToProduct.Aux[JobFn, ParamValues => Result],
-        podFnToProd: FnToProduct.Aux[PodJobFn, Containers => JobFn]
-      ) = Runner[JobFn, ParamValues, Result, Containers](
+        implicit podFnToProd: FnToProduct.Aux[PodJobFn, Containers => JobFn]
+      ) = Runner[ParamValues, Containers](
         Definition.this,
         podConfig,
         fnToProd(podFnToProd(job)(podConfig.containers))
@@ -56,10 +65,10 @@ object Job {
     }
   }
 
-  case class Runner[JobFn, ParamValues <: HList: Encoder: Decoder, Result: Encoder: Decoder, Containers <: HList](
-    definition: Definition[JobFn, ParamValues, Result],
+  case class Runner[ParamValues <: HList: Encoder: Decoder, Containers <: HList](
+    definition: Definition[ParamValues, _],
     podConfig: PodConfig[Containers],
-    job: ParamValues => Result
+    job: ParamValues => Unit
   ) {
 
     def run(runInfo: RunInfo): Unit =
@@ -134,17 +143,5 @@ object Job {
           }
         }
       }
-  }
-
-  def apply[JobFn] = new DefinitionBuilder[JobFn]
-
-  class DefinitionBuilder[JobFn] {
-    def apply[ParamValues <: HList, Result](id: Symbol)(
-      implicit fnToProd: FnToProduct.Aux[JobFn, ParamValues => Result],
-      encoderP: Encoder[ParamValues],
-      decoderP: Decoder[ParamValues],
-      encoderR: Encoder[Result],
-      decoderR: Decoder[Result]
-    ) = Definition[JobFn, ParamValues, Result](id)
   }
 }

@@ -17,7 +17,7 @@ import shapeless._
 object CreateEnvironment {
 
   def jobDefinition(environment: Environment) =
-    Job[(Environment, Boolean, Boolean) => Unit](Symbol(s"create$environment"))
+    Job[Environment :: Boolean :: Boolean :: HNil](Symbol(s"create$environment"))
 
   def job(environment: Environment) =
     jobDefinition(environment)(PodConfig(AnsibleContainer, TerraformContainer))(apply(environment) _)

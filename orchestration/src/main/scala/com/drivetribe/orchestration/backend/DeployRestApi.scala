@@ -11,11 +11,12 @@ import com.goyeau.orchestra.kubernetes.PodConfig
 import com.goyeau.orchestra.parameter.{Input, Select}
 import com.goyeau.orchestra.{Job, _}
 import com.typesafe.scalalogging.Logger
+import shapeless.{::, HNil}
 
 object DeployRestApi {
 
   def jobDefinition(environment: Environment) =
-    Job[(EnvironmentSide, String) => Unit](Symbol(s"deployRestApi$environment"))
+    Job[EnvironmentSide :: String :: HNil](Symbol(s"deployRestApi$environment"))
 
   def job(environment: Environment) =
     jobDefinition(environment)(PodConfig(AnsibleContainer, TerraformContainer))(apply(environment) _)

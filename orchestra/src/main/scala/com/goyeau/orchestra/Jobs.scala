@@ -7,7 +7,7 @@ import com.goyeau.orchestra.AkkaImplicits._
 
 trait Jobs extends JVMApp with BackendRoutes {
 
-  def jobs: Seq[Job.Runner[_, _, _, _]]
+  def jobs: Seq[Job.Runner[_, _]]
 
   override lazy val routes = super.routes ~
     pathPrefix("assets" / Remaining) { file =>

@@ -14,11 +14,12 @@ import com.goyeau.orchestra.kubernetes.PodConfig
 import com.goyeau.orchestra.parameter.{Checkbox, Input, Select}
 import com.goyeau.orchestra.{Job, _}
 import com.typesafe.scalalogging.Logger
+import shapeless.{::, HNil}
 
 object DeployFlinkJob {
 
   def jobDefinition(environment: Environment) =
-    Job[(EnvironmentSide, String, String, Boolean) => Unit](Symbol(s"deployFlinkJob$environment"))
+    Job[EnvironmentSide :: String :: String :: Boolean :: HNil](Symbol(s"deployFlinkJob$environment"))
 
   def job(environment: Environment) =
     jobDefinition(environment)(PodConfig(AnsibleContainer))(apply(environment) _)

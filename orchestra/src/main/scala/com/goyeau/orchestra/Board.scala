@@ -6,7 +6,7 @@ import com.goyeau.orchestra.page.FolderBoardPage
 import com.goyeau.orchestra.route.WebRouter.{AppPage, BoardPage, TaskLogsPage}
 import com.goyeau.orchestra.page.{LogsPage, SingleJobBoardPage}
 import com.goyeau.orchestra.parameter.{Parameter, ParameterOperations}
-import io.circe.{Decoder, Encoder}
+import io.circe.Encoder
 import japgolly.scalajs.react.extra.router.{RouterConfigDsl, StaticDsl}
 import japgolly.scalajs.react.vdom.html_<^._
 import shapeless.{::, Generic, HList, HNil, Poly}
@@ -32,9 +32,9 @@ object FolderBoard {
   def apply(name: String): (Board*) => FolderBoard = (childBoards: Seq[Board]) => FolderBoard(name, childBoards)
 }
 
-case class SingleJobBoard[ParamValues <: HList: Encoder, Params <: HList, Result: Decoder](
+case class SingleJobBoard[ParamValues <: HList: Encoder, Params <: HList](
   name: String,
-  job: Job.Definition[_, ParamValues, Result],
+  job: Job.Definition[ParamValues, _],
   params: Params
 )(implicit paramGetter: ParameterOperations[Params, ParamValues])
     extends Board {
@@ -55,25 +55,25 @@ case class SingleJobBoard[ParamValues <: HList: Encoder, Params <: HList, Result
 
 object SingleJobBoard {
 
-  def apply[Result: Decoder](
+  def apply(
     name: String,
-    job: Job.Definition[_, HNil, Result]
-  ): SingleJobBoard[HNil, HNil, Result] =
-    SingleJobBoard[HNil, HNil, Result](name, job, HNil)
+    job: Job.Definition[HNil, _]
+  ): SingleJobBoard[HNil, HNil] =
+    SingleJobBoard[HNil, HNil](name, job, HNil)
 
-  def apply[Param <: Parameter[ParamValue], ParamValue: Encoder, Result: Decoder](
+  def apply[Param <: Parameter[ParamValue], ParamValue: Encoder](
     name: String,
-    job: Job.Definition[_, ParamValue :: HNil, Result]
+    job: Job.Definition[ParamValue :: HNil, _]
   )(
     param: Param
   )(
     implicit paramGetter: ParameterOperations[Param :: HNil, ParamValue :: HNil]
-  ): SingleJobBoard[ParamValue :: HNil, Param :: HNil, Result] =
+  ): SingleJobBoard[ParamValue :: HNil, Param :: HNil] =
     SingleJobBoard(name, job, param :: HNil)
 
-  def apply[TupledParams, Params <: HList, UniParams <: HList, ParamValues <: HList: Encoder, Result: Decoder](
+  def apply[TupledParams, Params <: HList, UniParams <: HList, ParamValues <: HList: Encoder](
     name: String,
-    job: Job.Definition[_, ParamValues, Result]
+    job: Job.Definition[ParamValues, _]
   )(
     params: TupledParams
   )(
@@ -81,7 +81,7 @@ object SingleJobBoard {
     unifier: Mapper.Aux[UnifyParameter.type, Params, UniParams],
     paramValuesExtractor: Comapped.Aux[UniParams, Parameter, ParamValues],
     paramGetter: ParameterOperations[Params, ParamValues]
-  ): SingleJobBoard[ParamValues, Params, Result] =
+  ): SingleJobBoard[ParamValues, Params] =
     SingleJobBoard(name, job, tupleToHList.to(params))
 
   private object UnifyParameter extends Poly {

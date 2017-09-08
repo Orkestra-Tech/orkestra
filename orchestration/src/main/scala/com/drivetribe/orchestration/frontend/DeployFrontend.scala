@@ -24,10 +24,11 @@ import io.k8s.api.core.v1._
 import io.k8s.apimachinery.pkg.api.resource.Quantity
 import io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta
 import io.k8s.apimachinery.pkg.util.intstr.IntOrString
+import shapeless.{::, HNil}
 
 object DeployFrontend {
 
-  def jobDefinition(environment: Environment) = Job[String => Unit](Symbol(s"deployFrontend$environment"))
+  def jobDefinition(environment: Environment) = Job[String :: HNil](Symbol(s"deployFrontend$environment"))
 
   def job(environment: Environment) = jobDefinition(environment)(apply(environment) _)
 

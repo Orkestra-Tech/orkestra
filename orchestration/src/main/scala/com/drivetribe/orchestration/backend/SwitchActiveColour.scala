@@ -5,12 +5,13 @@ import com.drivetribe.orchestration.infrastructure.Colour.getActive
 import com.drivetribe.orchestration.infrastructure._
 import com.goyeau.orchestra.{Job, _}
 import com.typesafe.scalalogging.Logger
+import shapeless.HNil
 
 object SwitchActiveColour {
 
-  def jobDefinition(environment: Environment) = Job[() => Unit](Symbol(s"switchActiveColour$environment"))
+  def jobDefinition(environment: Environment) = Job[HNil](Symbol(s"switchActiveColour$environment"))
 
-  def job(environment: Environment) = jobDefinition(environment)(apply(environment) _)
+  def job(environment: Environment) = jobDefinition(environment).apply(apply(environment) _)
 
   def board(environment: Environment) = SingleJobBoard("Switch Active Colour", jobDefinition(environment))
 

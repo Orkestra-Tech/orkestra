@@ -22,9 +22,9 @@ import japgolly.scalajs.react.vdom.html_<^._
 import shapeless.HList
 
 object SingleJobBoardPage {
-  case class Props[Params <: HList, ParamValues <: HList, Result](
+  case class Props[Params <: HList, ParamValues <: HList](
     name: String,
-    job: Job.Definition[_, ParamValues, Result],
+    job: Job.Definition[ParamValues, _],
     params: Params,
     ctrl: RouterCtl[AppPage]
   )(
@@ -43,7 +43,7 @@ object SingleJobBoardPage {
       }
 
     def displays(
-      $ : RenderScope[Props[_, _ <: HList, _], (RunInfo, Map[Symbol, Any], Seq[TagMod], SetIntervalHandle), Unit]
+      $ : RenderScope[Props[_, _ <: HList], (RunInfo, Map[Symbol, Any], Seq[TagMod], SetIntervalHandle), Unit]
     ) = {
       val displayState = State(kv => $.modState(s => s.copy(_2 = s._2 + kv)), key => $.state._2.get(key))
       paramOperations.displays(params, displayState)
@@ -52,7 +52,7 @@ object SingleJobBoardPage {
 
   val component =
     ScalaComponent
-      .builder[Props[_, _ <: HList, _]](getClass.getSimpleName)
+      .builder[Props[_, _ <: HList]](getClass.getSimpleName)
       .initialStateFromProps[(RunInfo, Map[Symbol, Any], Seq[TagMod], SetIntervalHandle)] { props =>
         val jobInfo = RunInfo(props.job.id, Option(UUID.randomUUID()))
         (jobInfo, Map(RunId.id -> jobInfo.runId), Seq(<.tr(<.td("Loading runs"))), null)
@@ -76,7 +76,7 @@ object SingleJobBoardPage {
       .build
 
   def pullRuns(
-    $ : ComponentDidMount[Props[_, _ <: HList, _], (RunInfo, Map[Symbol, Any], Seq[TagMod], SetIntervalHandle), Unit]
+    $ : ComponentDidMount[Props[_, _ <: HList], (RunInfo, Map[Symbol, Any], Seq[TagMod], SetIntervalHandle), Unit]
   ) = {
     implicit val ec = $.props.ec
     Callback.future(
