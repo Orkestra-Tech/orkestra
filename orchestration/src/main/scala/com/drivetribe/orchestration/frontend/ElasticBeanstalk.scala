@@ -97,7 +97,7 @@ object ElasticBeanstalk {
        |      "name": "node",
        |      "image": "registry.drivetribe.com/app/web-backend:$version",
        |      "essential": true,
-       |      "memory": ${if (environment.isProd) 768 else 400}
+       |      "memory": ${if (environment.isProd) 2048 else 512}
        |    },
        |    {
        |      "name": "dd-agent",
