@@ -73,8 +73,8 @@ object DeployFrontend {
 
   def webBackend(version: String, environment: Environment) = {
     logger.info("Deploy web backend")
-    if (environment.environmentType == EnvironmentType.Medium) deployOnKubernetes(version, environment)
-    else deployOnBeanstalk(version, environment)
+    if (environment.environmentType == EnvironmentType.Large) deployOnBeanstalk(version, environment)
+    deployOnKubernetes(version, environment)
   }
 
   def deployOnKubernetes(version: String, environment: Environment) = {
@@ -84,7 +84,6 @@ object DeployFrontend {
       metadata = Option(ObjectMeta(name = Option("web-backend"), namespace = Option(environment.entryName))),
       spec = Option(
         DeploymentSpec(
-          replicas = Option(2),
           strategy = Option(
             DeploymentStrategy(
               `type` = Option("RollingUpdate"),
@@ -140,6 +139,8 @@ object DeployFrontend {
     )
 
     Await.result(kube.namespaces(environment.entryName).deployments.create(deployment), Duration.Inf)
+
+    // @TODO: Do the HorizontalPodAutoscaler
   }
 
   def deployOnBeanstalk(version: String, environment: Environment) = {

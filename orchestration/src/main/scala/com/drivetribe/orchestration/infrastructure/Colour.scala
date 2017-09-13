@@ -29,7 +29,8 @@ object Colour {
       new DescribeTagsRequest(Seq(new Filter("key", Seq("Colour")), new Filter("resource-id", instanceIds)))
     )
     val instanceColours = instances.getTags.map(_.getValue)
-    assert(instanceColours.distinct.size == 1)
+    val coloursAttached = instanceColours.distinct.size
+    assert(coloursAttached == 1, s"Number of colour attached was not 1 but $coloursAttached")
 
     EnvironmentColour.withNameInsensitive(instanceColours.head)
   }

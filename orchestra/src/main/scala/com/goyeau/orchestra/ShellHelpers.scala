@@ -12,11 +12,9 @@ import scala.concurrent.duration._
 
 import akka.http.scaladsl.model.ws.{BinaryMessage, Message}
 import akka.stream.scaladsl.{Flow, Keep, Sink, Source}
-import com.typesafe.scalalogging.Logger
 
 trait ShellHelpers {
-  private lazy val logger = Logger(getClass)
-  private def runningMessage(script: String) = logger.info(s"Running: $script")
+  private def runningMessage(script: String) = println(s"Running: $script")
 
   def sh(script: String)(implicit workDir: Directory): String = {
     runningMessage(script)
@@ -47,7 +45,7 @@ trait ShellHelpers {
     }
     val flow = Flow.fromSinkAndSourceMat(sink, Source.maybe[Message])(Keep.left)
 
-    def exec(timeout: Duration = 20.seconds, interval: Duration = 200.millis): Future[String] =
+    def exec(timeout: Duration = 30.seconds, interval: Duration = 200.millis): Future[String] =
       Kubernetes.client
         .namespaces(OrchestraConfig.namespace)
         .pods(OrchestraConfig.podName)

@@ -1,7 +1,7 @@
 package com.goyeau.orchestra
 
-import java.io.{File, FileOutputStream, PrintStream}
-import java.nio.file.{Files, Paths}
+import java.io.{FileOutputStream, _}
+import java.nio.file.Files
 import java.time.Instant
 import java.util.UUID
 
@@ -16,7 +16,7 @@ import autowire.Core
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.auto._
 import io.circe.java8.time._
-import ARunStatus._
+import com.goyeau.orchestra.ARunStatus._
 import com.goyeau.orchestra.kubernetes.{JobUtils, PodConfig}
 import shapeless._
 import shapeless.ops.function.FnToProduct
@@ -54,7 +54,7 @@ object Job {
 
     trait Api {
       def trigger(runInfo: RunInfo, params: ParamValues): ARunStatus
-      def logs(runId: UUID, from: Int): Seq[String]
+      def logs(runId: UUID, from: Int): Seq[(Option[Symbol], String)]
       def runs(): Seq[(UUID, Instant, ARunStatus)]
     }
 
@@ -71,9 +71,16 @@ object Job {
     job: ParamValues => Unit
   ) {
 
-    def run(runInfo: RunInfo): Unit =
+    private val logDelimiter = "_OrchestraDelimiter_"
+
+    def start(runInfo: RunInfo): Unit =
       if (OrchestraConfig.paramsFilePath(runInfo).toFile.exists()) {
-        val logsOut = new PrintStream(new FileOutputStream(OrchestraConfig.logsFilePath(runInfo).toFile, true), true)
+        OrchestraConfig.logsDirPath(runInfo.runId).toFile.mkdirs()
+        val logsOut =
+          new LogsPrintStream(new FileOutputStream(OrchestraConfig.logsFilePath(runInfo.runId).toFile, true),
+                              true,
+                              logDelimiter,
+                              None)
 
         Utils.withOutErr(logsOut) {
           try {
@@ -111,10 +118,23 @@ object Job {
           triggered
         }
 
-      override def logs(runId: UUID, from: Int): Seq[String] =
-        Seq(OrchestraConfig.logsFilePath(RunInfo(definition.id, Some(runId))).toFile)
+      // @TODO Move that in a common api
+      override def logs(runId: UUID, from: Int): Seq[(Option[Symbol], String)] = {
+        val stageRegex = s"(.+)$logDelimiter(.+)".r
+        Seq(OrchestraConfig.logsFilePath(runId).toFile)
           .filter(_.exists())
-          .flatMap(Source.fromFile(_).getLines().slice(from, Int.MaxValue).toSeq)
+          .flatMap(
+            Source
+              .fromFile(_)
+              .getLines()
+              .slice(from, Int.MaxValue)
+              .map {
+                case stageRegex(line, stage) => (Option(Symbol(stage)), line)
+                case line                    => (None, line)
+              }
+              .toSeq
+          )
+      }
 
       override def runs(): Seq[(UUID, Instant, ARunStatus)] =
         Seq(OrchestraConfig.jobDirPath(definition.id).toFile)
@@ -144,4 +164,15 @@ object Job {
         }
       }
   }
+}
+
+class LogsPrintStream(out: OutputStream, autoFlush: Boolean, delimiter: String, stageId: Option[Symbol])
+    extends PrintStream(out, autoFlush) {
+
+  private val stageInfo = stageId.map(stageId => s"$delimiter${stageId.name}\n")
+  private def insertStageInfo(s: String) =
+    stageInfo.fold(s)(added => s.replaceAll("\r", "").replaceAll("\n", s"$added\n"))
+
+  override def print(s: String): Unit = super.print(insertStageInfo(s))
+  override def println(s: String): Unit = super.println(insertStageInfo(s) + stageInfo.mkString)
 }

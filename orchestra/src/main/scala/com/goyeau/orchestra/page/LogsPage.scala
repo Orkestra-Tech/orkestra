@@ -12,6 +12,7 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.component.builder.Lifecycle.ComponentDidMount
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.{document, window}
+import io.circe.generic.auto._
 
 object LogsPage {
   case class Props(page: TaskLogsPage)(implicit val ec: ExecutionContext)
@@ -19,22 +20,24 @@ object LogsPage {
   val component =
     ScalaComponent
       .builder[Props](getClass.getSimpleName)
-      .initialState[(Option[Seq[String]], SetIntervalHandle)]((None, null))
+      .initialState[(Option[Seq[(Option[Symbol], String)]], SetIntervalHandle)]((None, null))
       .render { $ =>
         val logs = $.state._1 match {
-          case Some(log) if log.nonEmpty => log.mkString("\n")
-          case Some(log) if log.isEmpty  => "No logged message yet"
-          case None                      => "Loading log"
+          case Some(log) if log.nonEmpty => log.map(_._2)
+          case Some(log) if log.isEmpty  => Seq("No logged message yet")
+          case None                      => Seq("Loading log")
         }
 
+        val ansiUp = newInstance(global.AnsiUp)()
         <.div(
           <.div("Logs: " + $.props.page.runId.toString),
-          <.pre(
-            ^.dangerouslySetInnerHtml :=
-              newInstance(global.AnsiUp)()
-                .ansi_to_html(logs)
-                .asInstanceOf[String]
-          )
+          <.div(logs.map { line =>
+            <.pre(
+              ^.margin := "0px",
+              ^.dangerouslySetInnerHtml :=
+                ansiUp.ansi_to_html(line).asInstanceOf[String]
+            )
+          }: _*)
         )
       }
       .componentDidMount { $ =>
@@ -44,7 +47,9 @@ object LogsPage {
       .componentWillUnmount($ => Callback(js.timers.clearInterval($.state._2)))
       .build
 
-  private def pullLogs($ : ComponentDidMount[Props, (Option[Seq[String]], SetIntervalHandle), Unit]) = {
+  private def pullLogs(
+    $ : ComponentDidMount[Props, (Option[Seq[(Option[Symbol], String)]], SetIntervalHandle), Unit]
+  ) = {
     implicit val ec = $.props.ec
     $.props.page.job.Api.client
       .logs($.props.page.runId, $.state._1.fold(0)(_.size))

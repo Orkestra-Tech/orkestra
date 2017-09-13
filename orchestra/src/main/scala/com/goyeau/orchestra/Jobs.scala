@@ -29,7 +29,7 @@ trait Jobs extends JVMApp with BackendRoutes {
       jobs
         .find(_.definition.id == runInfo.jobId)
         .getOrElse(throw new IllegalArgumentException(s"No job found for id ${runInfo.jobId}"))
-        .run(runInfo)
+        .start(runInfo)
     }
   }
 }
