@@ -16,7 +16,7 @@ import shapeless.{::, HNil}
 object DeployRestApi {
 
   def jobDefinition(environment: Environment) =
-    Job[EnvironmentSide :: String :: HNil](Symbol(s"deployRestApi$environment"))
+    Job[(EnvironmentSide, String) => Unit](Symbol(s"deployRestApi$environment"))
 
   def job(environment: Environment) =
     jobDefinition(environment)(PodConfig(AnsibleContainer, TerraformContainer))(apply(environment) _)

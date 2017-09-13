@@ -24,7 +24,7 @@ import shapeless.HList
 object SingleJobBoardPage {
   case class Props[Params <: HList, ParamValues <: HList](
     name: String,
-    job: Job.Definition[ParamValues, _],
+    job: Job.Definition[_, ParamValues, _],
     params: Params,
     ctrl: RouterCtl[AppPage]
   )(

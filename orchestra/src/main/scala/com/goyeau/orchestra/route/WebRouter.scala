@@ -17,7 +17,7 @@ object WebRouter {
   sealed trait AppPage
   case class BoardPage2(path: String) extends AppPage
   case class BoardPage(board: Board) extends AppPage
-  case class TaskLogsPage(job: Job.Definition[_ <: HList, _], runId: UUID) extends AppPage
+  case class TaskLogsPage(job: Job.Definition[_, _ <: HList, _], runId: UUID) extends AppPage
   case object Status extends AppPage
 
   def config(board: Board) = RouterConfigDsl[AppPage].buildConfig { dsl =>

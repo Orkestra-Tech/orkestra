@@ -10,10 +10,10 @@ import shapeless._
 
 object Orchestration extends Jobs with Boards with Github with Cron {
 
-  lazy val emptyTaskDef = Job[HNil]('emptyJob)
+  lazy val emptyTaskDef = Job[() => Unit]('emptyJob)
   lazy val emptyTask = emptyTaskDef(() => println("empty"))
 
-  lazy val deployBackendDef = Job[String :: UUID :: HNil]('deployBackend)
+  lazy val deployBackendDef = Job[(String, UUID) => Unit]('deployBackend)
   lazy val deployBackend = deployBackendDef((version, runId) => println(version + runId))
 
   lazy val githubTriggers = Seq(

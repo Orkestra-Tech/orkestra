@@ -9,7 +9,7 @@ import shapeless.HNil
 
 object SwitchActiveColour {
 
-  def jobDefinition(environment: Environment) = Job[HNil](Symbol(s"switchActiveColour$environment"))
+  def jobDefinition(environment: Environment) = Job[() => Unit](Symbol(s"switchActiveColour$environment"))
 
   def job(environment: Environment) = jobDefinition(environment).apply(apply(environment) _)
 

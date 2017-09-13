@@ -10,7 +10,7 @@ import com.goyeau.orchestra.{Job, RunInfo}
 import io.circe.Json
 import shapeless.{::, HList, HNil}
 
-case class BranchTrigger(repoName: String, branchRegex: String, job: Job.Runner[String :: HNil, _ <: HList]) {
+case class BranchTrigger(repoName: String, branchRegex: String, job: Job.Runner[String :: HNil, _, _ <: HList]) {
   def trigger(eventType: String,
               json: Json)(implicit ec: ExecutionContext, system: ActorSystem, mat: Materializer): Unit =
     eventType match {

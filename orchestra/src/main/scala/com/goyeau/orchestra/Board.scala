@@ -34,7 +34,7 @@ object FolderBoard {
 
 case class SingleJobBoard[ParamValues <: HList: Encoder, Params <: HList](
   name: String,
-  job: Job.Definition[ParamValues, _],
+  job: Job.Definition[_, ParamValues, _],
   params: Params
 )(implicit paramGetter: ParameterOperations[Params, ParamValues])
     extends Board {
@@ -57,13 +57,13 @@ object SingleJobBoard {
 
   def apply(
     name: String,
-    job: Job.Definition[HNil, _]
+    job: Job.Definition[_, HNil, _]
   ): SingleJobBoard[HNil, HNil] =
     SingleJobBoard[HNil, HNil](name, job, HNil)
 
   def apply[Param <: Parameter[ParamValue], ParamValue: Encoder](
     name: String,
-    job: Job.Definition[ParamValue :: HNil, _]
+    job: Job.Definition[_, ParamValue :: HNil, _]
   )(
     param: Param
   )(
@@ -73,7 +73,7 @@ object SingleJobBoard {
 
   def apply[TupledParams, Params <: HList, UniParams <: HList, ParamValues <: HList: Encoder](
     name: String,
-    job: Job.Definition[ParamValues, _]
+    job: Job.Definition[_, ParamValues, _]
   )(
     params: TupledParams
   )(
