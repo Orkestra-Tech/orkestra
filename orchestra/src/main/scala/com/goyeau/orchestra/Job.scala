@@ -85,9 +85,12 @@ object Job {
                               None)
 
         Utils.withOutErr(logsOut) {
-          try {
-            RunStatusUtils.save(runInfo, ARunStatus.Running(Instant.now()))
+          val running = RunStatusUtils.current(runInfo) match {
+            case triggered: ARunStatus.Triggered => triggered.run(runInfo)
+            case s                               => throw new IllegalStateException(s"The job is not in Triggered status but $s")
+          }
 
+          try {
             job(
               AutowireServer.read[ParamValues](
                 Source.fromFile(OrchestraConfig.paramsFilePath(runInfo).toFile).mkString
@@ -95,11 +98,11 @@ object Job {
             )
             println("Job completed")
 
-            RunStatusUtils.save(runInfo, ARunStatus.Success(Instant.now()))
+            running.succeed(runInfo)
           } catch {
             case e: Throwable =>
               e.printStackTrace()
-              RunStatusUtils.save(runInfo, ARunStatus.Failure(Instant.now(), e))
+              running.fail(runInfo, e)
           } finally {
             logsOut.close()
             JobUtils.delete(runInfo)
@@ -113,7 +116,7 @@ object Job {
         else {
           OrchestraConfig.runDirPath(runInfo).toFile.mkdirs()
 
-          val triggered = RunStatusUtils.save(runInfo, ARunStatus.Triggered(Instant.now()))
+          val triggered = RunStatusUtils.persist(runInfo, ARunStatus.Triggered(Instant.now()))
           Files.write(OrchestraConfig.paramsFilePath(runInfo), AutowireServer.write(params).getBytes)
 
           Await.result(JobUtils.create(runInfo, podConfig), Duration.Inf)

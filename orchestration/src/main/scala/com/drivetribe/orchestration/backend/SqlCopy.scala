@@ -21,10 +21,8 @@ object SqlCopy {
 
   private lazy val logger = Logger(getClass)
 
-  def apply(mySql: MySqlContainer.type)(source: Environment, destination: Environment): Unit = {
+  def apply(mySql: MySqlContainer.type)(source: Environment, destination: Environment): Unit =
     mySql.dump(source, destination)
-    DestroyEnvironment.job(destination).run
-  }
 
 //  def stage[T](name: String)(f: => T) =
 //    f

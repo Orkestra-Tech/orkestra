@@ -53,8 +53,8 @@ trait TriggerHelpers {
 
     RunStatusUtils.current(runInfo) match {
       case _: Success    =>
-      case Failure(_, e) => throw new IllegalStateException(s"Run of job ${runInfo.jobId} failed", e)
-      case s             => throw new IllegalStateException(s"Run of job ${runInfo.jobId} failed with status $s")
+      case Failure(_, e) => throw new IllegalStateException(s"Run of job ${runInfo.jobId.name} failed", e)
+      case s             => throw new IllegalStateException(s"Run of job ${runInfo.jobId.name} failed with status $s")
     }
   }
 }
