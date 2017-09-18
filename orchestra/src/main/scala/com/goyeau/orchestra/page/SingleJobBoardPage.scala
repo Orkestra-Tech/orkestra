@@ -21,7 +21,7 @@ import japgolly.scalajs.react.extra.router.RouterCtl
 import japgolly.scalajs.react.vdom.html_<^._
 import shapeless.HList
 
-object SingleJobBoardPage {
+object JobBoardPage {
   case class Props[Params <: HList, ParamValues <: HList](
     name: String,
     job: Job.Definition[_, ParamValues, _],

@@ -23,7 +23,7 @@ object DeployFlinkJob {
     jobDefinition(environment)(PodConfig(AnsibleContainer :: HNil))(apply(environment) _)
 
   def board(environment: Environment) =
-    SingleJobBoard("Deploy Flink job", jobDefinition(environment))(
+    JobBoard("Deploy Flink job", jobDefinition(environment))(
       Select("Side", EnvironmentSide, Option(EnvironmentSide.Inactive)),
       Input[String]("Version"),
       Input[String]("Job name"),

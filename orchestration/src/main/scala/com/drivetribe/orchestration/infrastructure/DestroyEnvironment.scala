@@ -14,7 +14,7 @@ object DestroyEnvironment {
   def job(environment: Environment) =
     jobDefinition(environment)(PodConfig(AnsibleContainer :: TerraformContainer :: HNil))(apply(environment) _)
 
-  def board(environment: Environment) = SingleJobBoard("Destroy", jobDefinition(environment))
+  def board(environment: Environment) = JobBoard("Destroy", jobDefinition(environment))
 
   private lazy val logger = Logger(getClass)
 

@@ -14,7 +14,7 @@ object Spamatron {
 
   lazy val job = jobDefinition(PodConfig(AnsibleContainer :: HNil))(apply _)
 
-  lazy val board = SingleJobBoard("Spamatron", jobDefinition)
+  lazy val board = JobBoard("Spamatron", jobDefinition)
 
   private lazy val logger = Logger(getClass)
 

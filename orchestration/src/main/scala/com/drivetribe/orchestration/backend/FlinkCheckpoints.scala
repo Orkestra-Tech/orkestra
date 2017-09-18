@@ -15,7 +15,7 @@ object FlinkCheckpoints {
   def job(environment: Environment) =
     jobDefinition(environment)(PodConfig(AnsibleContainer :: HNil, Map("cronJob" -> "true")))(apply(environment) _)
 
-  def board(environment: Environment) = SingleJobBoard("Flink Checkpoints", jobDefinition(environment))
+  def board(environment: Environment) = JobBoard("Flink Checkpoints", jobDefinition(environment))
 
   private lazy val logger = Logger(getClass)
 

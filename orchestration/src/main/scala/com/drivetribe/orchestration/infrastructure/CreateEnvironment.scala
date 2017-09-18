@@ -23,7 +23,7 @@ object CreateEnvironment {
     jobDefinition(environment)(PodConfig(AnsibleContainer :: TerraformContainer :: HNil))(apply(environment) _)
 
   def board(environment: Environment) =
-    SingleJobBoard("Create", jobDefinition(environment))(
+    JobBoard("Create", jobDefinition(environment))(
       Select("Source Environment", Environment, defaultValue = Some(Environment.Staging)),
       Checkbox("Deploy Frontend", checked = true),
       Checkbox("Deploy Backend")

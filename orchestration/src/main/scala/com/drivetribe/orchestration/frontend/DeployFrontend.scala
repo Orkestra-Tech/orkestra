@@ -33,7 +33,7 @@ object DeployFrontend {
   def job(environment: Environment) = jobDefinition(environment)(apply(environment) _)
 
   def board(environment: Environment) =
-    SingleJobBoard("Deploy Frontend", jobDefinition(environment))(Input[String]("Version"))
+    JobBoard("Deploy Frontend", jobDefinition(environment))(Input[String]("Version"))
 
   private lazy val logger = Logger(getClass)
 

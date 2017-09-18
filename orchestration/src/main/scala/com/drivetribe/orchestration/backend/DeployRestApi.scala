@@ -22,7 +22,7 @@ object DeployRestApi {
     jobDefinition(environment)(PodConfig(AnsibleContainer :: TerraformContainer :: HNil))(apply(environment) _)
 
   def board(environment: Environment) =
-    SingleJobBoard("Deploy REST API", jobDefinition(environment))(
+    JobBoard("Deploy REST API", jobDefinition(environment))(
       Select("Side", EnvironmentSide, Option(EnvironmentSide.Inactive)),
       Input[String]("Version")
     )

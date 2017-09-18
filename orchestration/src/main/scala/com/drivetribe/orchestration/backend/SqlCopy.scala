@@ -14,7 +14,7 @@ object SqlCopy {
   lazy val job = jobDefinition(PodConfig(MySqlContainer :: HNil))(apply _)
 
   lazy val board =
-    SingleJobBoard("SQL Copy", jobDefinition)(
+    JobBoard("SQL Copy", jobDefinition)(
       Select[Environment]("Source Environment", Environment, defaultValue = Option(Environment.Staging)),
       Select[Environment]("Destination Environment", Environment)
     )

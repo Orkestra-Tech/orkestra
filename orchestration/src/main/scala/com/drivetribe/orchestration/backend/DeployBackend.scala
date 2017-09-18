@@ -22,7 +22,7 @@ object DeployBackend {
     jobDefinition(environment)(PodConfig(HList(AnsibleContainer, TerraformContainer)))(apply(environment) _)
 
   def board(environment: Environment) =
-    SingleJobBoard("Deploy Backend", jobDefinition(environment))(Input[String]("Version"))
+    JobBoard("Deploy Backend", jobDefinition(environment))(Input[String]("Version"))
 
   private lazy val logger = Logger(getClass)
 
