@@ -16,6 +16,7 @@ import autowire.Core
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.auto._
 import io.circe.java8.time._
+import io.circe.shapes._
 import com.goyeau.orchestra.ARunStatus._
 import com.goyeau.orchestra.kubernetes.{JobUtils, PodConfig}
 import shapeless._
@@ -39,7 +40,7 @@ object Job {
   case class Definition[JobFn, ParamValues <: HList: Encoder: Decoder, Result: Encoder: Decoder](id: Symbol) {
 
     def apply(job: JobFn)(implicit fnToProd: FnToProduct.Aux[JobFn, ParamValues => Result]) =
-      Runner(this, PodConfig(HNil), fnToProd(job))
+      Runner(this, PodConfig(), fnToProd(job))
 
     def apply[Containers <: HList](podConfig: PodConfig[Containers]) = new RunnerBuilder[Containers](podConfig)
 
@@ -75,40 +76,39 @@ object Job {
 
     private val logDelimiter = "_OrchestraDelimiter_"
 
-    def start(runInfo: RunInfo): Unit =
-      if (OrchestraConfig.paramsFilePath(runInfo).toFile.exists()) {
-        OrchestraConfig.logsDirPath(runInfo.runId).toFile.mkdirs()
-        val logsOut =
-          new LogsPrintStream(new FileOutputStream(OrchestraConfig.logsFilePath(runInfo.runId).toFile, true),
-                              true,
-                              logDelimiter,
-                              None)
+    def start(runInfo: RunInfo): Unit = {
+      OrchestraConfig.runDirPath(runInfo).toFile.mkdirs()
+      OrchestraConfig.logsDirPath(runInfo.runId).toFile.mkdirs()
+      val logsOut =
+        new LogsPrintStream(new FileOutputStream(OrchestraConfig.logsFilePath(runInfo.runId).toFile, true),
+                            true,
+                            logDelimiter,
+                            None)
 
-        Utils.withOutErr(logsOut) {
-          val running = RunStatusUtils.current(runInfo) match {
-            case triggered: ARunStatus.Triggered => triggered.run(runInfo)
-            case s                               => throw new IllegalStateException(s"The job is not in Triggered status but $s")
-          }
+      Utils.withOutErr(logsOut) {
+        val running = RunStatusUtils.notifyRunning(runInfo)
 
-          try {
-            job(
-              AutowireServer.read[ParamValues](
-                Source.fromFile(OrchestraConfig.paramsFilePath(runInfo).toFile).mkString
-              )
+        try {
+          val paramFile = OrchestraConfig.paramsFilePath(runInfo).toFile
+          job(
+            AutowireServer.read[ParamValues](
+              if (paramFile.exists()) Source.fromFile(paramFile).mkString
+              else "[]"
             )
-            println("Job completed")
+          )
+          println("Job completed")
 
-            running.succeed(runInfo)
-          } catch {
-            case e: Throwable =>
-              e.printStackTrace()
-              running.fail(runInfo, e)
-          } finally {
-            logsOut.close()
-            JobUtils.delete(runInfo)
-          }
+          running.succeed(runInfo)
+        } catch {
+          case e: Throwable =>
+            e.printStackTrace()
+            running.fail(runInfo, e)
+        } finally {
+          logsOut.close()
+          JobUtils.selfDelete(runInfo)
         }
       }
+    }
 
     val apiServer = new definition.Api {
       override def trigger(runInfo: RunInfo, params: ParamValues): ARunStatus =
@@ -116,7 +116,7 @@ object Job {
         else {
           OrchestraConfig.runDirPath(runInfo).toFile.mkdirs()
 
-          val triggered = RunStatusUtils.persist(runInfo, ARunStatus.Triggered(Instant.now()))
+          val triggered = RunStatusUtils.notifyTriggered(runInfo)
           Files.write(OrchestraConfig.paramsFilePath(runInfo), AutowireServer.write(params).getBytes)
 
           Await.result(JobUtils.create(runInfo, podConfig), Duration.Inf)
@@ -148,11 +148,16 @@ object Job {
           .map(runDir => RunInfo(definition.id, Option(UUID.fromString(runDir.getName))))
           .filter(OrchestraConfig.statusFilePath(_).toFile.exists())
           .flatMap { runInfo =>
-            RunStatusUtils.history(runInfo).headOption.map {
-              case status: Triggered => (runInfo.runId, status.at, RunStatusUtils.current(runInfo))
-              case status =>
-                throw new IllegalStateException(s"$status is not of status type ${classOf[Triggered].getName}")
-            }
+            RunStatusUtils
+              .history(runInfo)
+              .headOption
+              .map {
+                case status: Triggered => status.at
+                case status: Running   => status.at
+                case status =>
+                  throw new IllegalStateException(s"$status is not of status type ${classOf[Triggered].getName}")
+              }
+              .map((runInfo.runId, _, RunStatusUtils.current(runInfo)))
           }
           .sortBy(_._2)
           .reverse

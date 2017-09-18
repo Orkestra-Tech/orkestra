@@ -12,6 +12,7 @@ import com.goyeau.orchestra.filesystem.Directory
 import com.goyeau.orchestra.kubernetes.PodConfig
 import com.goyeau.orchestra.parameter.{Checkbox, Select}
 import com.typesafe.scalalogging.Logger
+import shapeless._
 
 object CreateEnvironment {
 
@@ -19,7 +20,7 @@ object CreateEnvironment {
     Job[(Environment, Boolean, Boolean) => Unit](Symbol(s"create$environment"))
 
   def job(environment: Environment) =
-    jobDefinition(environment)(PodConfig(AnsibleContainer, TerraformContainer))(apply(environment) _)
+    jobDefinition(environment)(PodConfig(AnsibleContainer :: TerraformContainer :: HNil))(apply(environment) _)
 
   def board(environment: Environment) =
     SingleJobBoard("Create", jobDefinition(environment))(

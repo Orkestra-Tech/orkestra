@@ -1,7 +1,7 @@
 package com.drivetribe.orchestration.backend
 
 import com.drivetribe.orchestration._
-import com.drivetribe.orchestration.infrastructure.Colour.getActive
+import com.drivetribe.orchestration.infrastructure.Colour
 import com.drivetribe.orchestration.infrastructure._
 import com.goyeau.orchestra.{Job, _}
 import com.typesafe.scalalogging.Logger
@@ -18,7 +18,7 @@ object SwitchActiveColour {
   private lazy val logger = Logger(getClass)
 
   def apply(environment: Environment)(): Unit = {
-    val activeColour = getActive(environment)
+    val activeColour = Colour.getActive(environment)
     val inactiveColour = activeColour.opposite
     logger.info(s"Switching from * $activeColour * to * $inactiveColour *")
 
@@ -32,9 +32,13 @@ object SwitchActiveColour {
       tfState.getResourceAttribute(Seq("root"), "aws_alb_target_group.monitoring_inactive", "arn")
 
     val activeAutoScaling =
-      tfState.getResourceAttribute(Seq("root", s"rest_api_$activeColour"), "aws_autoscaling_group.api", "name")
+      tfState.getResourceAttribute(Seq("root", s"rest_api_${activeColour.entryName}"),
+                                   "aws_autoscaling_group.api",
+                                   "name")
     val inactiveAutoScaling =
-      tfState.getResourceAttribute(Seq("root", s"rest_api_$inactiveColour"), "aws_autoscaling_group.api", "name")
+      tfState.getResourceAttribute(Seq("root", s"rest_api_${inactiveColour.entryName}"),
+                                   "aws_autoscaling_group.api",
+                                   "name")
 
     logger.info("Scale up inactive")
     AutoScaling.setDesiredCapacity(inactiveAutoScaling, AutoScaling.getDesiredCapacity(activeAutoScaling))

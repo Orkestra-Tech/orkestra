@@ -5,14 +5,14 @@ import com.goyeau.orchestra.{Job, _}
 import com.goyeau.orchestra.filesystem.Directory
 import com.goyeau.orchestra.kubernetes.PodConfig
 import com.typesafe.scalalogging.Logger
-import shapeless.HNil
+import shapeless._
 
 object DestroyEnvironment {
 
   def jobDefinition(environment: Environment) = Job[() => Unit](Symbol(s"destroy$environment"))
 
   def job(environment: Environment) =
-    jobDefinition(environment)(PodConfig(AnsibleContainer, TerraformContainer))(apply(environment) _)
+    jobDefinition(environment)(PodConfig(AnsibleContainer :: TerraformContainer :: HNil))(apply(environment) _)
 
   def board(environment: Environment) = SingleJobBoard("Destroy", jobDefinition(environment))
 

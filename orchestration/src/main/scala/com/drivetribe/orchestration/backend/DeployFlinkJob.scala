@@ -12,6 +12,7 @@ import com.goyeau.orchestra.kubernetes.PodConfig
 import com.goyeau.orchestra.parameter.{Checkbox, Input, Select}
 import com.goyeau.orchestra.{Job, _}
 import com.typesafe.scalalogging.Logger
+import shapeless._
 
 object DeployFlinkJob {
 
@@ -19,7 +20,7 @@ object DeployFlinkJob {
     Job[(EnvironmentSide, String, String, Boolean) => Unit](Symbol(s"deployFlinkJob$environment"))
 
   def job(environment: Environment) =
-    jobDefinition(environment)(PodConfig(AnsibleContainer))(apply(environment) _)
+    jobDefinition(environment)(PodConfig(AnsibleContainer :: HNil))(apply(environment) _)
 
   def board(environment: Environment) =
     SingleJobBoard("Deploy Flink job", jobDefinition(environment))(
@@ -70,7 +71,7 @@ object DeployFlinkJob {
         if (environment.isProd && jobName == "all-jobs") s"flink_job_list=default"
         else s"single_flink_job=$jobName"
 
-      val envParams = Seq(
+      val params = Seq(
         s"env_name=${environment.entryName}",
         s"data_processing_version=$version",
         s"dt_tools_version=$version",
@@ -79,10 +80,7 @@ object DeployFlinkJob {
         StateVersions.template(stateVersion)
       ) ++ ansibleColourEnvParam(colour)
 
-      ansible.playbook(
-        "deploy-flink.yml",
-        envParams.map(p => s"-e $p").mkString(" ")
-      )
+      ansible.playbook("deploy-flink.yml", params.map(p => s"-e $p").mkString(" "))
     }
   }
 }

@@ -12,13 +12,14 @@ import com.goyeau.orchestra.kubernetes.PodConfig
 import com.goyeau.orchestra.parameter.Input
 import com.goyeau.orchestra.{Job, _}
 import com.typesafe.scalalogging.Logger
+import shapeless._
 
 object DeployBackend {
 
   def jobDefinition(environment: Environment) = Job[String => Unit](Symbol(s"deployBackend$environment"))
 
   def job(environment: Environment) =
-    jobDefinition(environment)(PodConfig(AnsibleContainer, TerraformContainer))(apply(environment) _)
+    jobDefinition(environment)(PodConfig(HList(AnsibleContainer, TerraformContainer)))(apply(environment) _)
 
   def board(environment: Environment) =
     SingleJobBoard("Deploy Backend", jobDefinition(environment))(Input[String]("Version"))
@@ -55,16 +56,13 @@ object DeployBackend {
               ansible: AnsibleContainer.type)(implicit workDir: Directory) = {
     logger.info("DT Tools")
     dir("ansible") { implicit workDir =>
-      val envParams = Seq(
+      val params = Seq(
         s"env_name=${environment.entryName}",
         s"dt_tools_version=$version",
         StateVersions.template(stateVersion)
       ) ++ ansibleColourEnvParam(colour)
 
-      ansible.playbook(
-        "dt-tools.yml",
-        envParams.map(p => s"-e $p").mkString(" ")
-      )
+      ansible.playbook("dt-tools.yml", params.map(p => s"-e $p").mkString(" "))
     }
   }
 

@@ -26,6 +26,7 @@ trait Jobs extends JVMApp with BackendRoutes {
       val port = OrchestraConfig.port.getOrElse(throw new IllegalStateException("ORCHESTRA_PORT should be set"))
       Http().bindAndHandle(routes, "0.0.0.0", port)
     } { runInfo =>
+      println(s"Runing job: $runInfo")
       jobs
         .find(_.definition.id == runInfo.jobId)
         .getOrElse(throw new IllegalArgumentException(s"No job found for id ${runInfo.jobId}"))

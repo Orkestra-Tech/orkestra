@@ -17,12 +17,7 @@ import io.circe._
 // Should be in the model package
 sealed trait ARunStatus
 object ARunStatus {
-  case class Triggered(at: Instant) extends ARunStatus {
-    def run(runInfo: RunInfo)(implicit encoder: Encoder[ARunStatus]) = new Running(Instant.now()) {
-      override val task =
-        system.scheduler.schedule(0.second, 1.minute.)(RunStatusUtils.persist(runInfo, Running(Instant.now())))
-    }
-  }
+  case class Triggered(at: Instant) extends ARunStatus
 
   case class Running(at: Instant) extends ARunStatus {
     def task: Cancellable = NoopSubscriptionTimeout
@@ -72,6 +67,14 @@ object RunStatusUtils {
       .getLines()
       .map(AutowireServer.read[ARunStatus])
       .toSeq
+
+  def notifyTriggered(runInfo: RunInfo)(implicit encoder: Encoder[ARunStatus]) =
+    RunStatusUtils.persist(runInfo, ARunStatus.Triggered(Instant.now()))
+
+  def notifyRunning(runInfo: RunInfo)(implicit encoder: Encoder[ARunStatus]) = new ARunStatus.Running(Instant.now()) {
+    override val task =
+      system.scheduler.schedule(0.second, 1.minute)(RunStatusUtils.persist(runInfo, ARunStatus.Running(Instant.now())))
+  }
 
   def persist[Status <: ARunStatus](runInfo: RunInfo,
                                     status: Status)(implicit encoder: Encoder[ARunStatus]): Status = {

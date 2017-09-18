@@ -46,6 +46,7 @@ object JobSpecUtils {
       template = PodTemplateSpec(
         spec = Option(
           PodSpec(
+            nodeSelector = Option(podConfig.nodeSelector),
             containers = slaveContainer +: podConfig.containerSeq.map(createContainer(_, masterContainer)),
             volumes = Option(distinctOnName(masterSpec.volumes.toSeq.flatten :+ JobSpecUtils.homeDirVolume)),
             restartPolicy = Option("Never")

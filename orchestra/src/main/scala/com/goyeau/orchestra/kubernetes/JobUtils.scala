@@ -8,7 +8,7 @@ import shapeless.HList
 
 object JobUtils {
 
-  def jobName(runInfo: RunInfo) =
+  private def jobName(runInfo: RunInfo) =
     s"orchestra-${runInfo.jobId.name.toLowerCase}-${runInfo.runId.toString.split("-").head}"
 
   def create[Containers <: HList](runInfo: RunInfo, podConfig: PodConfig[Containers]) =
@@ -21,9 +21,12 @@ object JobUtils {
       _ <- Kubernetes.client.namespaces(OrchestraConfig.namespace).jobs.create(job)
     } yield ()
 
-  def delete(runInfo: RunInfo) =
+  def selfDelete(runInfo: RunInfo) =
     for {
-      _ <- Kubernetes.client.namespaces(OrchestraConfig.namespace).jobs(jobName(runInfo)).delete()
+      _ <- Kubernetes.client
+        .namespaces(OrchestraConfig.namespace)
+        .jobs(OrchestraConfig.podName.take(OrchestraConfig.podName.lastIndexOf("-")))
+        .delete()
       _ <- Kubernetes.client.namespaces(OrchestraConfig.namespace).pods(OrchestraConfig.podName).delete()
     } yield ()
 }

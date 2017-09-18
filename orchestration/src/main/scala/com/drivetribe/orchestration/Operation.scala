@@ -15,13 +15,21 @@ object Operation {
       if (environment.isBiColour) Seq(SwitchActiveColour.board(environment))
       else Seq.empty
 
+    val prodAndStagingBoards =
+      if (environment.isProd) Seq(FlinkCheckpoints.board(environment))
+      else Seq.empty
+
+    val prodBoards =
+      if (environment.isInstanceOf[Environment.Prod.type]) Seq(Spamatron.board)
+      else Seq.empty
+
     FolderBoard(environment.toString)(
       Seq(
         DeployFrontend.board(environment),
         DeployBackend.board(environment),
         DeployRestApi.board(environment),
         DeployFlinkJob.board(environment)
-      ) ++ biColourBoards: _*
+      ) ++ biColourBoards ++ prodAndStagingBoards ++ prodBoards: _*
     )
   }
 
@@ -30,11 +38,15 @@ object Operation {
       if (environment.isBiColour) Seq(SwitchActiveColour.job(environment))
       else Seq.empty
 
+    val prodAndStagingBoards =
+      if (environment.isProd) Seq(FlinkCheckpoints.job(environment))
+      else Seq.empty
+
     Seq(
       DeployFrontend.job(environment),
       DeployBackend.job(environment),
       DeployRestApi.job(environment),
       DeployFlinkJob.job(environment)
-    ) ++ biColourJobs
-  } :+ SqlCopy.job
+    ) ++ biColourJobs ++ prodAndStagingBoards
+  } :+ SqlCopy.job :+ Spamatron.job
 }
