@@ -30,8 +30,6 @@ object DeployFlinkJob {
       Checkbox("Kill existing job", checked = true)
     )
 
-  private lazy val logger = Logger(getClass)
-
   def apply(environment: Environment)(
     ansible: AnsibleContainer.type
   )(side: EnvironmentSide, version: String, jobName: String, killExistingJob: Boolean): Unit = {
@@ -65,22 +63,23 @@ object DeployFlinkJob {
              ansible: AnsibleContainer.type,
              jobName: String = "all-jobs",
              killExistingJob: Boolean = false)(implicit workDir: Directory) = Future {
-    logger.info("Deploy Flink")
-    dir("ansible") { implicit workDir =>
-      val flinkJobEnvParam =
-        if (environment.isProd && jobName == "all-jobs") s"flink_job_list=default"
-        else s"single_flink_job=$jobName"
+    stage("Deploy Flink") {
+      dir("ansible") { implicit workDir =>
+        val flinkJobEnvParam =
+          if (environment.isProd && jobName == "all-jobs") s"flink_job_list=default"
+          else s"single_flink_job=$jobName"
 
-      val params = Seq(
-        s"env_name=${environment.entryName}",
-        s"data_processing_version=$version",
-        s"dt_tools_version=$version",
-        s"kill_existing_job=$killExistingJob",
-        flinkJobEnvParam,
-        StateVersions.template(stateVersion)
-      ) ++ ansibleColourEnvParam(colour)
+        val params = Seq(
+          s"env_name=${environment.entryName}",
+          s"data_processing_version=$version",
+          s"dt_tools_version=$version",
+          s"kill_existing_job=$killExistingJob",
+          flinkJobEnvParam,
+          StateVersions.template(stateVersion)
+        ) ++ ansibleColourEnvParam(colour)
 
-      ansible.playbook("deploy-flink.yml", params.map(p => s"-e $p").mkString(" "))
+        ansible.playbook("deploy-flink.yml", params.map(p => s"-e $p").mkString(" "))
+      }
     }
   }
 }

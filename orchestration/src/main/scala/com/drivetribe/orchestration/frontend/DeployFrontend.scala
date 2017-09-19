@@ -24,7 +24,6 @@ import io.k8s.api.core.v1._
 import io.k8s.apimachinery.pkg.api.resource.Quantity
 import io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta
 import io.k8s.apimachinery.pkg.util.intstr.IntOrString
-import shapeless.{::, HNil}
 
 object DeployFrontend {
 

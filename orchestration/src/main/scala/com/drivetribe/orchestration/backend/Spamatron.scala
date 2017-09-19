@@ -28,19 +28,19 @@ object Spamatron {
   }
 
   def spamatron(ansible: AnsibleContainer.type)(implicit workDir: Directory) =
-    dir("ansible") { implicit workDir =>
-      logger.info("Spamatron")
+    stage("Spamatron") {
+      dir("ansible") { implicit workDir =>
+        val environment = Environment.Prod
+        val version = Version(environment)
 
-      val environment = Environment.Prod
-      val version = Version(environment)
+        val params = Seq(
+          s"env_name=${environment.entryName}",
+          s"colour=${Colour.getActive(environment).entryName}",
+          s"dt_tools_version=${version.build}",
+          StateVersions.template(version.state)
+        )
 
-      val params = Seq(
-        s"env_name=${environment.entryName}",
-        s"colour=${Colour.getActive(environment).entryName}",
-        s"dt_tools_version=${version.build}",
-        StateVersions.template(version.state)
-      )
-
-      ansible.playbook("email-tool.yml", params.map(p => s"-e $p").mkString(" "))
+        ansible.playbook("email-tool.yml", params.map(p => s"-e $p").mkString(" "))
+      }
     }
 }

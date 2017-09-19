@@ -74,16 +74,10 @@ object Job {
     job: ParamValues => Result
   ) {
 
-    private val logDelimiter = "_OrchestraDelimiter_"
-
     def start(runInfo: RunInfo): Unit = {
       OrchestraConfig.runDirPath(runInfo).toFile.mkdirs()
       OrchestraConfig.logsDirPath(runInfo.runId).toFile.mkdirs()
-      val logsOut =
-        new LogsPrintStream(new FileOutputStream(OrchestraConfig.logsFilePath(runInfo.runId).toFile, true),
-                            true,
-                            logDelimiter,
-                            None)
+      val logsOut = LoggingHelpers(new FileOutputStream(OrchestraConfig.logsFilePath(runInfo.runId).toFile, true))
 
       Utils.withOutErr(logsOut) {
         val running = RunStatusUtils.notifyRunning(runInfo)
@@ -125,7 +119,7 @@ object Job {
 
       // @TODO Move that in a common api
       override def logs(runId: UUID, from: Int): Seq[(Option[Symbol], String)] = {
-        val stageRegex = s"(.+)$logDelimiter(.+)".r
+        val stageRegex = s"(.*)${LoggingHelpers.delimiter}(.+)".r
         Seq(OrchestraConfig.logsFilePath(runId).toFile)
           .filter(_.exists())
           .flatMap(
@@ -174,15 +168,4 @@ object Job {
         }
       }
   }
-}
-
-class LogsPrintStream(out: OutputStream, autoFlush: Boolean, delimiter: String, stageId: Option[Symbol])
-    extends PrintStream(out, autoFlush) {
-
-  private val stageInfo = stageId.map(stageId => s"$delimiter${stageId.name}\n")
-  private def insertStageInfo(s: String) =
-    stageInfo.fold(s)(added => s.replaceAll("\r", "").replaceAll("\n", s"$added\n"))
-
-  override def print(s: String): Unit = super.print(insertStageInfo(s))
-  override def println(s: String): Unit = super.println(insertStageInfo(s) + stageInfo.mkString)
 }

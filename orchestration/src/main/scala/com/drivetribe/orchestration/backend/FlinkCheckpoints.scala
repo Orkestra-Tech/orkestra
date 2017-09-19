@@ -5,7 +5,6 @@ import com.drivetribe.orchestration.{Git, _}
 import com.goyeau.orchestra.filesystem.Directory
 import com.goyeau.orchestra.kubernetes.PodConfig
 import com.goyeau.orchestra.{Job, _}
-import com.typesafe.scalalogging.Logger
 import shapeless._
 
 object FlinkCheckpoints {
@@ -17,8 +16,6 @@ object FlinkCheckpoints {
 
   def board(environment: Environment) = JobBoard("Flink Checkpoints", jobDefinition(environment))
 
-  private lazy val logger = Logger(getClass)
-
   def apply(environment: Environment)(ansible: AnsibleContainer.type)(): Unit = {
     Git.checkoutInfrastructure()
 
@@ -29,8 +26,11 @@ object FlinkCheckpoints {
   }
 
   def saveCheckpoints(environment: Environment, ansible: AnsibleContainer.type)(implicit workDir: Directory) =
-    dir("ansible") { implicit workDir =>
-      logger.info("Flink Checkpoints")
-      ansible.playbook("flink-savepoint-manager.yml", s"-e env_name=${environment.entryName}")
+    Lock.onCheckpoint(environment) {
+      stage("Flink Checkpoints") {
+        dir("ansible") { implicit workDir =>
+          ansible.playbook("flink-savepoint-manager.yml", s"-e env_name=${environment.entryName}")
+        }
+      }
     }
 }

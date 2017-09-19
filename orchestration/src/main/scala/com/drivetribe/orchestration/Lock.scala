@@ -1,23 +1,24 @@
 package com.drivetribe.orchestration
 
-import java.io.{File, RandomAccessFile}
+import java.io.RandomAccessFile
+import java.nio.file.Paths
 
 import com.goyeau.orchestra.OrchestraConfig
 
 object Lock {
 
-  private def deploymentChannel(environment: Environment, project: Project) = {
-    val lockFile = new File(s"${OrchestraConfig.home}/locks/${environment.entryName.toLowerCase}/$project/deployment")
+  def lock[T](id: String)(f: => T): T = {
+    val lockFile = Paths.get(s"${OrchestraConfig.home}/locks", id).toFile
     lockFile.getParentFile.mkdirs()
-    new RandomAccessFile(lockFile, "rw").getChannel
-  }
+    val channel = new RandomAccessFile(lockFile, "rw").getChannel
 
-  def onDeployment[T](environment: Environment, project: Project)(f: => T): T = {
-    val channel = deploymentChannel(environment, project)
     channel.lock() // Blocking
     try f
     finally channel.close()
   }
+
+  def onDeployment[T](environment: Environment, project: Project)(f: => T): T =
+    lock(s"${environment.entryName.toLowerCase}/$project/deployment")(f)
 
   def onEnvironment[T](environment: Environment)(f: => T): T =
     onDeployment(environment, Project.Backend) {
@@ -25,6 +26,9 @@ object Lock {
         onDeployment(environment, Project.Studio)(f)
       }
     }
+
+  def onCheckpoint[T](environment: Environment)(f: => T): T =
+    lock(environment.entryName.toLowerCase)(f)
 }
 
 trait Project

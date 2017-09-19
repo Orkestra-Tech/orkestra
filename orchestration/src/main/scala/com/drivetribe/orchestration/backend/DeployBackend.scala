@@ -24,8 +24,6 @@ object DeployBackend {
   def board(environment: Environment) =
     JobBoard("Deploy Backend", jobDefinition(environment))(Input[String]("Version"))
 
-  private lazy val logger = Logger(getClass)
-
   def apply(environment: Environment)(ansible: AnsibleContainer.type,
                                       terraform: TerraformContainer.type)(version: String): Unit = {
     Git.checkoutInfrastructure()
@@ -53,18 +51,18 @@ object DeployBackend {
               version: String,
               stateVersion: String,
               colour: Option[EnvironmentColour],
-              ansible: AnsibleContainer.type)(implicit workDir: Directory) = {
-    logger.info("DT Tools")
-    dir("ansible") { implicit workDir =>
-      val params = Seq(
-        s"env_name=${environment.entryName}",
-        s"dt_tools_version=$version",
-        StateVersions.template(stateVersion)
-      ) ++ ansibleColourEnvParam(colour)
+              ansible: AnsibleContainer.type)(implicit workDir: Directory) =
+    stage("DT Tools") {
+      dir("ansible") { implicit workDir =>
+        val params = Seq(
+          s"env_name=${environment.entryName}",
+          s"dt_tools_version=$version",
+          StateVersions.template(stateVersion)
+        ) ++ ansibleColourEnvParam(colour)
 
-      ansible.playbook("dt-tools.yml", params.map(p => s"-e $p").mkString(" "))
+        ansible.playbook("dt-tools.yml", params.map(p => s"-e $p").mkString(" "))
+      }
     }
-  }
 
   def ansibleColourEnvParam(colour: Option[EnvironmentColour]) = colour.map(c => s"colour=${c.entryName}")
 }

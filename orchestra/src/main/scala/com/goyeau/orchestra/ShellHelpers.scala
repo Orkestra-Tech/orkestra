@@ -26,20 +26,24 @@ trait ShellHelpers {
 
   def sh(script: String, container: Container)(implicit workDir: Directory): String = {
     runningMessage(script)
+    val stageId = LoggingHelpers.stageVar.value
 
     val sink = Sink.fold[String, Message]("") {
       case (acc, BinaryMessage.Strict(data)) =>
         val exitCodeRegex =
           """.*command terminated with non-zero exit code: Error executing in Docker Container: (\d+).*""".r
-        data.utf8String match {
-          case messageData @ exitCodeRegex(exitCode) =>
-            println(messageData)
-            throw new RuntimeException(
-              s"Nonzero exit value: $exitCode for script '$script' in container ${container.name}"
-            )
-          case messageData =>
-            print(messageData)
-            acc + messageData
+
+        LoggingHelpers.stageVar.withValue(stageId) {
+          data.utf8String match {
+            case messageData @ exitCodeRegex(exitCode) =>
+              println(messageData)
+              throw new RuntimeException(
+                s"Nonzero exit value: $exitCode for script '$script' in container ${container.name}"
+              )
+            case messageData =>
+              print(messageData)
+              acc + messageData
+          }
         }
       case (_, message) => throw new IllegalStateException(s"Unexpected message type received: $message")
     }

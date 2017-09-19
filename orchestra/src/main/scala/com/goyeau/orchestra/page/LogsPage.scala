@@ -2,6 +2,7 @@ package com.goyeau.orchestra.page
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
+import scala.reflect.macros.whitebox
 import scala.scalajs.js
 import scala.scalajs.js.Dynamic._
 import scala.scalajs.js.timers.SetIntervalHandle
@@ -22,22 +23,31 @@ object LogsPage {
       .builder[Props](getClass.getSimpleName)
       .initialState[(Option[Seq[(Option[Symbol], String)]], SetIntervalHandle)]((None, null))
       .render { $ =>
+        val ansiUp = newInstance(global.AnsiUp)()
         val logs = $.state._1 match {
-          case Some(log) if log.nonEmpty => log.map(_._2)
-          case Some(log) if log.isEmpty  => Seq("No logged message yet")
-          case None                      => Seq("Loading log")
+          case Some(log) if log.nonEmpty =>
+            log.zipWithIndex.map {
+              case ((stage, line), lineNumber) =>
+                <.tr(^.backgroundColor :=? stage.map(s => generateColour(s.name)))(
+                  <.td(lineNumber + 1),
+                  <.td(^.wordWrap.`break-word`)(
+                    <.pre(
+                      ^.margin := "0px",
+                      ^.dangerouslySetInnerHtml :=
+                        ansiUp.ansi_to_html(line).asInstanceOf[String]
+                    )
+                  )
+                )
+            }
+          case Some(log) if log.isEmpty => Seq(<.tr(<.td("No logged message yet")))
+          case None                     => Seq(<.tr(<.td("Loading log")))
         }
 
-        val ansiUp = newInstance(global.AnsiUp)()
         <.div(
           <.div("Logs: " + $.props.page.runId.toString),
-          <.div(logs.map { line =>
-            <.pre(
-              ^.margin := "0px",
-              ^.dangerouslySetInnerHtml :=
-                ansiUp.ansi_to_html(line).asInstanceOf[String]
-            )
-          }: _*)
+          <.table(^.borderSpacing := "0px")(
+            <.tbody(logs: _*)
+          )
         )
       }
       .componentDidMount { $ =>
@@ -59,5 +69,14 @@ object LogsPage {
         $.modState(_.copy(_1 = Option($.state._1.toSeq.flatten ++ logs))).runNow()
         if (isScrolledToBottom) window.scrollTo(window.pageXOffset.toInt, document.body.scrollHeight)
       }
+  }
+
+  private def generateColour(s: String): String = {
+    val i = s.hashCode
+    "#" +
+      Integer.toHexString((i >> 24) & 0xFF) +
+      Integer.toHexString((i >> 16) & 0xFF) +
+      Integer.toHexString((i >> 8) & 0xFF) +
+      Integer.toHexString(i & 0xFF)
   }
 }

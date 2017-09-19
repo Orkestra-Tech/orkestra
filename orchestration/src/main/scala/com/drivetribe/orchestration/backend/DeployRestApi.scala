@@ -27,8 +27,6 @@ object DeployRestApi {
       Input[String]("Version")
     )
 
-  private lazy val logger = Logger(getClass)
-
   def apply(environment: Environment)(
     ansible: AnsibleContainer.type,
     terraform: TerraformContainer.type
@@ -59,28 +57,29 @@ object DeployRestApi {
              colour: Option[EnvironmentColour],
              terraform: TerraformContainer.type,
              ansible: AnsibleContainer.type)(implicit workDir: Directory) = Future {
-    logger.info("Deploy REST API")
-    Init(environment, ansible, terraform)
+    stage("Deploy REST API") {
+      Init(environment, ansible, terraform)
 
-    dir(terraform.rootDir(environment)) { implicit workDir =>
-      val moduleName = colour.fold("rest_api")(c => s"rest_api_$c")
-      val stateVersions = StateVersions.template(stateVersion).replaceAll("\\{", "\\\\{").replaceAll("\\}", "\\\\}")
-      val tfState = TerraformState.fromS3(environment)
-      val capacity = AutoScaling.getDesiredCapacity(
-        tfState.getResourceAttribute(Seq("root", moduleName), "aws_autoscaling_group.api", "name")
-      )
+      dir(terraform.rootDir(environment)) { implicit workDir =>
+        val moduleName = colour.fold("rest_api")(c => s"rest_api_$c")
+        val stateVersions = StateVersions.template(stateVersion).replaceAll("\\{", "\\\\{").replaceAll("\\}", "\\\\}")
+        val tfState = TerraformState.fromS3(environment)
+        val capacity = AutoScaling.getDesiredCapacity(
+          tfState.getResourceAttribute(Seq("root", moduleName), "aws_autoscaling_group.api", "name")
+        )
 
-      val params = Seq(
-        s"-target=module.$moduleName",
-        s"-target=data.terraform_remote_state.vpc", // @TODO to remove hacky bug fix
-        s"-var ansible_key=${System.getenv("ANSIBLE_VAULT_PASS")}",
-        s"-var api_version=$version",
-        s"-var state_versions=$stateVersions",
-        s"-var bootstrap_git_branch=master",
-        s"-var api_desired_instances_count=$capacity"
-      ) ++ colour.map(c => s"-var active_colour=${c.entryName}")
+        val params = Seq(
+          s"-target=module.$moduleName",
+          s"-target=data.terraform_remote_state.vpc", // @TODO to remove hacky bug fix
+          s"-var ansible_key=${System.getenv("ANSIBLE_VAULT_PASS")}",
+          s"-var api_version=$version",
+          s"-var state_versions=$stateVersions",
+          s"-var bootstrap_git_branch=master",
+          s"-var api_desired_instances_count=$capacity"
+        ) ++ colour.map(c => s"-var active_colour=${c.entryName}")
 
-      terraform.apply(params.mkString(" "))
+        terraform.apply(params.mkString(" "))
+      }
     }
   }
 }
