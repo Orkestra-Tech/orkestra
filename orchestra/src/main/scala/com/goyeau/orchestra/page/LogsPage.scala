@@ -2,7 +2,6 @@ package com.goyeau.orchestra.page
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
-import scala.reflect.macros.whitebox
 import scala.scalajs.js
 import scala.scalajs.js.Dynamic._
 import scala.scalajs.js.timers.SetIntervalHandle
@@ -72,11 +71,8 @@ object LogsPage {
   }
 
   private def generateColour(s: String): String = {
-    val i = s.hashCode
-    "#" +
-      Integer.toHexString((i >> 24) & 0xFF) +
-      Integer.toHexString((i >> 16) & 0xFF) +
-      Integer.toHexString((i >> 8) & 0xFF) +
-      Integer.toHexString(i & 0xFF)
+    def hex(shift: Int) =
+      Integer.toHexString((s.hashCode >> shift) & 0xA) // 0xA instead of 0xF to keep the colour dark
+    "#" + hex(20) + hex(16) + hex(12) + hex(8) + hex(4) + hex(0)
   }
 }

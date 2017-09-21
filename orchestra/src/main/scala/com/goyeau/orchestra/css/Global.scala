@@ -11,6 +11,8 @@ object Global {
 
     style(
       unsafeRoot("body")(
+        backgroundColor(c"#2b2b2b"),
+        color(c"#f4f4f4"),
         margin.`0`,
         padding.`0`,
         fontSize(14.px),

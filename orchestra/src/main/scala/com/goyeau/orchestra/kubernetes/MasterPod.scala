@@ -6,8 +6,7 @@ import com.goyeau.orchestra.OrchestraConfig
 object MasterPod {
 
   def get() =
-    Kubernetes.client
-      .namespaces(OrchestraConfig.namespace)
-      .pods(OrchestraConfig.podName)
+    Kubernetes.client.pods
+      .namespace(OrchestraConfig.namespace)(OrchestraConfig.podName)
       .get()
 }

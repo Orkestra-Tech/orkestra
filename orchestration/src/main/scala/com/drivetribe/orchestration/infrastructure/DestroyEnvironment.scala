@@ -16,8 +16,6 @@ object DestroyEnvironment {
 
   def board(environment: Environment) = JobBoard("Destroy", jobDefinition(environment))
 
-  private lazy val logger = Logger(getClass)
-
   def apply(environment: Environment)(ansible: AnsibleContainer.type, terraform: TerraformContainer.type)(): Unit = {
     Git.checkoutInfrastructure()
 
@@ -30,12 +28,12 @@ object DestroyEnvironment {
     }
   }
 
-  def destroy(environment: Environment, terraform: TerraformContainer.type)(implicit workDir: Directory) = {
-    logger.info("Destroying")
-    // Remove prevent_destroy security
-    sh("find terraform -type f -name '*.tf' -exec sed -i 's/prevent_destroy *= .*/prevent_destroy = false/g' {} +")
-    dir(terraform.rootDir(environment)) { implicit workDir =>
-      terraform.destroy()
+  def destroy(environment: Environment, terraform: TerraformContainer.type)(implicit workDir: Directory) =
+    stage("Destroy") {
+      // Remove prevent_destroy security
+      sh("find terraform -type f -name '*.tf' -exec sed -i 's/prevent_destroy *= .*/prevent_destroy = false/g' {} +")
+      dir(terraform.rootDir(environment)) { implicit workDir =>
+        terraform.destroy()
+      }
     }
-  }
 }

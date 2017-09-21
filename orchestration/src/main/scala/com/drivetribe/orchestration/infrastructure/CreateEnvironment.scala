@@ -29,8 +29,6 @@ object CreateEnvironment {
       Checkbox("Deploy Backend")
     )
 
-  private lazy val logger = Logger(getClass)
-
   def apply(environment: Environment)(
     ansible: AnsibleContainer.type,
     terraform: TerraformContainer.type
@@ -58,23 +56,24 @@ object CreateEnvironment {
 
   def provisionCloudResources(environment: Environment,
                               terraform: TerraformContainer.type)(implicit workDir: Directory) = Future {
-    dir(terraform.rootDir(environment)) { implicit workDir =>
-      logger.info("Provision cloud resources")
-      val elasticsearchModules =
-        if (environment.environmentType == EnvironmentType.Large)
-          Seq("module.elasticsearch_black", "module.elasticsearch_white")
-        else Seq("module.elasticsearch")
+    stage("Provision cloud resources") {
+      dir(terraform.rootDir(environment)) { implicit workDir =>
+        val elasticsearchModules =
+          if (environment.environmentType == EnvironmentType.Large)
+            Seq("module.elasticsearch_black", "module.elasticsearch_white")
+          else Seq("module.elasticsearch")
 
-      val targets = Seq(
-        "module.kafka_zookeeper",
-        "data.terraform_remote_state.vpc", // @TODO to remove hacky bug fix
-        "data.terraform_remote_state.kafka_mirror" // @TODO to remove hacky fix
-      ) ++ elasticsearchModules
+        val targets = Seq(
+          "module.kafka_zookeeper",
+          "data.terraform_remote_state.vpc", // @TODO to remove hacky bug fix
+          "data.terraform_remote_state.kafka_mirror" // @TODO to remove hacky fix
+        ) ++ elasticsearchModules
 
-      terraform.apply(s"-var bootstrap_git_branch=master ${targets.map(t => s"-target=$t").mkString(" ")}")
-      terraform.apply(
-        s"-var ansible_key=${System.getenv("ANSIBLE_VAULT_PASS")} -var bootstrap_git_branch=master"
-      )
+        terraform.apply(s"-var bootstrap_git_branch=master ${targets.map(t => s"-target=$t").mkString(" ")}")
+        terraform.apply(
+          s"-var ansible_key=${System.getenv("ANSIBLE_VAULT_PASS")} -var bootstrap_git_branch=master"
+        )
+      }
     }
   }
 
@@ -84,20 +83,22 @@ object CreateEnvironment {
   def provisionKafkaZookeeper(environment: Environment, sourceEnv: Environment, ansible: AnsibleContainer.type)(
     implicit workDir: Directory
   ) = Future {
-    dir("ansible") { implicit workDir =>
-      Thread.sleep(cloudProvisiongTime)
-      logger.info("Provision Kafka and Zookeeper")
-      ansible
-        .playbook("kafka-zookeeper.yml", s"-e env_name=${environment.entryName} -e from_env=${sourceEnv.entryName}")
+    Thread.sleep(cloudProvisiongTime)
+    stage("Provision Kafka and Zookeeper") {
+      dir("ansible") { implicit workDir =>
+        ansible
+          .playbook("kafka-zookeeper.yml", s"-e env_name=${environment.entryName} -e from_env=${sourceEnv.entryName}")
+      }
     }
   }
 
   def provisionElasticsearch(environment: Environment, ansible: AnsibleContainer.type)(implicit workDir: Directory) =
     Future {
-      dir("ansible") { implicit workDir =>
-        Thread.sleep(cloudProvisiongTime)
-        logger.info("Provision Elasticsearch")
-        ansible.playbook("elasticsearch.yml", s"-e env_name=${environment.entryName}")
+      Thread.sleep(cloudProvisiongTime)
+      stage("Provision Elasticsearch") {
+        dir("ansible") { implicit workDir =>
+          ansible.playbook("elasticsearch.yml", s"-e env_name=${environment.entryName}")
+        }
       }
     }
 }

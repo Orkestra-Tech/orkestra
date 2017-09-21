@@ -20,6 +20,7 @@ import com.goyeau.orchestra.AkkaImplicits._
 import com.goyeau.orchestra.parameter.Input
 import com.typesafe.scalalogging.Logger
 import io.k8s.api.apps.v1beta1.{Deployment, DeploymentSpec, DeploymentStrategy, RollingUpdateDeployment}
+import io.k8s.api.autoscaling.v1.{CrossVersionObjectReference, HorizontalPodAutoscaler, HorizontalPodAutoscalerSpec}
 import io.k8s.api.core.v1._
 import io.k8s.apimachinery.pkg.api.resource.Quantity
 import io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta
@@ -34,53 +35,53 @@ object DeployFrontend {
   def board(environment: Environment) =
     JobBoard("Deploy Frontend", jobDefinition(environment))(Input[String]("Version"))
 
-  private lazy val logger = Logger(getClass)
-
   def apply(environment: Environment)(version: String): Unit =
     Lock.onDeployment(environment, Project.Frontend) {
       webFrontend(version)
       webBackend(version, environment)
     }
 
-  def webFrontend(version: String) = {
-    logger.info("Deploy web frontend")
+  def webFrontend(version: String) =
+    stage("Deploy web frontend") {
+      val s3 = AmazonS3ClientBuilder.standard.withRegion(Regions.EU_WEST_1).build
+      val transferManager = TransferManagerBuilder.standard.withS3Client(s3).build
+      val packageName = s"web-frontend-$version.zip"
+      transferManager
+        .download("drivetribe-web-releases", packageName, LocalFile(s"./$packageName"))
+        .waitForCompletion()
 
-    val s3 = AmazonS3ClientBuilder.standard.withRegion(Regions.EU_WEST_1).build
-    val transferManager = TransferManagerBuilder.standard.withS3Client(s3).build
-    val packageName = s"web-frontend-$version.zip"
-    transferManager.download("drivetribe-web-releases", packageName, LocalFile(s"./$packageName")).waitForCompletion()
+      sh(s"""mkdir temp
+            |unzip web-frontend-$version.zip -d temp
+            |""".stripMargin)
 
-    sh(s"""mkdir temp
-          |unzip web-frontend-$version.zip -d temp
-          |""".stripMargin)
-
-    val metadataProvider = new ObjectMetadataProvider {
-      override def provideObjectMetadata(file: File, metadata: ObjectMetadata): Unit = {
-        metadata.setExpirationTime(Date.from(ZonedDateTime.now().plusYears(1).toInstant))
-        metadata.setCacheControl("max-age=31536000")
+      val metadataProvider = new ObjectMetadataProvider {
+        override def provideObjectMetadata(file: File, metadata: ObjectMetadata): Unit = {
+          metadata.setExpirationTime(Date.from(ZonedDateTime.now().plusYears(1).toInstant))
+          metadata.setCacheControl("max-age=31536000")
+        }
       }
+
+      transferManager.uploadDirectory(
+        "drivetribe-live-frontend-application",
+        version,
+        LocalFile("temp"),
+        true,
+        metadataProvider
+      )
     }
 
-    transferManager.uploadDirectory(
-      "drivetribe-live-frontend-application",
-      version,
-      LocalFile("temp"),
-      true,
-      metadataProvider
-    )
-  }
-
-  def webBackend(version: String, environment: Environment) = {
-    logger.info("Deploy web backend")
-    if (environment.environmentType == EnvironmentType.Large) deployOnBeanstalk(version, environment)
-    deployOnKubernetes(version, environment)
-  }
+  def webBackend(version: String, environment: Environment) =
+    stage("Deploy web backend") {
+      if (environment.environmentType == EnvironmentType.Large) deployOnBeanstalk(version, environment)
+      deployOnKubernetes(version, environment)
+    }
 
   def deployOnKubernetes(version: String, environment: Environment) = {
     val kube = KubernetesClient(KubeConfig(new File("/opt/docker/secrets/kube/config")))
+    val name = "web-backend"
 
     val deployment = Deployment(
-      metadata = Option(ObjectMeta(name = Option("web-backend"), namespace = Option(environment.entryName))),
+      metadata = Option(ObjectMeta(name = Option(name), namespace = Option(environment.entryName))),
       spec = Option(
         DeploymentSpec(
           strategy = Option(
@@ -137,9 +138,31 @@ object DeployFrontend {
       )
     )
 
-    Await.result(kube.namespaces(environment.entryName).deployments.create(deployment), Duration.Inf)
+    val autoscaler = HorizontalPodAutoscaler(
+      metadata = Option(
+        ObjectMeta(
+          name = Option(name),
+          namespace = Option(environment.entryName)
+        )
+      ),
+      spec = Option(
+        HorizontalPodAutoscalerSpec(
+          scaleTargetRef = CrossVersionObjectReference(kind = "Deployment", name = name),
+          minReplicas = Option(if (environment == Environment.Prod) 5 else 2),
+          maxReplicas = if (environment == Environment.Prod) 40 else 5
+        )
+      )
+    )
 
-    // @TODO: Do the HorizontalPodAutoscaler
+    val deployments = kube.deployments.namespace(environment.entryName)
+    val horizontalPodAutoscalers = kube.horizontalPodAutoscalers.namespace(environment.entryName)
+    Await.result(
+      for {
+        _ <- deployments.create(deployment).fallbackTo(deployments(name).replace(deployment))
+        _ <- horizontalPodAutoscalers.create(autoscaler).fallbackTo(horizontalPodAutoscalers(name).replace(autoscaler))
+      } yield (),
+      Duration.Inf
+    )
   }
 
   def deployOnBeanstalk(version: String, environment: Environment) = {

@@ -18,15 +18,14 @@ object JobUtils {
         metadata = Option(ObjectMeta(name = Option(jobName(runInfo)))),
         spec = Option(JobSpecUtils.createJobSpec(masterPod, runInfo, podConfig))
       )
-      _ <- Kubernetes.client.namespaces(OrchestraConfig.namespace).jobs.create(job)
+      _ <- Kubernetes.client.jobs.namespace(OrchestraConfig.namespace).create(job)
     } yield ()
 
   def selfDelete(runInfo: RunInfo) =
     for {
-      _ <- Kubernetes.client
-        .namespaces(OrchestraConfig.namespace)
-        .jobs(OrchestraConfig.podName.take(OrchestraConfig.podName.lastIndexOf("-")))
+      _ <- Kubernetes.client.jobs
+        .namespace(OrchestraConfig.namespace)(OrchestraConfig.podName.take(OrchestraConfig.podName.lastIndexOf("-")))
         .delete()
-      _ <- Kubernetes.client.namespaces(OrchestraConfig.namespace).pods(OrchestraConfig.podName).delete()
+      _ <- Kubernetes.client.pods.namespace(OrchestraConfig.namespace)(OrchestraConfig.podName).delete()
     } yield ()
 }

@@ -50,9 +50,8 @@ trait ShellHelpers {
     val flow = Flow.fromSinkAndSourceMat(sink, Source.maybe[Message])(Keep.left)
 
     def exec(timeout: Duration = 1.minute, interval: Duration = 300.millis): Future[String] =
-      Kubernetes.client
-        .namespaces(OrchestraConfig.namespace)
-        .pods(OrchestraConfig.podName)
+      Kubernetes.client.pods
+        .namespace(OrchestraConfig.namespace)(OrchestraConfig.podName)
         .exec(
           flow,
           Option(container.name),

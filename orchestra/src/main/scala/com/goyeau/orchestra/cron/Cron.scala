@@ -24,7 +24,7 @@ trait Cron extends JVMApp {
       Await.result(
         for {
           masterPod <- MasterPod.get()
-          currentCronJobs <- Kubernetes.client.namespaces(OrchestraConfig.namespace).cronJobs.list()
+          currentCronJobs <- Kubernetes.client.cronJobs.namespace(OrchestraConfig.namespace).list()
           currentCronJobNames = currentCronJobs.items.flatMap(_.metadata).flatMap(_.name)
         } yield {
           deleteStaleCronJobs(currentCronJobNames)
@@ -38,7 +38,7 @@ trait Cron extends JVMApp {
     val cronJobNames = cronTriggers.map(cronTrigger => cronJobName(cronTrigger.job.definition.id))
     val jobsToRemove = currentCronJobNames.diff(cronJobNames)
     jobsToRemove.foreach { cronJobName =>
-      Kubernetes.client.namespaces(OrchestraConfig.namespace).cronJobs(cronJobName).delete()
+      Kubernetes.client.cronJobs.namespace(OrchestraConfig.namespace)(cronJobName).delete()
       logger.debug(s"Deleting cronjob $cronJobName")
     }
   }
@@ -58,7 +58,7 @@ trait Cron extends JVMApp {
           )
         )
       )
-      val cronJobs = Kubernetes.client.namespaces(OrchestraConfig.namespace).cronJobs
+      val cronJobs = Kubernetes.client.cronJobs.namespace(OrchestraConfig.namespace)
       if (currentCronJobNames contains newCronJobName) {
         cronJobs(newCronJobName).replace(cronJob)
         logger.debug(s"Updated cronjob $newCronJobName")

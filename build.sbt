@@ -73,11 +73,12 @@ lazy val orchestra = crossProject
     name := "Orchestra",
     organization := "com.goyeau",
     buildInfoPackage := s"${organization.value}.orchestra",
+    resolvers += Opts.resolver.sonatypeSnapshots,
     libraryDependencies ++= Seq(
       "com.chuusai" %%% "shapeless" % "2.3.2",
       "com.vmunier" %% "scalajs-scripts" % "1.1.1",
       "com.beachape" %%% "enumeratum" % "1.5.12" % Provided,
-      "com.goyeau" %% "kubernetes-client" % "0.0.1"
+      "com.goyeau" %% "kubernetes-client" % "0.0.1+1-272215ec+20170920-1837-SNAPSHOT"
     ) ++ scalaJsReact.value ++ akkaHttp.value ++ scalaCss.value ++ autowire.value ++ logging.value,
     jsDependencies ++= Seq(
       "org.webjars.npm" % "ansi_up" % "2.0.2" / "ansi_up.js" commonJSName "ansi_up"
@@ -117,7 +118,7 @@ lazy val orchestrationJVM = orchestration.jvm
     pipelineStages in Assets := Seq(scalaJSPipeline),
     maintainer in Docker := "Drivetribe",
     dockerRepository := Option("registry.drivetribe.com/tools"),
-    devCommands in scalaJSPipeline ++= Seq("publishLocal", "console", "reload"),
+    devCommands in scalaJSPipeline ++= Seq("publishLocal", "console"),
     dockerUpdateLatest := true,
     dockerExposedPorts := Seq(8080, 8081),
     // Workaround the face that ENTRYPOINT is not absolute, so when we change the WORKDIR it won't start

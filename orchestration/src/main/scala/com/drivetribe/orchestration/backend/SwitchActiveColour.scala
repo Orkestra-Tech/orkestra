@@ -40,20 +40,24 @@ object SwitchActiveColour {
                                    "aws_autoscaling_group.api",
                                    "name")
 
-    logger.info("Scale up inactive")
-    AutoScaling.setDesiredCapacity(inactiveAutoScaling, AutoScaling.getDesiredCapacity(activeAutoScaling))
+    stage("Scale up inactive") {
+      AutoScaling.setDesiredCapacity(inactiveAutoScaling, AutoScaling.getDesiredCapacity(activeAutoScaling))
+    }
 
-    logger.info("Attach inactive")
-    AutoScaling.detachTargetGroups(inactiveAutoScaling, Seq(inactiveLoadBalancer, monitoringInactiveLoadBalancer))
-    AutoScaling.attachTargetGroups(inactiveAutoScaling, Seq(activeLoadBalancer, monitoringActiveLoadBalancer))
+    stage("Attach inactive") {
+      AutoScaling.detachTargetGroups(inactiveAutoScaling, Seq(inactiveLoadBalancer, monitoringInactiveLoadBalancer))
+      AutoScaling.attachTargetGroups(inactiveAutoScaling, Seq(activeLoadBalancer, monitoringActiveLoadBalancer))
+    }
 
-    logger.info("Wait")
-    while (!Colour.isHealthy(activeLoadBalancer)) Thread.sleep(5000)
-    while (!AutoScaling.isDesiredCapacity(inactiveAutoScaling)) Thread.sleep(5000)
+    stage("Wait") {
+      while (!Colour.isHealthy(activeLoadBalancer)) Thread.sleep(5000)
+      while (!AutoScaling.isDesiredCapacity(inactiveAutoScaling)) Thread.sleep(5000)
+    }
 
-    logger.info("Detach active")
-    AutoScaling.detachTargetGroups(activeAutoScaling, Seq(activeLoadBalancer, monitoringActiveLoadBalancer))
-    AutoScaling.attachTargetGroups(activeAutoScaling, Seq(inactiveLoadBalancer, monitoringInactiveLoadBalancer))
+    stage("Detach active") {
+      AutoScaling.detachTargetGroups(activeAutoScaling, Seq(activeLoadBalancer, monitoringActiveLoadBalancer))
+      AutoScaling.attachTargetGroups(activeAutoScaling, Seq(inactiveLoadBalancer, monitoringInactiveLoadBalancer))
+    }
 
     logger.info(s"Switched from * $activeColour * to * $inactiveColour *")
   }
