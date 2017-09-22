@@ -28,14 +28,12 @@ object LogsPage {
             log.zipWithIndex.map {
               case ((stage, line), lineNumber) =>
                 <.tr(^.backgroundColor :=? stage.map(s => generateColour(s.name)))(
-                  <.td(lineNumber + 1),
-                  <.td(^.wordWrap.`break-word`)(
-                    <.pre(
-                      ^.margin := "0px",
-                      ^.dangerouslySetInnerHtml :=
-                        ansiUp.ansi_to_html(line).asInstanceOf[String]
-                    )
-                  )
+                  <.td(^.width := "50px", ^.verticalAlign.`text-top`, ^.textAlign.right, ^.paddingRight := "5px")(
+                    lineNumber + 1
+                  ),
+                  <.td(^.width.auto,
+                       ^.wordWrap.`break-word`,
+                       ^.dangerouslySetInnerHtml := ansiUp.ansi_to_html(line).asInstanceOf[String])
                 )
             }
           case Some(log) if log.isEmpty => Seq(<.tr(<.td("No logged message yet")))
@@ -44,7 +42,7 @@ object LogsPage {
 
         <.div(
           <.div("Logs: " + $.props.page.runId.toString),
-          <.table(^.borderSpacing := "0px")(
+          <.table(^.borderSpacing := "0px", ^.tableLayout.fixed, ^.width := "100%")(
             <.tbody(logs: _*)
           )
         )
@@ -72,7 +70,7 @@ object LogsPage {
 
   private def generateColour(s: String): String = {
     def hex(shift: Int) =
-      Integer.toHexString((s.hashCode >> shift) & 0xA) // 0xA instead of 0xF to keep the colour dark
+      Integer.toHexString((s.hashCode >> shift) & 0x5) // 0x5 instead of 0xF to keep the colour dark
     "#" + hex(20) + hex(16) + hex(12) + hex(8) + hex(4) + hex(0)
   }
 }

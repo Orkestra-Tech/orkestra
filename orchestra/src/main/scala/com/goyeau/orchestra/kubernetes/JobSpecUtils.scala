@@ -5,31 +5,22 @@ import scala.language.reflectiveCalls
 
 import io.circe.generic.auto._
 import io.k8s.api.batch.v1.JobSpec
-import io.k8s.api.core.v1.{
-  EmptyDirVolumeSource,
-  EnvVar,
-  Pod,
-  PodSpec,
-  PodTemplateSpec,
-  Volume,
-  VolumeMount,
-  Container => KubeContainer
-}
+import io.k8s.api.core.v1._
 
 object JobSpecUtils {
   private val homeDirMount = VolumeMount(name = "home", mountPath = OrchestraConfig.workspace)
   private val homeDirVolume = Volume(name = "home", emptyDir = Option(EmptyDirVolumeSource()))
 
-  private def createContainer(container: Container, masterContainer: KubeContainer): KubeContainer =
-    KubeContainer(
-      name = container.name,
-      image = container.image,
-      env = masterContainer.env,
+  private def createContainer(container: Container, masterContainer: Container): Container =
+    container.copy(
       stdin = Option(true),
-      tty = Option(true),
-      command = Option(container.command),
-      workingDir = Option(OrchestraConfig.workspace),
-      volumeMounts = Option(distinctOnName(masterContainer.volumeMounts.toSeq.flatten :+ JobSpecUtils.homeDirMount))
+      env = Option((container.env ++ masterContainer.env).flatten.toSeq),
+      workingDir = container.workingDir.orElse(Option(OrchestraConfig.workspace)),
+      volumeMounts = Option(
+        distinctOnName(
+          (container.volumeMounts ++ masterContainer.volumeMounts).flatten.toSeq :+ JobSpecUtils.homeDirMount
+        )
+      )
     )
 
   def createJobSpec(masterPod: Pod, runInfo: RunInfo, podConfig: PodConfig[_]) = {
@@ -48,7 +39,9 @@ object JobSpecUtils {
           PodSpec(
             nodeSelector = Option(podConfig.nodeSelector),
             containers = slaveContainer +: podConfig.containerSeq.map(createContainer(_, masterContainer)),
-            volumes = Option(distinctOnName(masterSpec.volumes.toSeq.flatten :+ JobSpecUtils.homeDirVolume)),
+            volumes = Option(
+              distinctOnName(podConfig.volumes ++ masterSpec.volumes.toSeq.flatten :+ JobSpecUtils.homeDirVolume)
+            ),
             restartPolicy = Option("Never")
           )
         )

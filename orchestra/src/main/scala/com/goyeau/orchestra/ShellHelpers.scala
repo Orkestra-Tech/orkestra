@@ -6,12 +6,15 @@ import scala.sys.process
 
 import com.goyeau.orchestra.AkkaImplicits._
 import com.goyeau.orchestra.filesystem.Directory
-import com.goyeau.orchestra.kubernetes.{Container, Kubernetes}
+import com.goyeau.orchestra.kubernetes.Kubernetes
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
 
 import akka.http.scaladsl.model.ws.{BinaryMessage, Message}
 import akka.stream.scaladsl.{Flow, Keep, Sink, Source}
+import io.k8s.api.core.v1.Container
+import io.k8s.apimachinery.pkg.apis.meta.v1.Status
+import io.circe.parser._
 
 trait ShellHelpers {
   private def runningMessage(script: String) = println(s"Running: $script")
@@ -30,19 +33,21 @@ trait ShellHelpers {
 
     val sink = Sink.fold[String, Message]("") {
       case (acc, BinaryMessage.Strict(data)) =>
-        val exitCodeRegex =
-          """.*command terminated with non-zero exit code: Error executing in Docker Container: (\d+).*""".r
-
         LoggingHelpers.stageVar.withValue(stageId) {
-          data.utf8String match {
-            case messageData @ exitCodeRegex(exitCode) =>
-              println(messageData)
+          val log = data.utf8String
+          decode[Status](log.trim) match {
+            case Right(Status(_, _, _, _, _, _, _, Some("Success"))) =>
+              println()
+              acc
+            case Right(Status(_, _, _, _, Some(message), _, Some(reason), _)) =>
+              throw new RuntimeException(s"$reason: $message; Container: ${container.name}; Script: $script")
+            case Right(status) =>
               throw new RuntimeException(
-                s"Nonzero exit value: $exitCode for script '$script' in container ${container.name}"
+                s"Non success container termination: $status; Container: ${container.name}; Script: $script"
               )
-            case messageData =>
-              print(messageData)
-              acc + messageData
+            case Left(_) =>
+              print(log)
+              acc + log
           }
         }
       case (_, message) => throw new IllegalStateException(s"Unexpected message type received: $message")

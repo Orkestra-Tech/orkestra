@@ -12,7 +12,9 @@ object FlinkCheckpoints {
   def jobDefinition(environment: Environment) = Job[() => Unit](Symbol(s"flinkCheckpoints$environment"))
 
   def job(environment: Environment) =
-    jobDefinition(environment)(PodConfig(AnsibleContainer :: HNil, Map("cronJob" -> "true")))(apply(environment) _)
+    jobDefinition(environment)(PodConfig(AnsibleContainer :: HNil, nodeSelector = Map("cronJob" -> "true")))(
+      apply(environment) _
+    )
 
   def board(environment: Environment) = JobBoard("Flink Checkpoints", jobDefinition(environment))
 

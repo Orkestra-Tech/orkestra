@@ -18,7 +18,6 @@ import com.goyeau.orchestra.filesystem.LocalFile
 import com.goyeau.orchestra.{Job, _}
 import com.goyeau.orchestra.AkkaImplicits._
 import com.goyeau.orchestra.parameter.Input
-import com.typesafe.scalalogging.Logger
 import io.k8s.api.apps.v1beta1.{Deployment, DeploymentSpec, DeploymentStrategy, RollingUpdateDeployment}
 import io.k8s.api.autoscaling.v1.{CrossVersionObjectReference, HorizontalPodAutoscaler, HorizontalPodAutoscalerSpec}
 import io.k8s.api.core.v1._

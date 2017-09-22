@@ -11,7 +11,6 @@ import com.goyeau.orchestra.filesystem.Directory
 import com.goyeau.orchestra.kubernetes.PodConfig
 import com.goyeau.orchestra.parameter.Input
 import com.goyeau.orchestra.{Job, _}
-import com.typesafe.scalalogging.Logger
 import shapeless._
 
 object DeployBackend {
@@ -19,7 +18,7 @@ object DeployBackend {
   def jobDefinition(environment: Environment) = Job[String => Unit](Symbol(s"deployBackend$environment"))
 
   def job(environment: Environment) =
-    jobDefinition(environment)(PodConfig(HList(AnsibleContainer, TerraformContainer)))(apply(environment) _)
+    jobDefinition(environment)(PodConfig(AnsibleContainer :: TerraformContainer :: HNil))(apply(environment) _)
 
   def board(environment: Environment) =
     JobBoard("Deploy Backend", jobDefinition(environment))(Input[String]("Version"))

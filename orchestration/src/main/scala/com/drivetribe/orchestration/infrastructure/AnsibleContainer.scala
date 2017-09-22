@@ -3,11 +3,14 @@ package com.drivetribe.orchestration.infrastructure
 import com.drivetribe.orchestration.Environment
 import com.goyeau.orchestra._
 import com.goyeau.orchestra.filesystem.Directory
-import com.goyeau.orchestra.kubernetes.Container
 import com.typesafe.scalalogging.LazyLogging
+import io.k8s.api.core.v1.Container
 
 object AnsibleContainer
-    extends Container("ansible", "registry.drivetribe.com/tools/ansible:cached", tty = true, Seq("cat"))
+    extends Container(name = "ansible",
+                      image = "registry.drivetribe.com/tools/ansible:cached",
+                      tty = Option(true),
+                      command = Option(Seq("cat")))
     with LazyLogging {
 
   def install()(implicit workDir: Directory) = {

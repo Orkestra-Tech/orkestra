@@ -2,9 +2,10 @@ package com.drivetribe.orchestration.backend
 
 import com.drivetribe.orchestration.Environment
 import com.goyeau.orchestra._
-import com.goyeau.orchestra.kubernetes.Container
+import io.k8s.api.core.v1.Container
 
-object MySqlContainer extends Container("mysql", "mysql:5.7.18", tty = true, Seq("cat")) {
+object MySqlContainer
+    extends Container(name = "mysql", image = "mysql:5.7.18", tty = Option(true), command = Option(Seq("cat"))) {
 
   def dump(source: Environment, destination: Environment, dbName: String = "user_identity", params: String = "") = {
     mysql(destination, "", s"CREATE DATABASE IF NOT EXISTS $dbName")

@@ -6,7 +6,7 @@ import com.drivetribe.orchestration.backend.{FlinkCheckpoints, Spamatron}
 import com.drivetribe.orchestration.infrastructure.Infrastructure
 import com.goyeau.orchestra.{Boards, _}
 import com.goyeau.orchestra.cron.{Cron, CronTrigger}
-import com.goyeau.orchestra.github.Github
+import com.goyeau.orchestra.github.{BranchTrigger, Github}
 
 object Orchestration extends Jobs with Boards with Github with Cron {
 
@@ -19,9 +19,7 @@ object Orchestration extends Jobs with Boards with Github with Cron {
   lazy val deployBackendDef = Job[(String, UUID) => Unit]('deployBackend)
   lazy val deployBackend = deployBackendDef((version, runId) => println(version + runId))
 
-  lazy val githubTriggers = Seq(
-//    BranchTrigger("drivetribe/backend", "toto", emptyTask)
-  )
+  lazy val githubTriggers = Operation.githubTriggers
 
   lazy val cronTriggers = Seq(
     CronTrigger("*/5 * * * *", Spamatron.job),

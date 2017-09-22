@@ -1,9 +1,12 @@
 package com.goyeau.orchestra.kubernetes
 
+import io.k8s.api.core.v1.{Container, Volume}
 import shapeless._
 import shapeless.ops.hlist.ToTraversable
 
-case class PodConfig[Containers <: HList](containers: Containers = HNil, nodeSelector: Map[String, String] = Map.empty)(
+case class PodConfig[Containers <: HList](containers: Containers = HNil,
+                                          volumes: Seq[Volume] = Seq.empty,
+                                          nodeSelector: Map[String, String] = Map.empty)(
   implicit toSeq: ToTraversable.Aux[Containers, Seq, Container]
 ) {
   private[orchestra] val containerSeq: Seq[Container] = toSeq(containers)
@@ -20,5 +23,3 @@ case class PodConfig[Containers <: HList](containers: Containers = HNil, nodeSel
 //  def apply[C <: Container](container: C): PodConfig[C :: HNil] =
 //    PodConfig(container :: HNil, Seq.empty)
 //}
-
-case class Container(name: String, image: String, tty: Boolean = false, command: Seq[String] = Seq.empty)

@@ -3,11 +3,14 @@ package com.drivetribe.orchestration.infrastructure
 import com.drivetribe.orchestration.Environment
 import com.goyeau.orchestra._
 import com.goyeau.orchestra.filesystem.Directory
-import com.goyeau.orchestra.kubernetes.Container
 import com.typesafe.scalalogging.LazyLogging
+import io.k8s.api.core.v1.Container
 
 object TerraformContainer
-    extends Container("terraform", "hashicorp/terraform:0.9.8", tty = true, Seq("cat"))
+    extends Container(name = "terraform",
+                      image = "hashicorp/terraform:0.9.8",
+                      tty = Option(true),
+                      command = Option(Seq("cat")))
     with LazyLogging {
 
   def rootDir(environment: Environment) = s"terraform/providers/aws/app/${environment.environmentType.entryName}"

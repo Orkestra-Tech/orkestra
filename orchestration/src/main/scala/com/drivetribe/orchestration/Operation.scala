@@ -3,6 +3,7 @@ package com.drivetribe.orchestration
 import com.drivetribe.orchestration.backend._
 import com.drivetribe.orchestration.frontend.DeployFrontend
 import com.goyeau.orchestra.FolderBoard
+import com.goyeau.orchestra.github.BranchTrigger
 
 object Operation {
 
@@ -25,6 +26,7 @@ object Operation {
 
     FolderBoard(environment.toString)(
       Seq(
+        BuildAndDeployBackend.board(environment),
         DeployFrontend.board(environment),
         DeployBackend.board(environment),
         DeployRestApi.board(environment),
@@ -43,10 +45,18 @@ object Operation {
       else Seq.empty
 
     Seq(
+      BuildAndDeployBackend.job(environment),
       DeployFrontend.job(environment),
       DeployBackend.job(environment),
       DeployRestApi.job(environment),
       DeployFlinkJob.job(environment)
     ) ++ biColourJobs ++ prodAndStagingBoards
   } :+ SqlCopy.job :+ Spamatron.job
+
+  lazy val githubTriggers = Environment.values.flatMap { environment =>
+    val repo = "drivetribe/backend"
+    Seq(
+      BranchTrigger(repo, environment.entryName, BuildAndDeployBackend.job(environment))
+    )
+  }
 }
