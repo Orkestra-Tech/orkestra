@@ -55,8 +55,12 @@ object Operation {
 
   lazy val githubTriggers = Environment.values.flatMap { environment =>
     val repo = "drivetribe/backend"
+    val branch = environment match {
+      case Environment.Staging => "master"
+      case env                 => env.entryName
+    }
     Seq(
-      BranchTrigger(repo, environment.entryName, BuildAndDeployBackend.job(environment))
+      BranchTrigger(repo, branch, BuildAndDeployBackend.job(environment))
     )
   }
 }
