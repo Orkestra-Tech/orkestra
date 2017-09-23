@@ -10,11 +10,10 @@ import com.goyeau.orchestra.kubernetes.Kubernetes
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
 
-import akka.http.scaladsl.model.ws.{BinaryMessage, Message}
+import akka.http.scaladsl.model.ws.Message
 import akka.stream.scaladsl.{Flow, Keep, Sink, Source}
 import io.k8s.api.core.v1.Container
 import io.k8s.apimachinery.pkg.apis.meta.v1.Status
-import io.circe.parser._
 
 trait ShellHelpers {
   private def runningMessage(script: String) = println(s"Running: $script")
@@ -31,26 +30,23 @@ trait ShellHelpers {
     runningMessage(script)
     val stageId = LoggingHelpers.stageVar.value
 
-    val sink = Sink.fold[String, Message]("") {
-      case (acc, BinaryMessage.Strict(data)) =>
-        LoggingHelpers.stageVar.withValue(stageId) {
-          val log = data.utf8String
-          decode[Status](log.trim) match {
-            case Right(Status(_, _, _, _, _, _, _, Some("Success"))) =>
-              println()
-              acc
-            case Right(Status(_, _, _, _, Some(message), _, Some(reason), _)) =>
-              throw new RuntimeException(s"$reason: $message; Container: ${container.name}; Script: $script")
-            case Right(status) =>
-              throw new RuntimeException(
-                s"Non success container termination: $status; Container: ${container.name}; Script: $script"
-              )
-            case Left(_) =>
-              print(log)
-              acc + log
-          }
+    val sink = Sink.fold[String, Either[Status, String]]("") { (acc, data) =>
+      LoggingHelpers.stageVar.withValue(stageId) {
+        data match {
+          case Left(Status(_, _, _, _, _, _, _, Some("Success"))) =>
+            println()
+            acc
+          case Left(Status(_, _, _, _, Some(message), _, Some(reason), _)) =>
+            throw new RuntimeException(s"$reason: $message; Container: ${container.name}; Script: $script")
+          case Left(status) =>
+            throw new RuntimeException(
+              s"Non success container termination: $status; Container: ${container.name}; Script: $script"
+            )
+          case Right(log) =>
+            print(log)
+            acc + log
         }
-      case (_, message) => throw new IllegalStateException(s"Unexpected message type received: $message")
+      }
     }
     val flow = Flow.fromSinkAndSourceMat(sink, Source.maybe[Message])(Keep.left)
 
