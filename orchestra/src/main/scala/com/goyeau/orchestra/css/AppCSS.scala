@@ -11,7 +11,7 @@ import com.goyeau.orchestra.page.StatusPage
 object AppCSS {
   val CssSettings = scalacss.devOrProdDefaults; import CssSettings._
 
-  def load = {
+  def load() = {
     GlobalRegistry.register(Global.Style, TopNav.Style, StatusPage.Style)
     GlobalRegistry.onRegistration(_.addToDocument())
   }

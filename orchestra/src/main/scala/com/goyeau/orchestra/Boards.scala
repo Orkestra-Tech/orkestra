@@ -10,7 +10,10 @@ import com.goyeau.orchestra.route.{BackendRoutes, WebRouter}
 import org.scalajs.dom
 
 trait Boards extends BackendRoutes with JSApp {
+
   def board: Board
+
+  lazy val topElementId = "orchestra"
 
   override lazy val routes = super.routes ~
     pathSingleSlash {
@@ -23,7 +26,7 @@ trait Boards extends BackendRoutes with JSApp {
              |    <title>Orchestra</title>
              |</head>
              |<body>
-             |<div id="orchestra"></div>
+             |<div id="$topElementId"></div>
              |${scripts(
                "web",
                name => s"/assets/$name",
@@ -36,8 +39,8 @@ trait Boards extends BackendRoutes with JSApp {
       }
     }
 
-  override def main(): Unit = {
-    AppCSS.load
-    WebRouter.router(board).renderIntoDOM(dom.document.getElementById("orchestra"))
+  def main(): Unit = {
+    AppCSS.load()
+    WebRouter.router(board).renderIntoDOM(dom.document.getElementById(topElementId))
   }
 }

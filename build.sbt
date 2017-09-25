@@ -6,6 +6,11 @@ lazy val orchestra = crossProject
     name := "Orchestra",
     organization := "com.goyeau",
     scalaVersion := "2.12.3",
+    version := {
+      val ver = version.value
+      if (!ver.contains("+")) ver
+      else ver + "-SNAPSHOT"
+    },
     scalacOptions += "-deprecation",
     buildInfoPackage := s"${organization.value}.orchestra",
     resolvers += Opts.resolver.sonatypeSnapshots,
