@@ -79,17 +79,12 @@ lazy val react = Def.setting {
 }
 
 lazy val circe = Def.setting {
+  val version = "0.8.0"
   Seq(
-    "circe-core",
-    "circe-generic",
-    "circe-parser",
-    "circe-shapes",
-    "circe-java8"
-  ).flatMap { name =>
-    val version = "0.9.0-M1"
-    Seq(
-      "io.circe" %%% name % version,
-      "io.circe" %% name % version
-    )
-  }
+    "io.circe" %%% "circe-core" % version,
+    "io.circe" %%% "circe-generic" % version,
+    "io.circe" %%% "circe-parser" % version,
+    "io.circe" %%% "circe-shapes" % version,
+    "io.circe" %%% "circe-java8" % version
+  )
 }
