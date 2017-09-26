@@ -10,11 +10,6 @@ trait Jobs extends JVMApp with BackendRoutes {
   def jobs: Seq[Job.Runner[_, _, _]]
 
   override lazy val routes = super.routes ~
-    pathPrefix("assets" / Remaining) { file =>
-      encodeResponse {
-        getFromResource(s"public/$file")
-      }
-    } ~
     pathPrefix("api") {
       jobs.map(_.apiRoute).reduce(_ ~ _)
     }

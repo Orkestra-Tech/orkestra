@@ -9,7 +9,7 @@ import io.circe.java8.time._
 trait TriggerHelpers {
 
   implicit class TiggerableNoParamJob(job: Job.Runner[HNil, _, _]) {
-    def run = {
+    def run() = {
       triggerMessage(job)
       val runInfo = jobRunInfo(job)
       job.apiServer.trigger(runInfo, HNil)

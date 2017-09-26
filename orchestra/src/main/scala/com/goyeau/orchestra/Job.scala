@@ -127,6 +127,7 @@ object Job {
               .fromFile(_)
               .getLines()
               .slice(from, Int.MaxValue)
+              .filter(_.nonEmpty)
               .map {
                 case stageRegex(line, stage) => (Option(Symbol(stage)), line)
                 case line                    => (None, line)

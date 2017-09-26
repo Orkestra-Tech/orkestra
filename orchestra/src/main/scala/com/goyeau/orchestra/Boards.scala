@@ -16,6 +16,11 @@ trait Boards extends BackendRoutes with JSApp {
   lazy val topElementId = "orchestra"
 
   override lazy val routes = super.routes ~
+    pathPrefix("assets" / Remaining) { file =>
+      encodeResponse {
+        getFromResource(s"public/$file")
+      }
+    } ~
     pathSingleSlash {
       complete {
         HttpEntity(
