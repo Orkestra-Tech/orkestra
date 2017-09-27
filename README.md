@@ -1,7 +1,7 @@
 Orchestra
 =========
 
-[![Latest version](https://index.scala-lang.org/joan38/orchestra/orchestra/latest.svg?color=blue)](https://index.scala-lang.org/joan38/orchestra/orchestra)
+[![Latest version](https://index.scala-lang.org/joan38/orchestra/orchestra/latest.svg)](https://index.scala-lang.org/joan38/orchestra/orchestra)
 
 Continuous Integration & Deployment as a library
 
