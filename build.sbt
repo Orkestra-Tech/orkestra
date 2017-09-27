@@ -1,7 +1,14 @@
+lazy val root = project.in(file(".")).
+  aggregate(orchestraJVM, orchestraJS).
+  settings(
+    publish := {},
+    publishLocal := {}
+  )
+
 lazy val orchestra = crossProject
   .crossType(CrossType.Pure)
   .enablePlugins(ScalaJSPlugin, BuildInfoPlugin)
-  .jvmSettings(crossVersion := Binary())
+//  .jvmSettings(crossVersion := Binary())
   .settings(
     name := "Orchestra",
     organization := "com.goyeau",
