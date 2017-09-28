@@ -1,5 +1,6 @@
 package com.goyeau.orchestra.page
 
+import java.time.Instant
 import java.util.UUID
 
 import scala.concurrent.ExecutionContext
@@ -81,7 +82,7 @@ object JobBoardPage {
     implicit val ec = $.props.ec
     Callback.future(
       $.props.job.Api.client
-        .runs()
+        .runs(Page(None, 50)) // TODO load more as we scroll
         .call()
         .map { runs =>
           val runDisplays = runs.map {

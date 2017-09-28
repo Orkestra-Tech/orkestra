@@ -9,7 +9,7 @@ import io.circe.java8.time._
 trait TriggerHelpers {
 
   implicit class TiggerableNoParamJob(job: Job.Runner[HNil, _, _]) {
-    def run() = {
+    def trigger() = {
       triggerMessage(job)
       val runInfo = jobRunInfo(job)
       job.apiServer.trigger(runInfo, HNil)
@@ -18,7 +18,7 @@ trait TriggerHelpers {
   }
 
   implicit class TiggerableOneParamJob[ParamValue](job: Job.Runner[ParamValue :: HNil, _, _]) {
-    def run(params: ParamValue) = {
+    def trigger(params: ParamValue) = {
       triggerMessage(job)
       val runInfo = jobRunInfo(job)
       job.apiServer.trigger(runInfo, params :: HNil)
@@ -30,7 +30,7 @@ trait TriggerHelpers {
     implicit tupler: Tupler.Aux[ParamValues, TupledValues],
     tupleToHList: Generic.Aux[TupledValues, ParamValues]
   ) {
-    def run(params: TupledValues) = {
+    def trigger(params: TupledValues) = {
       triggerMessage(job)
       val runInfo = jobRunInfo(job)
       job.apiServer.trigger(runInfo, tupleToHList.to(params))

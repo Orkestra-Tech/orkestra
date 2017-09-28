@@ -7,6 +7,7 @@ import scala.scalajs.js.Dynamic._
 import scala.scalajs.js.timers.SetIntervalHandle
 
 import autowire._
+import com.goyeau.orchestra.{CommonApi, Page}
 import com.goyeau.orchestra.route.WebRouter.TaskLogsPage
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.component.builder.Lifecycle.ComponentDidMount
@@ -22,20 +23,25 @@ object LogsPage {
       .builder[Props](getClass.getSimpleName)
       .initialState[(Option[Seq[(Option[Symbol], String)]], SetIntervalHandle)]((None, null))
       .render { $ =>
-        val ansiUp = newInstance(global.AnsiUp)()
+        def format(log: String) = newInstance(global.AnsiUp)().ansi_to_html(log).asInstanceOf[String]
+        val PrettyDisplayMaxLines = 10000
+
         val logs = $.state._1 match {
-          case Some(log) if log.nonEmpty =>
+          case Some(log) if log.nonEmpty && log.size <= PrettyDisplayMaxLines =>
             log.zipWithIndex.map {
               case ((stage, line), lineNumber) =>
                 <.tr(^.backgroundColor :=? stage.map(s => generateColour(s.name)))(
                   <.td(^.width := "50px", ^.verticalAlign.`text-top`, ^.textAlign.right, ^.paddingRight := "5px")(
                     lineNumber + 1
                   ),
-                  <.td(^.width.auto,
-                       ^.wordWrap.`break-word`,
-                       ^.dangerouslySetInnerHtml := ansiUp.ansi_to_html(line).asInstanceOf[String])
+                  <.td(^.width.auto, ^.wordWrap.`break-word`, ^.dangerouslySetInnerHtml := format(line))
                 )
             }
+          case Some(log) if log.nonEmpty && log.size > PrettyDisplayMaxLines =>
+            Seq(
+              <.tr(<.td(s"Pretty display disabled as the log is over $PrettyDisplayMaxLines lines")),
+              <.tr(<.td(<.pre(^.dangerouslySetInnerHtml := format(log.map(_._2).mkString("\n")))))
+            )
           case Some(log) if log.isEmpty => Seq(<.tr(<.td("No logged message yet")))
           case None                     => Seq(<.tr(<.td("Loading log")))
         }
@@ -58,8 +64,8 @@ object LogsPage {
     $ : ComponentDidMount[Props, (Option[Seq[(Option[Symbol], String)]], SetIntervalHandle), Unit]
   ) = {
     implicit val ec = $.props.ec
-    $.props.page.job.Api.client
-      .logs($.props.page.runId, $.state._1.fold(0)(_.size))
+    CommonApi.client
+      .logs($.props.page.runId, Page($.state._1.map(_.size), Int.MaxValue))
       .call()
       .foreach { logs =>
         val isScrolledToBottom = window.innerHeight + window.pageYOffset + 1 >= document.body.scrollHeight

@@ -1,3 +1,12 @@
+lazy val root = project
+  .in(file("."))
+  .aggregate(orchestraJVM, orchestraJS)
+  .settings(
+    publishArtifact := false,
+    publishLocal := {},
+    publishTo := Option(Resolver.defaultLocal)
+  )
+
 lazy val orchestra = crossProject
   .crossType(CrossType.Pure)
   .enablePlugins(ScalaJSPlugin, BuildInfoPlugin)
@@ -35,11 +44,7 @@ lazy val orchestra = crossProject
     developers := List(
       Developer(id = "joan38", name = "Joan Goyeau", email = "joan@goyeau.com", url = url("http://goyeau.com"))
     ),
-    publishTo := Option(
-      if (isSnapshot.value) Opts.resolver.sonatypeSnapshots
-      else Opts.resolver.sonatypeStaging
-    ),
-    publishMavenStyle := true
+    publishTo := Option(sonatypeDefaultResolver.value)
   )
 lazy val orchestraJVM = orchestra.jvm
 lazy val orchestraJS = orchestra.js

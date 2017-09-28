@@ -6,7 +6,7 @@ import java.time.Instant
 import java.util.UUID
 
 import scala.concurrent.duration.Duration
-import scala.concurrent.{Await, ExecutionContext}
+import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.io.Source
 import scala.language.{higherKinds, implicitConversions}
 
@@ -22,6 +22,10 @@ import com.goyeau.orchestra.kubernetes.{JobUtils, PodConfig}
 import shapeless._
 import shapeless.ops.function.FnToProduct
 import com.goyeau.orchestra.ARunStatus._
+import io.circe.parser.decode
+import io.circe.{Decoder, Encoder}
+import io.circe.syntax._
+import org.scalajs.dom.ext.Ajax
 
 object Job {
 
@@ -57,14 +61,28 @@ object Job {
 
     trait Api {
       def trigger(runInfo: RunInfo, params: ParamValues): ARunStatus
-      def logs(runId: UUID, from: Int): Seq[(Option[Symbol], String)]
-      def runs(): Seq[(UUID, Instant, ARunStatus)]
+      def runs(page: Page[Instant]): Seq[(UUID, Instant, ARunStatus)]
     }
 
     object Api {
       def router(apiServer: Api)(implicit ec: ExecutionContext) = AutowireServer.route[Api](apiServer)
 
-      val client = AutowireClient(id)[Api]
+      val client = new autowire.Client[String, Decoder, Encoder] {
+        import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
+
+        override def doCall(req: Request): Future[String] =
+          Ajax
+            .post(
+              url = (Jobs.apiSegment +: Jobs.jobSegment +: id.name +: req.path).mkString("/"),
+              data = req.args.asJson.noSpaces,
+              responseType = "application/json",
+              headers = Map("Content-Type" -> "application/json")
+            )
+            .map(_.responseText)
+
+        override def read[T: Decoder](raw: String) = decode[T](raw).fold(throw _, identity)
+        override def write[T: Encoder](obj: T) = obj.asJson.noSpaces
+      }.apply[Api]
     }
   }
 
@@ -74,7 +92,7 @@ object Job {
     job: ParamValues => Result
   ) {
 
-    def start(runInfo: RunInfo): Unit = {
+    def run(runInfo: RunInfo): Unit = {
       OrchestraConfig.runDirPath(runInfo).toFile.mkdirs()
       OrchestraConfig.logsDirPath(runInfo.runId).toFile.mkdirs()
       val logsOut = LoggingHelpers(new FileOutputStream(OrchestraConfig.logsFilePath(runInfo.runId).toFile, true))
@@ -117,26 +135,7 @@ object Job {
           triggered
         }
 
-      // @TODO Move that in a common api
-      override def logs(runId: UUID, from: Int): Seq[(Option[Symbol], String)] = {
-        val stageRegex = s"(.*)${LoggingHelpers.delimiter}(.+)".r
-        Seq(OrchestraConfig.logsFilePath(runId).toFile)
-          .filter(_.exists())
-          .flatMap(
-            Source
-              .fromFile(_)
-              .getLines()
-              .slice(from, Int.MaxValue)
-              .filter(_.nonEmpty)
-              .map {
-                case stageRegex(line, stage) => (Option(Symbol(stage)), line)
-                case line                    => (None, line)
-              }
-              .toSeq
-          )
-      }
-
-      override def runs(): Seq[(UUID, Instant, ARunStatus)] =
+      override def runs(page: Page[Instant]): Seq[(UUID, Instant, ARunStatus)] =
         Seq(OrchestraConfig.jobDirPath(definition.id).toFile)
           .filter(_.exists())
           .flatMap(_.listFiles())
@@ -154,8 +153,10 @@ object Job {
               }
               .map((runInfo.runId, _, RunStatusUtils.current(runInfo)))
           }
+          .filter(_._2.isBefore(page.from.getOrElse(Instant.MAX)))
           .sortBy(_._2)
           .reverse
+          .take(page.size)
     }
 
     def apiRoute(implicit ec: ExecutionContext): Route =
