@@ -9,7 +9,7 @@ import io.circe.parser._
 
 trait Github extends JVMApp {
 
-  def githubTriggers: Seq[BranchTrigger]
+  def githubTriggers: Seq[GithubTrigger]
 
   override def main(args: Array[String]): Unit = {
     super.main(args)

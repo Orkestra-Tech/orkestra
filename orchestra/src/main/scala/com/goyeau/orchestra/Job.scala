@@ -60,7 +60,8 @@ object Job {
     }
 
     trait Api {
-      def trigger(runInfo: RunInfo, params: ParamValues): ARunStatus
+      def trigger(runInfo: RunInfo, params: ParamValues, tags: Seq[String] = Seq.empty): ARunStatus
+      def tags(): Seq[String]
       def runs(page: Page[Instant]): Seq[(UUID, Instant, ARunStatus)]
     }
 
@@ -93,8 +94,7 @@ object Job {
   ) {
 
     def run(runInfo: RunInfo): Unit = {
-      OrchestraConfig.runDirPath(runInfo).toFile.mkdirs()
-      OrchestraConfig.logsDirPath(runInfo.runId).toFile.mkdirs()
+      RunStatusUtils.runPrerequisites(runInfo, Seq.empty)
       val logsOut = LoggingHelpers(new FileOutputStream(OrchestraConfig.logsFilePath(runInfo.runId).toFile, true))
 
       Utils.withOutErr(logsOut) {
@@ -123,10 +123,10 @@ object Job {
     }
 
     val apiServer = new definition.Api {
-      override def trigger(runInfo: RunInfo, params: ParamValues): ARunStatus =
+      override def trigger(runInfo: RunInfo, params: ParamValues, tags: Seq[String] = Seq.empty): ARunStatus =
         if (OrchestraConfig.statusFilePath(runInfo).toFile.exists()) RunStatusUtils.current(runInfo)
         else {
-          OrchestraConfig.runDirPath(runInfo).toFile.mkdirs()
+          RunStatusUtils.runPrerequisites(runInfo, tags)
 
           val triggered = RunStatusUtils.notifyTriggered(runInfo)
           Files.write(OrchestraConfig.paramsFilePath(runInfo), AutowireServer.write(params).getBytes)
@@ -135,8 +135,10 @@ object Job {
           triggered
         }
 
+      override def tags(): Seq[String] = OrchestraConfig.tagsDirPath(definition.id).toFile.list()
+
       override def runs(page: Page[Instant]): Seq[(UUID, Instant, ARunStatus)] =
-        Seq(OrchestraConfig.jobDirPath(definition.id).toFile)
+        Seq(OrchestraConfig.runsDirPath(definition.id).toFile)
           .filter(_.exists())
           .flatMap(_.listFiles())
           .map(runDir => RunInfo(definition.id, Option(UUID.fromString(runDir.getName))))

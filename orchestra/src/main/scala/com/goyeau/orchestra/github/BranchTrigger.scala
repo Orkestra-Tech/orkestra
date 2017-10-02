@@ -10,9 +10,16 @@ import com.goyeau.orchestra.{Job, RunInfo}
 import io.circe.Json
 import shapeless.{::, HList, HNil}
 
-case class BranchTrigger(repoName: String, branchRegex: String, job: Job.Runner[String :: HNil, _, _ <: HList]) {
-  def trigger(eventType: String,
-              json: Json)(implicit ec: ExecutionContext, system: ActorSystem, mat: Materializer): Unit =
+sealed trait GithubTrigger {
+  private[github] def trigger(eventType: String,
+                              json: Json)(implicit ec: ExecutionContext, system: ActorSystem, mat: Materializer): Unit
+}
+
+case class BranchTrigger(repoName: String, branchRegex: String, job: Job.Runner[String :: HNil, _, _ <: HList])
+    extends GithubTrigger {
+  private[github] def trigger(eventType: String, json: Json)(implicit ec: ExecutionContext,
+                                                             system: ActorSystem,
+                                                             mat: Materializer): Unit =
     eventType match {
       case "create" | "push" =>
         val eventRepoName =
@@ -21,6 +28,23 @@ case class BranchTrigger(repoName: String, branchRegex: String, job: Job.Runner[
 
         if (eventRepoName == repoName && branchRegex.r.findFirstIn(eventBranch).isDefined)
           job.apiServer.trigger(RunInfo(job.definition.id, Option(UUID.randomUUID())), eventBranch :: HNil)
+      case _ =>
+    }
+}
+
+case class PullRequestTrigger(repoName: String, job: Job.Runner[String :: HNil, _, _ <: HList]) extends GithubTrigger {
+  private[github] def trigger(eventType: String, json: Json)(implicit ec: ExecutionContext,
+                                                             system: ActorSystem,
+                                                             mat: Materializer): Unit =
+    eventType match {
+      case "pull_request" =>
+        val eventRepoName =
+          json.hcursor.downField("repository").downField("full_name").as[String].fold(throw _, identity)
+        val prBranch =
+          json.hcursor.downField("pull_request").downField("head").downField("ref").as[String].fold(throw _, identity)
+
+        if (eventRepoName == repoName)
+          job.apiServer.trigger(RunInfo(job.definition.id, Option(UUID.randomUUID())), prBranch :: HNil, Seq(prBranch))
       case _ =>
     }
 }

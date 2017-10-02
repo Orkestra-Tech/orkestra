@@ -19,11 +19,16 @@ object OrchestraConfig {
     OrchestraConfig("NAMESPACE").getOrElse(throw new IllegalStateException("ORCHESTRA_NAMESPACE should be set"))
 
   val jobsDirName = "jobs"
+  val runsDirName = "runs"
   val logsDirName = "logs"
   def logsDirPath(runId: UUID) = Paths.get(home, logsDirName, runId.toString)
   def logsFilePath(runId: UUID) = Paths.get(logsDirPath(runId).toString, "logs")
   def jobDirPath(jobId: Symbol) = Paths.get(home, jobsDirName, jobId.name)
-  def runDirPath(runInfo: RunInfo) = Paths.get(jobDirPath(runInfo.jobId).toString, runInfo.runId.toString)
+  def runsDirPath(jobId: Symbol) = Paths.get(jobDirPath(jobId).toString, runsDirName)
+  def runDirPath(runInfo: RunInfo) = Paths.get(runsDirPath(runInfo.jobId).toString, runInfo.runId.toString)
+//  def runDirByDatePath(jobId: Symbol) = Paths.get(jobDirPath(jobId).toString, "runsByDate")
+  def tagsDirPath(jobId: Symbol) = Paths.get(jobDirPath(jobId).toString, "tags")
+  def tagDirPath(jobId: Symbol, tag: String) = Paths.get(tagsDirPath(jobId).toString, tag)
   def statusFilePath(runInfo: RunInfo) = Paths.get(runDirPath(runInfo).toString, "status")
   def paramsFilePath(runInfo: RunInfo) = Paths.get(runDirPath(runInfo).toString, "params")
 }

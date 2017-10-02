@@ -1,6 +1,7 @@
 package com.goyeau.orchestra
 
-import java.nio.file.{Files, StandardOpenOption}
+import java.nio.file.attribute.FileAttribute
+import java.nio.file.{FileAlreadyExistsException, Files, Paths, StandardOpenOption}
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 import java.util.UUID
@@ -67,6 +68,19 @@ object RunStatusUtils {
       .getLines()
       .map(AutowireServer.read[ARunStatus])
       .toSeq
+
+  def runPrerequisites(runInfo: RunInfo, tags: Seq[String]) = {
+    OrchestraConfig.runDirPath(runInfo).toFile.mkdirs()
+    OrchestraConfig.logsDirPath(runInfo.runId).toFile.mkdirs()
+
+    tags.foreach { tag =>
+      val tagDir = OrchestraConfig.tagDirPath(runInfo.jobId, tag)
+      tagDir.toFile.mkdirs()
+      try Files.createSymbolicLink(Paths.get(tagDir.toString, runInfo.runId.toString),
+                                   OrchestraConfig.runDirPath(runInfo))
+      catch { case _: FileAlreadyExistsException => }
+    }
+  }
 
   def notifyTriggered(runInfo: RunInfo)(implicit encoder: Encoder[ARunStatus]) =
     RunStatusUtils.persist(runInfo, ARunStatus.Triggered(Instant.now()))
