@@ -94,7 +94,7 @@ object Job {
   ) {
 
     def run(runInfo: RunInfo): Unit = {
-      RunStatusUtils.runPrerequisites(runInfo, Seq.empty)
+      RunStatusUtils.runInit(runInfo, Seq.empty)
       val logsOut = LoggingHelpers(new FileOutputStream(OrchestraConfig.logsFilePath(runInfo.runId).toFile, true))
 
       Utils.withOutErr(logsOut) {
@@ -126,7 +126,7 @@ object Job {
       override def trigger(runInfo: RunInfo, params: ParamValues, tags: Seq[String] = Seq.empty): ARunStatus =
         if (OrchestraConfig.statusFilePath(runInfo).toFile.exists()) RunStatusUtils.current(runInfo)
         else {
-          RunStatusUtils.runPrerequisites(runInfo, tags)
+          RunStatusUtils.runInit(runInfo, tags)
 
           val triggered = RunStatusUtils.notifyTriggered(runInfo)
           Files.write(OrchestraConfig.paramsFilePath(runInfo), AutowireServer.write(params).getBytes)

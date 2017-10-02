@@ -69,7 +69,7 @@ object RunStatusUtils {
       .map(AutowireServer.read[ARunStatus])
       .toSeq
 
-  def runPrerequisites(runInfo: RunInfo, tags: Seq[String]) = {
+  def runInit(runInfo: RunInfo, tags: Seq[String]) = {
     OrchestraConfig.runDirPath(runInfo).toFile.mkdirs()
     OrchestraConfig.logsDirPath(runInfo.runId).toFile.mkdirs()
 
