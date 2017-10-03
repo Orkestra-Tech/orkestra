@@ -2,7 +2,7 @@ package com.goyeau.orchestra
 
 import java.io.{FileOutputStream, _}
 import java.nio.file.Files
-import java.time.Instant
+import java.time.{Instant, LocalDateTime, ZoneOffset}
 import java.util.UUID
 
 import scala.concurrent.duration.Duration
@@ -95,13 +95,13 @@ object Job {
 
     def run(runInfo: RunInfo): Unit = {
       RunStatusUtils.runInit(runInfo, Seq.empty)
-      val logsOut = LoggingHelpers(new FileOutputStream(OrchestraConfig.logsFilePath(runInfo.runId).toFile, true))
+      val logsOut = LoggingHelpers(new FileOutputStream(OrchestraConfig.logsFile(runInfo.runId).toFile, true))
 
       Utils.withOutErr(logsOut) {
         val running = RunStatusUtils.notifyRunning(runInfo)
 
         try {
-          val paramFile = OrchestraConfig.paramsFilePath(runInfo).toFile
+          val paramFile = OrchestraConfig.paramsFile(runInfo).toFile
           job(
             AutowireServer.read[ParamValues](
               if (paramFile.exists()) Source.fromFile(paramFile).mkString
@@ -124,41 +124,50 @@ object Job {
 
     val apiServer = new definition.Api {
       override def trigger(runInfo: RunInfo, params: ParamValues, tags: Seq[String] = Seq.empty): ARunStatus =
-        if (OrchestraConfig.statusFilePath(runInfo).toFile.exists()) RunStatusUtils.current(runInfo)
+        if (OrchestraConfig.statusFile(runInfo).toFile.exists()) RunStatusUtils.current(runInfo)
         else {
           RunStatusUtils.runInit(runInfo, tags)
 
           val triggered = RunStatusUtils.notifyTriggered(runInfo)
-          Files.write(OrchestraConfig.paramsFilePath(runInfo), AutowireServer.write(params).getBytes)
+          Files.write(OrchestraConfig.paramsFile(runInfo), AutowireServer.write(params).getBytes)
 
           Await.result(JobUtils.create(runInfo, podConfig), Duration.Inf)
           triggered
         }
 
-      override def tags(): Seq[String] = OrchestraConfig.tagsDirPath(definition.id).toFile.list()
+      override def tags(): Seq[String] = OrchestraConfig.tagsDir(definition.id).toFile.list()
 
-      override def runs(page: Page[Instant]): Seq[(UUID, Instant, ARunStatus)] =
-        Seq(OrchestraConfig.runsDirPath(definition.id).toFile)
-          .filter(_.exists())
-          .flatMap(_.listFiles())
-          .map(runDir => RunInfo(definition.id, Option(UUID.fromString(runDir.getName))))
-          .filter(OrchestraConfig.statusFilePath(_).toFile.exists())
-          .flatMap { runInfo =>
-            RunStatusUtils
-              .history(runInfo)
-              .headOption
-              .map {
-                case status: Triggered => status.at
-                case status: Running   => status.at
-                case status =>
-                  throw new IllegalStateException(s"$status is not of status type ${classOf[Triggered].getName}")
-              }
-              .map((runInfo.runId, _, RunStatusUtils.current(runInfo)))
+      override def runs(page: Page[Instant]): Seq[(UUID, Instant, ARunStatus)] = {
+        val from = page.from.fold(LocalDateTime.MAX)(LocalDateTime.ofInstant(_, ZoneOffset.UTC))
+
+        val runs = for {
+          runsByDate <- Stream(OrchestraConfig.runsDirByDate(definition.id).toFile)
+          if runsByDate.exists()
+          yearDir <- runsByDate.listFiles().toStream.sortBy(-_.getName.toInt).dropWhile(_.getName.toInt > from.getYear)
+          dayDir <- yearDir
+            .listFiles()
+            .toStream
+            .sortBy(-_.getName.toInt)
+            .dropWhile(_.getName.toInt > from.getDayOfYear)
+          secondDir <- dayDir
+            .listFiles()
+            .toStream
+            .sortBy(-_.getName.toInt)
+            .dropWhile(_.getName.toInt > from.toEpochSecond(ZoneOffset.UTC))
+          runId <- secondDir.list().toStream
+
+          runInfo = RunInfo(definition.id, Option(UUID.fromString(runId)))
+          if OrchestraConfig.statusFile(runInfo).toFile.exists()
+          at <- RunStatusUtils.history(runInfo).headOption.map {
+            case status: Triggered => status.at
+            case status: Running   => status.at
+            case status =>
+              throw new IllegalStateException(s"$status is not of status type ${classOf[Triggered].getName}")
           }
-          .filter(_._2.isBefore(page.from.getOrElse(Instant.MAX)))
-          .sortBy(_._2)
-          .reverse
-          .take(page.size)
+        } yield (runInfo.runId, at, RunStatusUtils.current(runInfo))
+
+        runs.take(page.size)
+      }
     }
 
     def apiRoute(implicit ec: ExecutionContext): Route =

@@ -35,7 +35,7 @@ object CommonApi extends CommonApi {
 
   override def logs(runId: UUID, page: Page[Int]): Seq[(Option[Symbol], String)] = {
     val stageRegex = s"(.*)${LoggingHelpers.delimiter}(.+)".r
-    Seq(OrchestraConfig.logsFilePath(runId).toFile)
+    Seq(OrchestraConfig.logsFile(runId).toFile)
       .filter(_.exists())
       .flatMap(
         Source

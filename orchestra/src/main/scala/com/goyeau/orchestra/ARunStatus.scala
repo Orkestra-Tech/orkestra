@@ -2,7 +2,7 @@ package com.goyeau.orchestra
 
 import java.nio.file.attribute.FileAttribute
 import java.nio.file.{FileAlreadyExistsException, Files, Paths, StandardOpenOption}
-import java.time.Instant
+import java.time._
 import java.time.temporal.ChronoUnit
 import java.util.UUID
 
@@ -64,21 +64,32 @@ object RunStatusUtils {
 
   def history(runInfo: RunInfo)(implicit decoder: Decoder[ARunStatus]): Seq[ARunStatus] =
     Source
-      .fromFile(OrchestraConfig.statusFilePath(runInfo).toFile)
+      .fromFile(OrchestraConfig.statusFile(runInfo).toFile)
       .getLines()
       .map(AutowireServer.read[ARunStatus])
       .toSeq
 
   def runInit(runInfo: RunInfo, tags: Seq[String]) = {
-    OrchestraConfig.runDirPath(runInfo).toFile.mkdirs()
-    OrchestraConfig.logsDirPath(runInfo.runId).toFile.mkdirs()
+    val runDir = OrchestraConfig.runDir(runInfo)
+    val firstTimeInit = runDir.toFile.mkdirs()
 
-    tags.foreach { tag =>
-      val tagDir = OrchestraConfig.tagDirPath(runInfo.jobId, tag)
-      tagDir.toFile.mkdirs()
-      try Files.createSymbolicLink(Paths.get(tagDir.toString, runInfo.runId.toString),
-                                   OrchestraConfig.runDirPath(runInfo))
-      catch { case _: FileAlreadyExistsException => }
+    if (firstTimeInit) {
+      OrchestraConfig.logsDir(runInfo.runId).toFile.mkdirs()
+
+      tags.foreach { tag =>
+        val tagDir = OrchestraConfig.tagDir(runInfo.jobId, tag)
+        tagDir.toFile.mkdirs()
+        Files.createSymbolicLink(Paths.get(tagDir.toString, runInfo.runId.toString), runDir)
+      }
+
+      val now = LocalDateTime.now()
+      val dateDir = Paths
+        .get(OrchestraConfig.runsDirByDate(runInfo.jobId).toString,
+             now.getYear.toString,
+             now.getDayOfYear.toString,
+             now.toEpochSecond(ZoneOffset.UTC).toString)
+      dateDir.toFile.mkdirs()
+      Files.createSymbolicLink(Paths.get(dateDir.toString, runInfo.runId.toString), runDir)
     }
   }
 
@@ -93,7 +104,7 @@ object RunStatusUtils {
   def persist[Status <: ARunStatus](runInfo: RunInfo,
                                     status: Status)(implicit encoder: Encoder[ARunStatus]): Status = {
     Files.write(
-      OrchestraConfig.statusFilePath(runInfo),
+      OrchestraConfig.statusFile(runInfo),
       s"${AutowireServer.write[ARunStatus](status)}\n".getBytes,
       StandardOpenOption.APPEND,
       StandardOpenOption.CREATE
