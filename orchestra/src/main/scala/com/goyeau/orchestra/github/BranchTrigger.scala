@@ -27,7 +27,7 @@ case class BranchTrigger(repoName: String, branchRegex: String, job: Job.Runner[
         val eventBranch = json.hcursor.downField("ref").as[String].fold(throw _, identity).replace("refs/heads/", "")
 
         if (eventRepoName == repoName && branchRegex.r.findFirstIn(eventBranch).isDefined)
-          job.apiServer.trigger(RunInfo(job.definition.id, Option(UUID.randomUUID())), eventBranch :: HNil)
+          job.apiServer.trigger(UUID.randomUUID(), eventBranch :: HNil)
       case _ =>
     }
 }
@@ -44,7 +44,7 @@ case class PullRequestTrigger(repoName: String, job: Job.Runner[String :: HNil, 
           json.hcursor.downField("pull_request").downField("head").downField("ref").as[String].fold(throw _, identity)
 
         if (eventRepoName == repoName)
-          job.apiServer.trigger(RunInfo(job.definition.id, Option(UUID.randomUUID())), prBranch :: HNil, Seq(prBranch))
+          job.apiServer.trigger(UUID.randomUUID(), prBranch :: HNil, Seq(prBranch))
       case _ =>
     }
 }

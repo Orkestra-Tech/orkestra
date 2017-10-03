@@ -15,12 +15,12 @@ import shapeless.ops.hlist.{Comapped, Mapper}
 sealed trait Board {
   lazy val pathName: String = name.toLowerCase.replaceAll("\\s", "")
   def name: String
-  def route(implicit ec: ExecutionContext): StaticDsl.Rule[AppPage]
+  def route: StaticDsl.Rule[AppPage]
 }
 
 case class FolderBoard(name: String, childBoards: Seq[Board]) extends Board {
 
-  def route(implicit ec: ExecutionContext) = RouterConfigDsl[AppPage].buildRule { dsl =>
+  def route = RouterConfigDsl[AppPage].buildRule { dsl =>
     import dsl._
     staticRoute(pathName, BoardPage(this)) ~>
       renderR(ctrl => FolderBoardPage.component(FolderBoardPage.Props(name, childBoards, ctrl))) |
@@ -39,7 +39,7 @@ case class JobBoard[ParamValues <: HList: Encoder, Params <: HList](
 )(implicit paramGetter: ParameterOperations[Params, ParamValues])
     extends Board {
 
-  def route(implicit ec: ExecutionContext) = RouterConfigDsl[AppPage].buildRule { dsl =>
+  def route = RouterConfigDsl[AppPage].buildRule { dsl =>
     import dsl._
     (
       staticRoute(root, BoardPage(this)) ~> renderR { ctrl =>

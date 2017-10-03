@@ -7,7 +7,6 @@ import japgolly.scalajs.react.vdom.html_<^._
 import com.goyeau.orchestra.component.{Footer, TopNav}
 import com.goyeau.orchestra.model.Menu
 import com.goyeau.orchestra._
-import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
 import com.goyeau.orchestra.page.StatusPage
 import shapeless.HList

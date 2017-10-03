@@ -1,10 +1,9 @@
 package com.goyeau.orchestra.page
 
-import java.time.Instant
 import java.util.UUID
 
-import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
+import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.scalajs.js.timers.SetIntervalHandle
 import scala.scalajs.js
 
@@ -29,22 +28,18 @@ object JobBoardPage {
     params: Params,
     ctrl: RouterCtl[AppPage]
   )(
-    implicit val ec: ExecutionContext,
-    paramOperations: ParameterOperations[Params, ParamValues],
+    implicit paramOperations: ParameterOperations[Params, ParamValues],
     encoder: Encoder[ParamValues]
   ) {
 
-    def runJob(state: (RunInfo, Map[Symbol, Any], Seq[TagMod], SetIntervalHandle))(event: ReactEventFromInput) =
+    def runJob(state: (UUID, Map[Symbol, Any], Seq[TagMod], SetIntervalHandle))(event: ReactEventFromInput) =
       Callback.future {
         event.preventDefault()
-        job.Api.client.trigger(state._1, paramOperations.values(params, state._2)).call().map {
-          case ARunStatus.Failure(_, e) => Callback.alert(e.getMessage)
-          case _                        => ctrl.set(TaskLogsPage(job, state._1.runId))
-        }
+        job.Api.client.trigger(state._1, paramOperations.values(params, state._2)).call().map(Callback(_))
       }
 
     def displays(
-      $ : RenderScope[Props[_, _ <: HList], (RunInfo, Map[Symbol, Any], Seq[TagMod], SetIntervalHandle), Unit]
+      $ : RenderScope[Props[_, _ <: HList], (UUID, Map[Symbol, Any], Seq[TagMod], SetIntervalHandle), Unit]
     ) = {
       val displayState = State(kv => $.modState(s => s.copy(_2 = s._2 + kv)), key => $.state._2.get(key))
       paramOperations.displays(params, displayState)
@@ -54,9 +49,9 @@ object JobBoardPage {
   val component =
     ScalaComponent
       .builder[Props[_, _ <: HList]](getClass.getSimpleName)
-      .initialStateFromProps[(RunInfo, Map[Symbol, Any], Seq[TagMod], SetIntervalHandle)] { props =>
-        val jobInfo = RunInfo(props.job.id, Option(UUID.randomUUID()))
-        (jobInfo, Map(RunId.id -> jobInfo.runId), Seq(<.tr(<.td("Loading runs"))), null)
+      .initialStateFromProps[(UUID, Map[Symbol, Any], Seq[TagMod], SetIntervalHandle)] { props =>
+        val runId = UUID.randomUUID()
+        (runId, Map(RunId.id -> runId), Seq(<.tr(<.td("Loading runs"))), null)
       }
       .renderP { ($, props) =>
         <.div(
@@ -77,32 +72,32 @@ object JobBoardPage {
       .build
 
   def pullRuns(
-    $ : ComponentDidMount[Props[_, _ <: HList], (RunInfo, Map[Symbol, Any], Seq[TagMod], SetIntervalHandle), Unit]
-  ) = {
-    implicit val ec = $.props.ec
-    Callback.future(
-      $.props.job.Api.client
-        .runs(Page(None, 50)) // TODO load more as we scroll
-        .call()
-        .map { runs =>
-          val runDisplays = runs.map {
-            case (uuid, createdAt, runStatus) =>
-              val statusDisplay = runStatus match {
-                case _: Triggered    => "Triggered"
-                case _: Running      => "Running"
-                case _: Success      => "Success"
-                case _: Failure      => "Failure"
-                case _: Stopped.type => "Stopped"
-              }
+    $ : ComponentDidMount[Props[_, _ <: HList], (UUID, Map[Symbol, Any], Seq[TagMod], SetIntervalHandle), Unit]
+  ) = Callback.future {
+    $.props.job.Api.client
+      .runs(Page(None, 50)) // TODO load more as we scroll
+      .call()
+      .map { runs =>
+        val runDisplays = runs.map {
+          case (uuid, createdAt, runStatus) =>
+            val statusDisplay = runStatus match {
+              case _: Triggered    => <.td("Triggered")
+              case _: Running      => <.td(<.button(^.onClick --> stop($.props.job, uuid))("X"))
+              case _: Success      => <.td("Success")
+              case _: Failure      => <.td("Failure")
+              case _: Stopped.type => <.td("Stopped")
+            }
 
-              <.tr(
-                <.td(<.button(^.onClick --> $.props.ctrl.set(TaskLogsPage($.props.job, uuid)))(uuid.toString)),
-                <.td(createdAt.toString),
-                <.td(statusDisplay)
-              )
-          }
-          $.modState(_.copy(_3 = if (runDisplays.nonEmpty) runDisplays else Seq(<.tr(<.td("No job ran yet")))))
+            <.tr(
+              <.td(<.button(^.onClick --> $.props.ctrl.set(TaskLogsPage($.props.job, uuid)))(uuid.toString)),
+              <.td(createdAt.toString),
+              statusDisplay
+            )
         }
-    )
+        $.modState(_.copy(_3 = if (runDisplays.nonEmpty) runDisplays else Seq(<.tr(<.td("No job ran yet")))))
+      }
   }
+
+  def stop(job: Job.Definition[_, _, _], runId: UUID) =
+    Callback.future(job.Api.client.stop(runId).call().map(Callback(_)))
 }

@@ -12,7 +12,7 @@ trait TriggerHelpers {
     def trigger() = {
       triggerMessage(job)
       val runInfo = jobRunInfo(job)
-      job.apiServer.trigger(runInfo, HNil)
+      job.apiServer.trigger(runInfo.runId, HNil)
       awaitJobResult(runInfo)
     }
   }
@@ -21,7 +21,7 @@ trait TriggerHelpers {
     def trigger(params: ParamValue) = {
       triggerMessage(job)
       val runInfo = jobRunInfo(job)
-      job.apiServer.trigger(runInfo, params :: HNil)
+      job.apiServer.trigger(runInfo.runId, params :: HNil)
       awaitJobResult(runInfo)
     }
   }
@@ -33,7 +33,7 @@ trait TriggerHelpers {
     def trigger(params: TupledValues) = {
       triggerMessage(job)
       val runInfo = jobRunInfo(job)
-      job.apiServer.trigger(runInfo, tupleToHList.to(params))
+      job.apiServer.trigger(runInfo.runId, tupleToHList.to(params))
       awaitJobResult(runInfo)
     }
   }

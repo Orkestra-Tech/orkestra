@@ -1,7 +1,7 @@
 package com.goyeau.orchestra.page
 
-import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
+import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.scalajs.js
 import scala.scalajs.js.Dynamic._
 import scala.scalajs.js.timers.SetIntervalHandle
@@ -16,7 +16,7 @@ import org.scalajs.dom.{document, window}
 import io.circe.generic.auto._
 
 object LogsPage {
-  case class Props(page: TaskLogsPage)(implicit val ec: ExecutionContext)
+  case class Props(page: TaskLogsPage)
 
   val component =
     ScalaComponent
@@ -62,8 +62,7 @@ object LogsPage {
 
   private def pullLogs(
     $ : ComponentDidMount[Props, (Option[Seq[(Option[Symbol], String)]], SetIntervalHandle), Unit]
-  ) = {
-    implicit val ec = $.props.ec
+  ) =
     CommonApi.client
       .logs($.props.page.runId, Page($.state._1.map(_.size), Int.MaxValue))
       .call()
@@ -72,7 +71,6 @@ object LogsPage {
         $.modState(_.copy(_1 = Option($.state._1.toSeq.flatten ++ logs))).runNow()
         if (isScrolledToBottom) window.scrollTo(window.pageXOffset.toInt, document.body.scrollHeight)
       }
-  }
 
   private def generateColour(s: String): String = {
     def hex(shift: Int) =

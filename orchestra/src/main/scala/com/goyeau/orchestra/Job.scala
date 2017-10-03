@@ -60,7 +60,8 @@ object Job {
     }
 
     trait Api {
-      def trigger(runInfo: RunInfo, params: ParamValues, tags: Seq[String] = Seq.empty): ARunStatus
+      def trigger(runId: UUID, params: ParamValues, tags: Seq[String] = Seq.empty): ARunStatus
+      def stop(runId: UUID): Unit
       def tags(): Seq[String]
       def runs(page: Page[Instant]): Seq[(UUID, Instant, ARunStatus)]
     }
@@ -117,13 +118,14 @@ object Job {
             running.fail(runInfo, e)
         } finally {
           logsOut.close()
-          JobUtils.selfDelete(runInfo)
+          JobUtils.delete(runInfo)
         }
       }
     }
 
     val apiServer = new definition.Api {
-      override def trigger(runInfo: RunInfo, params: ParamValues, tags: Seq[String] = Seq.empty): ARunStatus =
+      override def trigger(runId: UUID, params: ParamValues, tags: Seq[String] = Seq.empty): ARunStatus = {
+        val runInfo = RunInfo(definition.id, Option(runId))
         if (OrchestraConfig.statusFile(runInfo).toFile.exists()) RunStatusUtils.current(runInfo)
         else {
           RunStatusUtils.runInit(runInfo, tags)
@@ -134,6 +136,9 @@ object Job {
           Await.result(JobUtils.create(runInfo, podConfig), Duration.Inf)
           triggered
         }
+      }
+
+      override def stop(runId: UUID): Unit = JobUtils.delete(RunInfo(definition.id, Option(runId)))
 
       override def tags(): Seq[String] = OrchestraConfig.tagsDir(definition.id).toFile.list()
 
@@ -148,7 +153,7 @@ object Job {
             .listFiles()
             .toStream
             .sortBy(-_.getName.toInt)
-            .dropWhile(_.getName.toInt > from.getDayOfYear)
+            .dropWhile(dir => yearDir.getName.toInt == from.getYear && dir.getName.toInt > from.getDayOfYear)
           secondDir <- dayDir
             .listFiles()
             .toStream

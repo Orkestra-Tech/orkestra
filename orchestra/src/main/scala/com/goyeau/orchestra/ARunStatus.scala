@@ -56,10 +56,10 @@ object ARunStatus {
 object RunStatusUtils {
   def current(runInfo: RunInfo)(implicit decoder: Decoder[ARunStatus]): ARunStatus =
     history(runInfo).lastOption match {
-      case Some(s @ ARunStatus.Running(at)) if at isAfter Instant.now().minus(2, ChronoUnit.MINUTES) => s
-      case Some(ARunStatus.Running(_))                                                               => ARunStatus.Stopped
-      case Some(s)                                                                                   => s
-      case None                                                                                      => throw new IllegalStateException(s"No status found for job ${runInfo.jobId} ${runInfo.runId}")
+      case Some(s @ ARunStatus.Running(at)) if at isAfter Instant.now().minus(30, ChronoUnit.SECONDS) => s
+      case Some(ARunStatus.Running(_))                                                                => ARunStatus.Stopped
+      case Some(s)                                                                                    => s
+      case None                                                                                       => throw new IllegalStateException(s"No status found for job ${runInfo.jobId} ${runInfo.runId}")
     }
 
   def history(runInfo: RunInfo)(implicit decoder: Decoder[ARunStatus]): Seq[ARunStatus] =
@@ -98,7 +98,9 @@ object RunStatusUtils {
 
   def notifyRunning(runInfo: RunInfo)(implicit encoder: Encoder[ARunStatus]) = new ARunStatus.Running(Instant.now()) {
     override val task =
-      system.scheduler.schedule(0.second, 1.minute)(RunStatusUtils.persist(runInfo, ARunStatus.Running(Instant.now())))
+      system.scheduler.schedule(0.second, 15.seconds)(
+        RunStatusUtils.persist(runInfo, ARunStatus.Running(Instant.now()))
+      )
   }
 
   def persist[Status <: ARunStatus](runInfo: RunInfo,

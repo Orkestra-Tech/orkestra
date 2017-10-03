@@ -3,7 +3,7 @@ package com.goyeau.orchestra.kubernetes
 import com.goyeau.orchestra._
 import com.goyeau.orchestra.AkkaImplicits._
 import io.k8s.api.batch.v1.{Job => KubeJob}
-import io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta
+import io.k8s.apimachinery.pkg.apis.meta.v1.{DeleteOptions, ObjectMeta}
 import shapeless.HList
 
 object JobUtils {
@@ -21,11 +21,9 @@ object JobUtils {
       _ <- Kubernetes.client.jobs.namespace(OrchestraConfig.namespace).create(job)
     } yield ()
 
-  def selfDelete(runInfo: RunInfo) =
-    for {
-      _ <- Kubernetes.client.jobs
-        .namespace(OrchestraConfig.namespace)(OrchestraConfig.podName.take(OrchestraConfig.podName.lastIndexOf("-")))
-        .delete()
-      _ <- Kubernetes.client.pods.namespace(OrchestraConfig.namespace)(OrchestraConfig.podName).delete()
-    } yield ()
+  def delete(runInfo: RunInfo) =
+    Kubernetes.client.jobs
+      .namespace(OrchestraConfig.namespace)(jobName(runInfo))
+      .delete(Option(DeleteOptions(propagationPolicy = Option("Background"))))
+
 }
