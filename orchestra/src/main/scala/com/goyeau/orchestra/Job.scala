@@ -118,7 +118,7 @@ object Job {
             running.fail(runInfo, e)
         } finally {
           logsOut.close()
-          JobUtils.delete(runInfo)
+          JobUtils.selfDelete()
         }
       }
     }

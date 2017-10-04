@@ -26,7 +26,7 @@ object JobBoardPage {
     name: String,
     job: Job.Definition[_, ParamValues, _],
     params: Params,
-    ctrl: RouterCtl[AppPage]
+    ctl: RouterCtl[AppPage]
   )(
     implicit paramOperations: ParameterOperations[Params, ParamValues],
     encoder: Encoder[ParamValues]
@@ -89,7 +89,7 @@ object JobBoardPage {
             }
 
             <.tr(
-              <.td(<.button(^.onClick --> $.props.ctrl.set(TaskLogsPage($.props.job, uuid)))(uuid.toString)),
+              <.td(<.button(^.onClick --> $.props.ctl.set(TaskLogsPage($.props.job, uuid)))(uuid.toString)),
               <.td(createdAt.toString),
               statusDisplay
             )

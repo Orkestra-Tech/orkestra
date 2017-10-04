@@ -26,4 +26,8 @@ object JobUtils {
       .namespace(OrchestraConfig.namespace)(jobName(runInfo))
       .delete(Option(DeleteOptions(propagationPolicy = Option("Background"))))
 
+  def selfDelete() =
+    Kubernetes.client.jobs
+      .namespace(OrchestraConfig.namespace)(OrchestraConfig.podName.take(OrchestraConfig.podName.lastIndexOf("-")))
+      .delete(Option(DeleteOptions(propagationPolicy = Option("Background"))))
 }
