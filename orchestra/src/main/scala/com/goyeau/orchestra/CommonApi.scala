@@ -12,6 +12,7 @@ import org.scalajs.dom.ext.Ajax
 
 trait CommonApi {
   def logs(runId: UUID, page: Page[Int]): Seq[(Option[Symbol], String)]
+  def runningJobs(): Seq[RunInfo]
 }
 
 object CommonApi extends CommonApi {
@@ -50,4 +51,9 @@ object CommonApi extends CommonApi {
           .toSeq
       )
   }
+
+  override def runningJobs(): Seq[RunInfo] = Seq(
+    RunInfo('test, Option(UUID.randomUUID())),
+    RunInfo('test2, Option(UUID.randomUUID()))
+  )
 }
