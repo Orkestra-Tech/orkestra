@@ -1,8 +1,6 @@
 Orchestra
 =========
 
-[![Latest version](https://index.scala-lang.org/joan38/orchestra/orchestra/latest.svg)](https://index.scala-lang.org/joan38/orchestra/orchestra)
-
 Continuous Integration & Deployment as a library
 
 
@@ -20,7 +18,7 @@ Key features:
 
 ## Installation
 ```scala
-"com.goyeau" %%% "orchestra" % "<Latest version>"
+"io.chumps" %%% "orchestra" % "<Latest version>"
 ```
 
 ## Usage
@@ -32,8 +30,3 @@ TBD
 
 * [Jenkins](https://jenkins.io)
 * [Kubernetes Plugin for Jenkins](https://github.com/jenkinsci/kubernetes-plugin)
-
-
-## License
-
-[Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt)

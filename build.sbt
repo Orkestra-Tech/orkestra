@@ -13,7 +13,7 @@ lazy val orchestra = crossProject
   .jvmSettings(crossVersion := Binary())
   .settings(
     name := "Orchestra",
-    organization := "com.goyeau",
+    organization := "io.chumps",
     scalaVersion := "2.12.3",
     version := {
       val ver = version.value
@@ -33,18 +33,6 @@ lazy val orchestra = crossProject
     jsDependencies ++= Seq(
       "org.webjars.npm" % "ansi_up" % "2.0.2" / "ansi_up.js" commonJSName "ansi_up"
     ) ++ react.value,
-    licenses := Seq("APL2" -> url("http://www.apache.org/licenses/LICENSE-2.0")),
-    homepage := Option(url("https://github.com/joan38/orchestra")),
-    scmInfo := Option(
-      ScmInfo(
-        url("https://github.com/joan38/orchestra"),
-        "https://github.com/joan38/orchestra.git"
-      )
-    ),
-    developers := List(
-      Developer(id = "joan38", name = "Joan Goyeau", email = "joan@goyeau.com", url = url("http://goyeau.com"))
-    ),
-    publishTo := Option(sonatypeDefaultResolver.value)
   )
 lazy val orchestraJVM = orchestra.jvm
 lazy val orchestraJS = orchestra.js
