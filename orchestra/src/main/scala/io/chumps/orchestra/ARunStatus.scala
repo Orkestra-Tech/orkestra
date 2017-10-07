@@ -1,18 +1,20 @@
 package io.chumps.orchestra
 
-import java.nio.file.attribute.FileAttribute
-import java.nio.file.{FileAlreadyExistsException, Files, Paths, StandardOpenOption}
-import java.time._
-import java.time.temporal.ChronoUnit
+import java.nio.file.{Files, Paths, StandardOpenOption}
+import java.time.{Instant, LocalDateTime, ZoneOffset}
 import java.util.UUID
 
+import scala.concurrent.Await
 import scala.concurrent.duration._
 import scala.io.Source
 
 import akka.actor.Cancellable
 import akka.stream.impl.StreamSubscriptionTimeoutSupport.NoopSubscriptionTimeout
+
 import io.chumps.orchestra.AkkaImplicits._
 import io.circe._
+
+import io.chumps.orchestra.kubernetes.{JobUtils, Kubernetes}
 
 // Start with A because of a compiler bug
 // Should be in the model package
@@ -56,10 +58,18 @@ object ARunStatus {
 object RunStatusUtils {
   def current(runInfo: RunInfo)(implicit decoder: Decoder[ARunStatus]): ARunStatus =
     history(runInfo).lastOption match {
-      case Some(s @ ARunStatus.Running(at)) if at isAfter Instant.now().minus(30, ChronoUnit.SECONDS) => s
-      case Some(ARunStatus.Running(_))                                                                => ARunStatus.Stopped
-      case Some(s)                                                                                    => s
-      case None                                                                                       => throw new IllegalStateException(s"No status found for job ${runInfo.jobId} ${runInfo.runId}")
+      case Some(running @ ARunStatus.Running(_))
+          if Await.result(
+            Kubernetes.client.jobs
+              .namespace(OrchestraConfig.namespace)
+              .list()
+              .map(_.items.exists(_.metadata.get.name == JobUtils.jobName(runInfo))),
+            Duration.Inf
+          ) =>
+        running
+      case Some(ARunStatus.Running(_)) => ARunStatus.Stopped
+      case Some(status)                => status
+      case None                        => throw new IllegalStateException(s"No status found for job ${runInfo.jobId} ${runInfo.runId}")
     }
 
   def history(runInfo: RunInfo)(implicit decoder: Decoder[ARunStatus]): Seq[ARunStatus] =
@@ -98,7 +108,7 @@ object RunStatusUtils {
 
   def notifyRunning(runInfo: RunInfo)(implicit encoder: Encoder[ARunStatus]) = new ARunStatus.Running(Instant.now()) {
     override val task =
-      system.scheduler.schedule(0.second, 15.seconds)(
+      system.scheduler.schedule(0.second, 30.seconds)(
         RunStatusUtils.persist(runInfo, ARunStatus.Running(Instant.now()))
       )
   }
@@ -115,6 +125,6 @@ object RunStatusUtils {
   }
 }
 
-case class RunInfo(jobId: Symbol, runIdMaybe: Option[UUID]) {
-  val runId = runIdMaybe.getOrElse(UUID.randomUUID())
+case class RunInfo(jobId: Symbol, jobName: String, runIdMaybe: Option[UUID]) {
+  val runId = runIdMaybe.getOrElse(UUID.randomUUID()) // TODO: (UUID.fromString(OrchestraConfig.jobUid))
 }

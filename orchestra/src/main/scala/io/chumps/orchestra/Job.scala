@@ -13,7 +13,6 @@ import scala.language.{higherKinds, implicitConversions}
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import autowire.Core
-import io.circe.{Decoder, Encoder}
 import io.circe.generic.auto._
 import io.circe.java8.time._
 import io.circe.shapes._
@@ -32,16 +31,17 @@ object Job {
   def apply[JobFn] = new DefinitionBuilder[JobFn]
 
   class DefinitionBuilder[JobFn] {
-    def apply[ParamValues <: HList, Result](id: Symbol)(
+    def apply[ParamValues <: HList, Result](id: Symbol, name: String)(
       implicit fnToProd: FnToProduct.Aux[JobFn, ParamValues => Result],
       encoderP: Encoder[ParamValues],
       decoderP: Decoder[ParamValues],
       encoderR: Encoder[Result],
       decoderR: Decoder[Result]
-    ) = Definition[JobFn, ParamValues, Result](id)
+    ) = Definition[JobFn, ParamValues, Result](id, name)
   }
 
-  case class Definition[JobFn, ParamValues <: HList: Encoder: Decoder, Result: Encoder: Decoder](id: Symbol) {
+  case class Definition[JobFn, ParamValues <: HList: Encoder: Decoder, Result: Encoder: Decoder](id: Symbol,
+                                                                                                 name: String) {
 
     def apply(job: JobFn)(implicit fnToProd: FnToProduct.Aux[JobFn, ParamValues => Result]) =
       Runner(this, PodConfig(), fnToProd(job))
@@ -123,9 +123,9 @@ object Job {
       }
     }
 
-    val apiServer = new definition.Api {
+    object ApiServer extends definition.Api {
       override def trigger(runId: UUID, params: ParamValues, tags: Seq[String] = Seq.empty): ARunStatus = {
-        val runInfo = RunInfo(definition.id, Option(runId))
+        val runInfo = RunInfo(definition.id, definition.name, Option(runId))
         if (OrchestraConfig.statusFile(runInfo).toFile.exists()) RunStatusUtils.current(runInfo)
         else {
           RunStatusUtils.runInit(runInfo, tags)
@@ -138,7 +138,7 @@ object Job {
         }
       }
 
-      override def stop(runId: UUID): Unit = JobUtils.delete(RunInfo(definition.id, Option(runId)))
+      override def stop(runId: UUID): Unit = JobUtils.delete(RunInfo(definition.id, definition.name, Option(runId)))
 
       override def tags(): Seq[String] = OrchestraConfig.tagsDir(definition.id).toFile.list()
 
@@ -161,7 +161,7 @@ object Job {
             .dropWhile(_.getName.toInt > from.toEpochSecond(ZoneOffset.UTC))
           runId <- secondDir.list().toStream
 
-          runInfo = RunInfo(definition.id, Option(UUID.fromString(runId)))
+          runInfo = RunInfo(definition.id, definition.name, Option(UUID.fromString(runId)))
           if OrchestraConfig.statusFile(runInfo).toFile.exists()
           at <- RunStatusUtils.history(runInfo).headOption.map {
             case status: Triggered => status.at
@@ -180,7 +180,7 @@ object Job {
         post {
           entity(as[String]) { entity =>
             val body = AutowireServer.read[Map[String, String]](entity)
-            val request = definition.Api.router(apiServer).apply(Core.Request(segments, body))
+            val request = definition.Api.router(ApiServer).apply(Core.Request(segments, body))
             onSuccess(request)(complete(_))
           }
         }

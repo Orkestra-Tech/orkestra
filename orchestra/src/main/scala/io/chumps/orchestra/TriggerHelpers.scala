@@ -12,7 +12,7 @@ trait TriggerHelpers {
     def trigger() = {
       triggerMessage(job)
       val runInfo = jobRunInfo(job)
-      job.apiServer.trigger(runInfo.runId, HNil)
+      job.ApiServer.trigger(runInfo.runId, HNil)
       awaitJobResult(runInfo)
     }
   }
@@ -21,7 +21,7 @@ trait TriggerHelpers {
     def trigger(params: ParamValue) = {
       triggerMessage(job)
       val runInfo = jobRunInfo(job)
-      job.apiServer.trigger(runInfo.runId, params :: HNil)
+      job.ApiServer.trigger(runInfo.runId, params :: HNil)
       awaitJobResult(runInfo)
     }
   }
@@ -33,14 +33,15 @@ trait TriggerHelpers {
     def trigger(params: TupledValues) = {
       triggerMessage(job)
       val runInfo = jobRunInfo(job)
-      job.apiServer.trigger(runInfo.runId, tupleToHList.to(params))
+      job.ApiServer.trigger(runInfo.runId, tupleToHList.to(params))
       awaitJobResult(runInfo)
     }
   }
 
   private def triggerMessage(job: Job.Runner[_, _, _]) = println(s"Triggering ${job.definition.id.name}")
 
-  private def jobRunInfo(job: Job.Runner[_, _, _]) = RunInfo(job.definition.id, OrchestraConfig.runInfo.map(_.runId))
+  private def jobRunInfo(job: Job.Runner[_, _, _]) =
+    RunInfo(job.definition.id, job.definition.name, OrchestraConfig.runInfo.map(_.runId))
 
   private def awaitJobResult(runInfo: RunInfo) = {
     def isInProgress() = RunStatusUtils.current(runInfo) match {

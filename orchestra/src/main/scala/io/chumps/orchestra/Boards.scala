@@ -5,6 +5,7 @@ import scalajs.html.scripts
 
 import akka.http.scaladsl.model.{ContentTypes, HttpEntity}
 import akka.http.scaladsl.server.Directives.{complete, pathSingleSlash, _}
+
 import io.chumps.orchestra.css.AppCSS
 import io.chumps.orchestra.route.{BackendRoutes, WebRouter}
 import org.scalajs.dom
@@ -13,7 +14,7 @@ trait Boards extends BackendRoutes with JSApp {
 
   def board: Board
 
-  lazy val topElementId = "orchestra"
+  lazy val topElementId = BuildInfo.name.toLowerCase
 
   override lazy val routes = super.routes ~
     pathPrefix("assets" / Remaining) { file =>
@@ -28,7 +29,7 @@ trait Boards extends BackendRoutes with JSApp {
           s"""<!DOCTYPE html>
              |<html>
              |<head>
-             |    <title>Orchestra</title>
+             |    <title>${BuildInfo.name}</title>
              |</head>
              |<body>
              |<div id="$topElementId"></div>

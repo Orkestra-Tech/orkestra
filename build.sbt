@@ -28,7 +28,7 @@ lazy val orchestra = crossProject
       "com.vmunier" %% "scalajs-scripts" % "1.1.1",
       "com.beachape" %%% "enumeratum" % "1.5.12" % Provided,
       "com.lihaoyi" %%% "autowire" % "0.2.6",
-      "com.goyeau" %% "kubernetes-client" % "0.0.1+4-c3703e26+20170923-1722-SNAPSHOT"
+      "com.goyeau" %% "kubernetes-client" % "0.0.1+8-7b308de9+20171006-2343-SNAPSHOT"
     ) ++ scalaJsReact.value ++ akkaHttp.value ++ scalaCss.value ++ logging.value ++ circe.value,
     jsDependencies ++= Seq(
       "org.webjars.npm" % "ansi_up" % "2.0.2" / "ansi_up.js" commonJSName "ansi_up"

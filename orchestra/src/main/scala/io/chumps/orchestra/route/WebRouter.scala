@@ -4,28 +4,34 @@ import java.util.UUID
 
 import japgolly.scalajs.react.extra.router.{Resolution, RouterConfigDsl, RouterCtl, _}
 import japgolly.scalajs.react.vdom.html_<^._
+
 import io.chumps.orchestra.component.{Footer, TopNav}
 import io.chumps.orchestra._
-import io.chumps.orchestra.page.StatusPage
-import shapeless.HList
+import io.chumps.orchestra.page.{LogsPage, StatusPage}
 
 object WebRouter {
 
-  sealed trait AppPage
-  case class BoardPage(board: Board) extends AppPage
-  case class TaskLogsPage(job: Job.Definition[_, _ <: HList, _], runId: UUID) extends AppPage
-  case object Status extends AppPage
+  sealed trait PageRoute
+  case class BoardPageRoute(board: Board) extends PageRoute
+  case class LogsPageRoute(runId: UUID) extends PageRoute
+  case object StatusPageRoute extends PageRoute
 
-  def config(board: Board) = RouterConfigDsl[AppPage].buildConfig { dsl =>
+  def config(board: Board) = RouterConfigDsl[PageRoute].buildConfig { dsl =>
     import dsl._
 
-    val rootBoard = BoardPage(board)
+    val rootBoard = BoardPageRoute(board)
+    val logsRoute =
+      dynamicRouteCT(uuid.caseClass[LogsPageRoute]) ~> dynRender(page => LogsPage.component(LogsPage.Props(page)))
+    val statusRoute = staticRoute(root, StatusPageRoute) ~> render(StatusPage())
 
-    (trimSlashes | (board.route | staticRoute("status", Status) ~> render(StatusPage())).prefixPath_/("#"))
+    (trimSlashes |
+      (
+        board.route.prefixPath_/("boards") | logsRoute.prefixPath_/("logs") | statusRoute.prefixPath_/("status")
+      ).prefixPath_/("#"))
       .notFound(redirectToPage(rootBoard)(Redirect.Replace))
-      .renderWith { (ctl: RouterCtl[AppPage], resolution: Resolution[AppPage]) =>
+      .renderWith { (ctl: RouterCtl[PageRoute], resolution: Resolution[PageRoute]) =>
         <.div(
-          TopNav(TopNav.Props(rootBoard, resolution.page, ctl)),
+          TopNav.component(TopNav.Props(rootBoard, resolution.page, ctl)),
           resolution.render(),
           Footer()
         )

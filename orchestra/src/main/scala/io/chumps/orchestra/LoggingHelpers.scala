@@ -12,7 +12,7 @@ trait LoggingHelpers {
 
 object LoggingHelpers {
 
-  private[orchestra] val delimiter = "_OrchestraDelimiter_"
+  private[orchestra] val delimiter = "_ColumnDelimiter_"
   private[orchestra] val stageVar = new DynamicVariable[Option[Symbol]](None)
 
   def apply(out: OutputStream) = new LogsPrintStream(out)

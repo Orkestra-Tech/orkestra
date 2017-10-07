@@ -12,7 +12,7 @@ import io.chumps.orchestra._
 import io.chumps.orchestra.ARunStatus._
 import io.chumps.orchestra.parameter.Parameter.State
 import io.chumps.orchestra.parameter.{ParameterOperations, RunId}
-import io.chumps.orchestra.route.WebRouter.{AppPage, TaskLogsPage}
+import io.chumps.orchestra.route.WebRouter.{LogsPageRoute, PageRoute}
 import io.circe._
 import io.circe.java8.time._
 import japgolly.scalajs.react._
@@ -26,7 +26,7 @@ object JobBoardPage {
     name: String,
     job: Job.Definition[_, ParamValues, _],
     params: Params,
-    ctl: RouterCtl[AppPage]
+    ctl: RouterCtl[PageRoute]
   )(
     implicit paramOperations: ParameterOperations[Params, ParamValues],
     encoder: Encoder[ParamValues]
@@ -89,7 +89,7 @@ object JobBoardPage {
             }
 
             <.tr(
-              <.td(<.button(^.onClick --> $.props.ctl.set(TaskLogsPage($.props.job, uuid)))(uuid.toString)),
+              <.td(<.button(^.onClick --> $.props.ctl.set(LogsPageRoute(uuid)))(uuid.toString)),
               <.td(createdAt.toString),
               statusDisplay
             )

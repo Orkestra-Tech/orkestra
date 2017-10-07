@@ -8,7 +8,7 @@ import scala.scalajs.js.timers.SetIntervalHandle
 
 import autowire._
 import io.chumps.orchestra.{CommonApi, Page}
-import io.chumps.orchestra.route.WebRouter.TaskLogsPage
+import io.chumps.orchestra.route.WebRouter.LogsPageRoute
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.component.builder.Lifecycle.ComponentDidMount
 import japgolly.scalajs.react.vdom.html_<^._
@@ -16,7 +16,7 @@ import org.scalajs.dom.{document, window}
 import io.circe.generic.auto._
 
 object LogsPage {
-  case class Props(page: TaskLogsPage)
+  case class Props(page: LogsPageRoute)
 
   val component =
     ScalaComponent
@@ -48,7 +48,7 @@ object LogsPage {
 
         <.div(
           <.div("Logs: " + $.props.page.runId.toString),
-          <.table(^.borderSpacing := "0px", ^.tableLayout.fixed, ^.width := "100%")(
+          <.table(^.borderSpacing := "0", ^.tableLayout.fixed, ^.width := "100%")(
             <.tbody(logs: _*)
           )
         )

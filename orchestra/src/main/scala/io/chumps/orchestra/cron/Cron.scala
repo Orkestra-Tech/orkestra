@@ -45,7 +45,7 @@ trait Cron extends JVMApp {
 
   private def applyCronJobs(masterPod: Pod, currentCronJobNames: Seq[String]) =
     cronTriggers.foreach { cronTrigger =>
-      val runInfo = RunInfo(cronTrigger.job.definition.id, None)
+      val runInfo = RunInfo(cronTrigger.job.definition.id, cronTrigger.job.definition.name, None)
       val newCronJobName = cronJobName(runInfo.jobId)
       val cronJob = CronJob(
         metadata = Option(ObjectMeta(name = Option(newCronJobName))),
@@ -68,5 +68,5 @@ trait Cron extends JVMApp {
       }
     }
 
-  private def cronJobName(jobId: Symbol) = s"orchestra-${jobId.name.toLowerCase}"
+  private def cronJobName(jobId: Symbol) = jobId.name.toLowerCase
 }

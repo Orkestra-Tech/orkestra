@@ -30,10 +30,6 @@ trait Github extends JVMApp {
           }
         }
 
-    if (OrchestraConfig.runInfo.isEmpty) {
-      val port =
-        OrchestraConfig.githubPort.getOrElse(throw new IllegalStateException("ORCHESTRA_GITHUB_PORT should be set"))
-      Http().bindAndHandle(routes, "0.0.0.0", port)
-    }
+    if (OrchestraConfig.runInfo.isEmpty) Http().bindAndHandle(routes, "0.0.0.0", OrchestraConfig.githubPort)
   }
 }

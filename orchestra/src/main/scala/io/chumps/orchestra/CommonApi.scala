@@ -2,7 +2,8 @@ package io.chumps.orchestra
 
 import java.util.UUID
 
-import scala.concurrent.Future
+import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, Future}
 import scala.io.Source
 
 import io.circe._
@@ -10,15 +11,17 @@ import io.circe.parser._
 import io.circe.syntax._
 import org.scalajs.dom.ext.Ajax
 
+import io.chumps.orchestra.kubernetes.Kubernetes
+
 trait CommonApi {
   def logs(runId: UUID, page: Page[Int]): Seq[(Option[Symbol], String)]
   def runningJobs(): Seq[RunInfo]
 }
 
-object CommonApi extends CommonApi {
+object CommonApi {
+  import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
   val client = new autowire.Client[String, Decoder, Encoder] {
-    import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
     override def doCall(req: Request): Future[String] =
       Ajax
@@ -33,6 +36,11 @@ object CommonApi extends CommonApi {
     override def read[T: Decoder](raw: String) = decode[T](raw).fold(throw _, identity)
     override def write[T: Encoder](obj: T) = obj.asJson.noSpaces
   }.apply[CommonApi]
+
+}
+
+object CommonApiServer extends CommonApi {
+  import AkkaImplicits._
 
   override def logs(runId: UUID, page: Page[Int]): Seq[(Option[Symbol], String)] = {
     val stageRegex = s"(.*)${LoggingHelpers.delimiter}(.+)".r
@@ -52,8 +60,17 @@ object CommonApi extends CommonApi {
       )
   }
 
-  override def runningJobs(): Seq[RunInfo] = Seq(
-    RunInfo('test, Option(UUID.randomUUID())),
-    RunInfo('test2, Option(UUID.randomUUID()))
-  )
+  override def runningJobs(): Seq[RunInfo] = {
+    val jobList = Await.result(Kubernetes.client.jobs.namespace(OrchestraConfig.namespace).list(), Duration.Inf)
+    for {
+      job <- jobList.items
+      jobSpec <- job.spec
+      podSpec <- jobSpec.template.spec
+      container <- podSpec.containers.headOption
+      envs <- container.env
+      env <- envs.find(_.name == "ORCHESTRA_RUN_INFO")
+      envValue <- env.value
+      runInfo = decode[RunInfo](envValue).fold(throw _, identity)
+    } yield runInfo.copy(runIdMaybe = runInfo.runIdMaybe.orElse(Option(UUID.fromString(job.metadata.get.uid.get))))
+  }
 }

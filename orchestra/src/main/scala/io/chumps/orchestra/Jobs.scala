@@ -19,7 +19,7 @@ trait Jobs extends JVMApp with BackendRoutes {
           post {
             entity(as[String]) { entity =>
               val body = AutowireServer.read[Map[String, String]](entity)
-              val request = AutowireServer.route[CommonApi](CommonApi).apply(Core.Request(segments, body))
+              val request = AutowireServer.route[CommonApi](CommonApiServer).apply(Core.Request(segments, body))
               onSuccess(request)(complete(_))
             }
           }
@@ -30,8 +30,7 @@ trait Jobs extends JVMApp with BackendRoutes {
     super.main(args)
 
     OrchestraConfig.runInfo.fold[Unit] {
-      val port = OrchestraConfig.port.getOrElse(throw new IllegalStateException("ORCHESTRA_PORT should be set"))
-      Http().bindAndHandle(routes, "0.0.0.0", port)
+      Http().bindAndHandle(routes, "0.0.0.0", OrchestraConfig.port)
     } { runInfo =>
       jobs
         .find(_.definition.id == runInfo.jobId)

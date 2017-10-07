@@ -8,8 +8,8 @@ import shapeless.HList
 
 object JobUtils {
 
-  private def jobName(runInfo: RunInfo) =
-    s"orchestra-${runInfo.jobId.name.toLowerCase}-${runInfo.runId.toString.split("-").head}"
+  def jobName(runInfo: RunInfo) =
+    s"${runInfo.jobId.name.toLowerCase}-${runInfo.runId.toString.split("-").head}"
 
   def create[Containers <: HList](runInfo: RunInfo, podConfig: PodConfig[Containers]) =
     for {
@@ -24,10 +24,10 @@ object JobUtils {
   def delete(runInfo: RunInfo) =
     Kubernetes.client.jobs
       .namespace(OrchestraConfig.namespace)(jobName(runInfo))
-      .delete(Option(DeleteOptions(propagationPolicy = Option("Background"))))
+      .delete(Option(DeleteOptions(propagationPolicy = Option("Foreground"))))
 
   def selfDelete() =
     Kubernetes.client.jobs
       .namespace(OrchestraConfig.namespace)(OrchestraConfig.podName.take(OrchestraConfig.podName.lastIndexOf("-")))
-      .delete(Option(DeleteOptions(propagationPolicy = Option("Background"))))
+      .delete(Option(DeleteOptions(propagationPolicy = Option("Foreground"))))
 }
