@@ -22,7 +22,7 @@ object RunningJobs {
           case Some(runningJobs) if runningJobs.nonEmpty =>
             runningJobs.map { runInfo =>
               <.tr(
-                <.td(runInfo.jobName),
+                <.td(runInfo.job.name),
                 <.td(runInfo.runId.toString) //,
                 // <.td(<.button(^.onClick --> JobBoardPage.stop(runInfo.jobId, runInfo.runId))("X"))
               )

@@ -7,7 +7,7 @@ import io.chumps.orchestra.{JVMApp, OrchestraConfig, RunInfo}
 import io.chumps.orchestra.AkkaImplicits._
 import io.chumps.orchestra.kubernetes.{JobSpecUtils, Kubernetes, MasterPod}
 import com.typesafe.scalalogging.Logger
-import io.k8s.api.batch.v2alpha1.{CronJob, CronJobSpec, JobTemplateSpec}
+import io.k8s.api.batch.v1beta1.{CronJob, CronJobSpec, JobTemplateSpec}
 import io.k8s.api.core.v1.Pod
 import io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta
 
@@ -45,8 +45,8 @@ trait Cron extends JVMApp {
 
   private def applyCronJobs(masterPod: Pod, currentCronJobNames: Seq[String]) =
     cronTriggers.foreach { cronTrigger =>
-      val runInfo = RunInfo(cronTrigger.job.definition.id, cronTrigger.job.definition.name, None)
-      val newCronJobName = cronJobName(runInfo.jobId)
+      val runInfo = RunInfo(cronTrigger.job.definition, None)
+      val newCronJobName = cronJobName(runInfo.job.id)
       val cronJob = CronJob(
         metadata = Option(ObjectMeta(name = Option(newCronJobName))),
         spec = Option(

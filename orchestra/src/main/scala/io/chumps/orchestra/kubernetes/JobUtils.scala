@@ -9,7 +9,7 @@ import shapeless.HList
 object JobUtils {
 
   def jobName(runInfo: RunInfo) =
-    s"${runInfo.jobId.name.toLowerCase}-${runInfo.runId.toString.split("-").head}"
+    s"${runInfo.job.id.name.toLowerCase}-${runInfo.runId.toString.split("-").head}"
 
   def create[Containers <: HList](runInfo: RunInfo, podConfig: PodConfig[Containers]) =
     for {

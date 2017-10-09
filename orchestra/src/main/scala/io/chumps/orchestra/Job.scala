@@ -16,12 +16,14 @@ import autowire.Core
 import io.circe.generic.auto._
 import io.circe.java8.time._
 import io.circe.shapes._
+
 import io.chumps.orchestra.ARunStatus._
 import io.chumps.orchestra.kubernetes.{JobUtils, PodConfig}
 import shapeless._
 import shapeless.ops.function.FnToProduct
+
 import io.chumps.orchestra.ARunStatus._
-import io.circe.parser.decode
+import io.circe.parser._
 import io.circe.{Decoder, Encoder}
 import io.circe.syntax._
 import org.scalajs.dom.ext.Ajax
@@ -99,7 +101,7 @@ object Job {
       val logsOut = LoggingHelpers(new FileOutputStream(OrchestraConfig.logsFile(runInfo.runId).toFile, true))
 
       Utils.withOutErr(logsOut) {
-        val running = RunStatusUtils.notifyRunning(runInfo)
+        val running = RunStatusUtils.persist(runInfo, ARunStatus.Running(Instant.now()))
 
         try {
           val paramFile = OrchestraConfig.paramsFile(runInfo).toFile
@@ -125,12 +127,12 @@ object Job {
 
     object ApiServer extends definition.Api {
       override def trigger(runId: UUID, params: ParamValues, tags: Seq[String] = Seq.empty): ARunStatus = {
-        val runInfo = RunInfo(definition.id, definition.name, Option(runId))
+        val runInfo = RunInfo(definition, Option(runId))
         if (OrchestraConfig.statusFile(runInfo).toFile.exists()) RunStatusUtils.current(runInfo)
         else {
           RunStatusUtils.runInit(runInfo, tags)
 
-          val triggered = RunStatusUtils.notifyTriggered(runInfo)
+          val triggered = RunStatusUtils.persist(runInfo, ARunStatus.Triggered(Instant.now()))
           Files.write(OrchestraConfig.paramsFile(runInfo), AutowireServer.write(params).getBytes)
 
           Await.result(JobUtils.create(runInfo, podConfig), Duration.Inf)
@@ -138,7 +140,7 @@ object Job {
         }
       }
 
-      override def stop(runId: UUID): Unit = JobUtils.delete(RunInfo(definition.id, definition.name, Option(runId)))
+      override def stop(runId: UUID): Unit = JobUtils.delete(RunInfo(definition, Option(runId)))
 
       override def tags(): Seq[String] = OrchestraConfig.tagsDir(definition.id).toFile.list()
 
@@ -161,7 +163,7 @@ object Job {
             .dropWhile(_.getName.toInt > from.toEpochSecond(ZoneOffset.UTC))
           runId <- secondDir.list().toStream
 
-          runInfo = RunInfo(definition.id, definition.name, Option(UUID.fromString(runId)))
+          runInfo = RunInfo(definition, Option(UUID.fromString(runId)))
           if OrchestraConfig.statusFile(runInfo).toFile.exists()
           at <- RunStatusUtils.history(runInfo).headOption.map {
             case status: Triggered => status.at

@@ -27,8 +27,10 @@ object JobSpecUtils {
     val masterSpec = masterPod.spec.get
     val masterContainer = masterSpec.containers.head
     val runInfoEnvVar = EnvVar("ORCHESTRA_RUN_INFO", value = Option(AutowireServer.write(runInfo)))
+    val jobUidEnvVar = EnvVar("ORCHESTRA_JOB_UID",
+                              valueFrom = Option(EnvVarSource(fieldRef = Option(ObjectFieldSelector("metadata.uid")))))
     val slaveContainer = masterContainer.copy(
-      env = Option(distinctOnName(runInfoEnvVar +: masterContainer.env.toSeq.flatten)),
+      env = Option(distinctOnName(runInfoEnvVar +: jobUidEnvVar +: masterContainer.env.toSeq.flatten)),
       workingDir = Option(OrchestraConfig.workspace),
       volumeMounts = Option(distinctOnName(masterContainer.volumeMounts.toSeq.flatten :+ JobSpecUtils.homeDirMount))
     )

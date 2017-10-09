@@ -40,8 +40,8 @@ trait TriggerHelpers {
 
   private def triggerMessage(job: Job.Runner[_, _, _]) = println(s"Triggering ${job.definition.id.name}")
 
-  private def jobRunInfo(job: Job.Runner[_, _, _]) =
-    RunInfo(job.definition.id, job.definition.name, OrchestraConfig.runInfo.map(_.runId))
+  private def jobRunInfo(job: Job.Runner[_ <: HList, _, _]) =
+    RunInfo(job.definition, OrchestraConfig.runInfo.map(_.runId))
 
   private def awaitJobResult(runInfo: RunInfo) = {
     def isInProgress() = RunStatusUtils.current(runInfo) match {
@@ -54,8 +54,8 @@ trait TriggerHelpers {
 
     RunStatusUtils.current(runInfo) match {
       case _: Success    =>
-      case Failure(_, e) => throw new IllegalStateException(s"Run of job ${runInfo.jobId.name} failed", e)
-      case s             => throw new IllegalStateException(s"Run of job ${runInfo.jobId.name} failed with status $s")
+      case Failure(_, e) => throw new IllegalStateException(s"Run of job ${runInfo.job.id.name} failed", e)
+      case s             => throw new IllegalStateException(s"Run of job ${runInfo.job.id.name} failed with status $s")
     }
   }
 }
