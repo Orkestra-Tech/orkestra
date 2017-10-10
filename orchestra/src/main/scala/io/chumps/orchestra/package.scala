@@ -10,4 +10,4 @@ package object orchestra
     with DirectoryHelpers
     with ShellHelpers
     with TriggerHelpers
-    with LoggingHelpers
+    with StagesHelpers

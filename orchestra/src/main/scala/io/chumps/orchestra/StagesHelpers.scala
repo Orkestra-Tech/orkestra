@@ -1,16 +1,28 @@
 package io.chumps.orchestra
 
 import java.io.{OutputStream, PrintStream}
+import java.time.Instant
 
 import scala.util.DynamicVariable
 
-trait LoggingHelpers {
+import io.circe.generic.auto._
+import io.circe.java8.time._
 
-  def stage[T](name: String)(f: => T) =
-    LoggingHelpers.stageVar.withValue(Option(Symbol(name)))(f)
+import io.chumps.orchestra.AStageStatus.{StageEnd, StageStart}
+
+trait StagesHelpers {
+
+  def stage[T](name: String)(f: => T) = {
+    val runInfo =
+      OrchestraConfig.runInfo.getOrElse(throw new IllegalStateException("ORCHESTRA_RUN_INFO should be set"))
+
+    AStageStatus.persist(runInfo.runId, StageStart(name, Instant.now()))
+    try StagesHelpers.stageVar.withValue(Option(Symbol(name)))(f)
+    finally AStageStatus.persist(runInfo.runId, StageEnd(name, Instant.now()))
+  }
 }
 
-object LoggingHelpers {
+object StagesHelpers {
 
   private[orchestra] val delimiter = "_ColumnDelimiter_"
   private[orchestra] val stageVar = new DynamicVariable[Option[Symbol]](None)

@@ -28,10 +28,10 @@ trait ShellHelpers {
 
   def sh(script: String, container: Container)(implicit workDir: Directory): String = {
     runningMessage(script)
-    val stageId = LoggingHelpers.stageVar.value
+    val stageId = StagesHelpers.stageVar.value
 
     val sink = Sink.fold[String, Either[Status, String]]("") { (acc, data) =>
-      LoggingHelpers.stageVar.withValue(stageId) {
+      StagesHelpers.stageVar.withValue(stageId) {
         data match {
           case Left(Status(_, _, _, _, _, _, _, Some("Success"))) =>
             println()

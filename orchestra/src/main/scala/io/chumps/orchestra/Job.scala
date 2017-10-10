@@ -97,11 +97,11 @@ object Job {
   ) {
 
     def run(runInfo: RunInfo): Unit = {
-      RunStatusUtils.runInit(runInfo, Seq.empty)
-      val logsOut = LoggingHelpers(new FileOutputStream(OrchestraConfig.logsFile(runInfo.runId).toFile, true))
+      Utils.runInit(runInfo, Seq.empty)
+      val logsOut = StagesHelpers(new FileOutputStream(OrchestraConfig.logsFile(runInfo.runId).toFile, true))
 
       Utils.withOutErr(logsOut) {
-        val running = RunStatusUtils.persist(runInfo, ARunStatus.Running(Instant.now()))
+        val running = ARunStatus.persist(runInfo, ARunStatus.Running(Instant.now()))
 
         try {
           val paramFile = OrchestraConfig.paramsFile(runInfo).toFile
@@ -128,11 +128,11 @@ object Job {
     object ApiServer extends definition.Api {
       override def trigger(runId: UUID, params: ParamValues, tags: Seq[String] = Seq.empty): ARunStatus = {
         val runInfo = RunInfo(definition, Option(runId))
-        if (OrchestraConfig.statusFile(runInfo).toFile.exists()) RunStatusUtils.current(runInfo)
+        if (OrchestraConfig.statusFile(runInfo).toFile.exists()) ARunStatus.current(runInfo)
         else {
-          RunStatusUtils.runInit(runInfo, tags)
+          Utils.runInit(runInfo, tags)
 
-          val triggered = RunStatusUtils.persist(runInfo, ARunStatus.Triggered(Instant.now()))
+          val triggered = ARunStatus.persist(runInfo, ARunStatus.Triggered(Instant.now()))
           Files.write(OrchestraConfig.paramsFile(runInfo), AutowireServer.write(params).getBytes)
 
           Await.result(JobUtils.create(runInfo, podConfig), Duration.Inf)
@@ -148,7 +148,7 @@ object Job {
         val from = page.from.fold(LocalDateTime.MAX)(LocalDateTime.ofInstant(_, ZoneOffset.UTC))
 
         val runs = for {
-          runsByDate <- Stream(OrchestraConfig.runsDirByDate(definition.id).toFile)
+          runsByDate <- Stream(OrchestraConfig.runsByDateDir(definition.id).toFile)
           if runsByDate.exists()
           yearDir <- runsByDate.listFiles().toStream.sortBy(-_.getName.toInt).dropWhile(_.getName.toInt > from.getYear)
           dayDir <- yearDir
@@ -165,13 +165,13 @@ object Job {
 
           runInfo = RunInfo(definition, Option(UUID.fromString(runId)))
           if OrchestraConfig.statusFile(runInfo).toFile.exists()
-          at <- RunStatusUtils.history(runInfo).headOption.map {
+          at <- ARunStatus.history(runInfo).headOption.map {
             case status: Triggered => status.at
             case status: Running   => status.at
             case status =>
               throw new IllegalStateException(s"$status is not of status type ${classOf[Triggered].getName}")
           }
-        } yield (runInfo.runId, at, RunStatusUtils.current(runInfo))
+        } yield (runInfo.runId, at, ARunStatus.current(runInfo))
 
         runs.take(page.size)
       }

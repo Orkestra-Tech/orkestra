@@ -43,7 +43,7 @@ object CommonApiServer extends CommonApi {
   import AkkaImplicits._
 
   override def logs(runId: UUID, page: Page[Int]): Seq[(Option[Symbol], String)] = {
-    val stageRegex = s"(.*)${LoggingHelpers.delimiter}(.+)".r
+    val stageRegex = s"(.*)${StagesHelpers.delimiter}(.+)".r
     Seq(OrchestraConfig.logsFile(runId).toFile)
       .filter(_.exists())
       .flatMap(

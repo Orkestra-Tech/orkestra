@@ -27,15 +27,15 @@ object OrchestraConfig {
 
   val jobsDirName = "jobs"
   val runsDirName = "runs"
-  val logsDirName = "logs"
-  def logsDir(runId: UUID) = Paths.get(home, logsDirName, runId.toString)
-  def logsFile(runId: UUID) = Paths.get(logsDir(runId).toString, "logs")
+  def runDir(runId: UUID) = Paths.get(home, runsDirName, runId.toString)
+  def logsFile(runId: UUID) = Paths.get(runDir(runId).toString, "logs")
+  def stagesFile(runId: UUID) = Paths.get(runDir(runId).toString, "stages")
   def jobDir(jobId: Symbol) = Paths.get(home, jobsDirName, jobId.name)
-  def runsDir(jobId: Symbol) = Paths.get(jobDir(jobId).toString, runsDirName)
-  def runDir(runInfo: RunInfo) = Paths.get(runsDir(runInfo.job.id).toString, runInfo.runId.toString)
-  def runsDirByDate(jobId: Symbol) = Paths.get(jobDir(jobId).toString, "runsByDate")
+  def jobRunsDir(jobId: Symbol) = Paths.get(jobDir(jobId).toString, runsDirName)
+  def jobRunDir(runInfo: RunInfo) = Paths.get(jobRunsDir(runInfo.job.id).toString, runInfo.runId.toString)
+  def runsByDateDir(jobId: Symbol) = Paths.get(jobDir(jobId).toString, "runsByDate")
   def tagsDir(jobId: Symbol) = Paths.get(jobDir(jobId).toString, "tags")
   def tagDir(jobId: Symbol, tag: String) = Paths.get(tagsDir(jobId).toString, tag)
-  def statusFile(runInfo: RunInfo) = Paths.get(runDir(runInfo).toString, "status")
-  def paramsFile(runInfo: RunInfo) = Paths.get(runDir(runInfo).toString, "params")
+  def statusFile(runInfo: RunInfo) = Paths.get(jobRunDir(runInfo).toString, "status")
+  def paramsFile(runInfo: RunInfo) = Paths.get(jobRunDir(runInfo).toString, "params")
 }
