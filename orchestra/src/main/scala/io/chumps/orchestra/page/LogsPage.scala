@@ -7,7 +7,8 @@ import scala.scalajs.js.Dynamic._
 import scala.scalajs.js.timers.SetIntervalHandle
 
 import autowire._
-import io.chumps.orchestra.{CommonApi, Page}
+
+import io.chumps.orchestra.{CommonApi, Page, Utils}
 import io.chumps.orchestra.route.WebRouter.LogsPageRoute
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.component.builder.Lifecycle.ComponentDidMount
@@ -30,7 +31,7 @@ object LogsPage {
           case Some(log) if log.nonEmpty && log.size <= PrettyDisplayMaxLines =>
             log.zipWithIndex.map {
               case ((stage, line), lineNumber) =>
-                <.tr(^.backgroundColor :=? stage.map(s => generateColour(s.name)))(
+                <.tr(^.backgroundColor :=? stage.map(s => Utils.generateColour(s.name)))(
                   <.td(^.width := "50px", ^.verticalAlign.`text-top`, ^.textAlign.right, ^.paddingRight := "5px")(
                     lineNumber + 1
                   ),
@@ -71,10 +72,4 @@ object LogsPage {
         $.modState(_.copy(_1 = Option($.state._1.toSeq.flatten ++ logs))).runNow()
         if (isScrolledToBottom) window.scrollTo(window.pageXOffset.toInt, document.body.scrollHeight)
       }
-
-  private def generateColour(s: String): String = {
-    def hex(shift: Int) =
-      Integer.toHexString((s.hashCode >> shift) & 0x5) // 0x5 instead of 0xF to keep the colour dark
-    "#" + hex(20) + hex(16) + hex(12) + hex(8) + hex(4) + hex(0)
-  }
 }

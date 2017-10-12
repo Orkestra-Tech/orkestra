@@ -8,6 +8,7 @@ import scala.scalajs.js.timers.SetIntervalHandle
 import scala.scalajs.js
 
 import autowire._
+
 import io.chumps.orchestra._
 import io.chumps.orchestra.ARunStatus._
 import io.chumps.orchestra.parameter.Parameter.State
@@ -20,8 +21,24 @@ import japgolly.scalajs.react.component.builder.Lifecycle.{ComponentDidMount, Re
 import japgolly.scalajs.react.extra.router.RouterCtl
 import japgolly.scalajs.react.vdom.html_<^._
 import shapeless.HList
+import scalacss.DevDefaults._
+import scalacss.ProdDefaults._
+import scalacss.ScalaCssReact._
+
+import io.chumps.orchestra.css.Global
 
 object JobBoardPage {
+  val CssSettings = scalacss.devOrProdDefaults; import CssSettings._
+
+  object Style extends StyleSheet.Inline {
+    import dsl._
+
+    val item = style(
+      padding(2.px),
+      display.inlineBlock
+    )
+  }
+
   case class Props[Params <: HList, ParamValues <: HList](
     name: String,
     job: Job.Definition[_, ParamValues, _],
@@ -49,7 +66,7 @@ object JobBoardPage {
   val component =
     ScalaComponent
       .builder[Props[_, _ <: HList]](getClass.getSimpleName)
-      .initialStateFromProps[(UUID, Map[Symbol, Any], Seq[TagMod], SetIntervalHandle)] { props =>
+      .initialState[(UUID, Map[Symbol, Any], Seq[TagMod], SetIntervalHandle)] {
         val runId = UUID.randomUUID()
         (runId, Map(RunId.id -> runId), Seq(<.tr(<.td("Loading runs"))), null)
       }
@@ -61,7 +78,7 @@ object JobBoardPage {
               <.button(^.`type` := "submit")("Run"): _*
           ),
           <.div("History"),
-          <.table(<.tbody($.state._3: _*))
+          <.div($.state._3: _*)
         )
       }
       .componentDidMount { $ =>
@@ -78,26 +95,41 @@ object JobBoardPage {
       .runs(Page(None, 50)) // TODO load more as we scroll
       .call()
       .map { runs =>
-        val runDisplays = runs.map {
-          case (uuid, createdAt, runStatus) =>
+        val runDisplays = runs.zipWithIndex.map {
+          case ((uuid, createdAt, runStatus, stageStatuses), index) =>
             val statusDisplay = runStatus match {
-              case _: Triggered    => <.td("Triggered")
-              case _: Running      => <.td(<.button(^.onClick --> stop($.props.job, uuid))("X"))
-              case _: Success      => <.td("Success")
-              case _: Failure      => <.td("Failure")
-              case _: Stopped.type => <.td("Stopped")
+              case _: Triggered    => <.div(Style.item)("Triggered")
+              case _: Running      => <.button(^.onClick ==> stop($.props.job, uuid))("X")
+              case _: Success      => <.span(Style.item)("Success")
+              case _: Failure      => <.span(Style.item)("Failure")
+              case _: Stopped.type => <.span(Style.item)("Stopped")
             }
 
-            <.tr(
-              <.td(<.button(^.onClick --> $.props.ctl.set(LogsPageRoute(uuid)))(uuid.toString)),
-              <.td(createdAt.toString),
-              statusDisplay
+            <.div(Global.Style.listItem(index % 2 == 0),
+                  ^.cursor.pointer,
+                  ^.onClick --> $.props.ctl.set(LogsPageRoute(uuid)))(
+              <.div(
+                <.span(Style.item, ^.backgroundColor := "#F2706D")(uuid.toString),
+                <.span(Style.item)(createdAt.toString),
+                statusDisplay
+              ),
+              <.div(
+                stageStatuses
+                  .groupBy(_.name)
+                  .map {
+                    case (name, statuses) =>
+                      <.span(Style.item, ^.backgroundColor := Utils.generateColour(name))(name)
+                  }
+                  .toSeq: _*
+              )
             )
         }
-        $.modState(_.copy(_3 = if (runDisplays.nonEmpty) runDisplays else Seq(<.tr(<.td("No job ran yet")))))
+        $.modState(_.copy(_3 = if (runDisplays.nonEmpty) runDisplays else Seq(<.div("No job ran yet"))))
       }
   }
 
-  def stop(job: Job.Definition[_, _, _], runId: UUID) =
-    Callback.future(job.Api.client.stop(runId).call().map(Callback(_)))
+  def stop(job: Job.Definition[_, _, _], runId: UUID)(event: ReactEventFromInput) = Callback.future {
+    event.stopPropagation()
+    job.Api.client.stop(runId).call().map(Callback(_))
+  }
 }

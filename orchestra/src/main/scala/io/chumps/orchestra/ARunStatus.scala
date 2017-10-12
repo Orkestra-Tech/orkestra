@@ -7,14 +7,11 @@ import scala.concurrent.Await
 import scala.concurrent.duration._
 import scala.io.Source
 
-import io.chumps.orchestra.AkkaImplicits._
 import io.circe._
 import io.circe.parser._
 import io.circe.shapes._
-import io.circe.syntax._
-import shapeless._
-
-import io.chumps.orchestra.kubernetes.{JobUtils, Kubernetes}
+import io.circe.generic.auto._
+import io.circe.java8.time._
 
 // Start with A because of a compiler bug
 // Should be in the model package
@@ -23,11 +20,9 @@ object ARunStatus {
   case class Triggered(at: Instant) extends ARunStatus
 
   case class Running(at: Instant) extends ARunStatus {
-    def succeed(runInfo: RunInfo)(implicit encoder: Encoder[ARunStatus]) =
-      persist(runInfo, Success(Instant.now()))
+    def succeed(runInfo: RunInfo) = persist(runInfo, Success(Instant.now()))
 
-    def fail(runInfo: RunInfo, e: Throwable)(implicit encoder: Encoder[ARunStatus]) =
-      persist(runInfo, Failure(Instant.now(), e))
+    def fail(runInfo: RunInfo, e: Throwable) = persist(runInfo, Failure(Instant.now(), e))
   }
 
   case class Success(at: Instant) extends ARunStatus
@@ -50,31 +45,24 @@ object ARunStatus {
       } yield new Throwable(message)
   }
 
-  def current(runInfo: RunInfo)(implicit decoder: Decoder[ARunStatus]): ARunStatus =
+  def current(runInfo: RunInfo): ARunStatus =
     history(runInfo).lastOption match {
-      case Some(running @ ARunStatus.Running(_))
-          if Await.result(
-            Kubernetes.client.jobs
-              .namespace(OrchestraConfig.namespace)
-              .list()
-              .map(_.items.exists(_.metadata.get.name.get == JobUtils.jobName(runInfo))),
-            Duration.Inf
-          ) =>
-        running
-      case Some(ARunStatus.Running(_)) => ARunStatus.Stopped
-      case Some(status)                => status
-      case None                        => throw new IllegalStateException(s"No status found for job ${runInfo.job.id} ${runInfo.runId}")
+      case Some(running @ ARunStatus.Running(_)) if CommonApiServer.runningJobs().contains(runInfo) => running
+      case Some(ARunStatus.Running(_)) =>
+        println("CommonApiServer.runningJobs(): " + CommonApiServer.runningJobs())
+        println("runInfo: " + runInfo)
+        ARunStatus.Stopped
+      case Some(status) => status
+      case None         => throw new IllegalStateException(s"No status found for job ${runInfo.job.id} ${runInfo.runId}")
     }
 
-  def history(runInfo: RunInfo)(implicit decoder: Decoder[ARunStatus]): Seq[ARunStatus] =
-    Source
-      .fromFile(OrchestraConfig.statusFile(runInfo).toFile)
-      .getLines()
+  def history(runInfo: RunInfo): Seq[ARunStatus] =
+    Seq(OrchestraConfig.statusFile(runInfo).toFile)
+      .filter(_.exists())
+      .flatMap(Source.fromFile(_).getLines())
       .map(AutowireServer.read[ARunStatus])
-      .toSeq
 
-  def persist[Status <: ARunStatus](runInfo: RunInfo,
-                                    status: Status)(implicit encoder: Encoder[ARunStatus]): Status = {
+  def persist[Status <: ARunStatus](runInfo: RunInfo, status: Status): Status = {
     Files.write(
       OrchestraConfig.statusFile(runInfo),
       s"${AutowireServer.write[ARunStatus](status)}\n".getBytes,

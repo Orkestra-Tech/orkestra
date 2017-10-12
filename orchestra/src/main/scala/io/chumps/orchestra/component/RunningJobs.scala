@@ -11,6 +11,8 @@ import scalacss.ScalaCssReact._
 import io.chumps.orchestra.{CommonApi, RunInfo}
 import io.circe.generic.auto._
 
+import io.chumps.orchestra.css.Global
+
 object RunningJobs {
 
   val component = ScalaComponent
@@ -20,12 +22,13 @@ object RunningJobs {
       val runningJobsDisplay = {
         val runs = $.state._2 match {
           case Some(runningJobs) if runningJobs.nonEmpty =>
-            runningJobs.map { runInfo =>
-              <.tr(
-                <.td(runInfo.job.name),
-                <.td(runInfo.runId.toString) //,
-                // <.td(<.button(^.onClick --> JobBoardPage.stop(runInfo.jobId, runInfo.runId))("X"))
-              )
+            runningJobs.zipWithIndex.map {
+              case (runInfo, index) =>
+                <.tr(Global.Style.listItem(index % 2 == 0))(
+                  <.td(runInfo.job.name),
+                  <.td(runInfo.runId.toString) //,
+                  // <.td(<.button(^.onClick --> JobBoardPage.stop(runInfo.jobId, runInfo.runId))("X"))
+                )
             }
           case Some(runningJobs) if runningJobs.isEmpty => Seq(<.tr(<.td("No running jobs")))
           case None                                     => Seq(<.tr(<.td("Loading running jobs")))

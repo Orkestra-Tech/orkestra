@@ -9,6 +9,13 @@ object Global {
   object Style extends StyleSheet.Inline {
     import dsl._
 
+    val listItem = styleF.bool { pair =>
+      styleS(
+        mixinIf(pair)(backgroundColor(c"rgba(255, 255, 255, 0.02)")),
+        &.hover(backgroundColor(c"rgba(255, 255, 255, 0.04)"))
+      )
+    }
+
     style(
       unsafeRoot("body")(
         backgroundColor(c"#2b2b2b"),

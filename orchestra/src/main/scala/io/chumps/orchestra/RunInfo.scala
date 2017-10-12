@@ -4,40 +4,28 @@ import java.util.UUID
 
 import io.circe._
 import io.circe.syntax._
+import io.circe.parser._
 import shapeless._
 
-case class RunInfo(job: Job.Definition[_, _ <: HList, _], runIdMaybe: Option[UUID]) {
-  lazy val runId = runIdMaybe.getOrElse(UUID.fromString(OrchestraConfig.jobUid))
-}
+case class RunInfo(job: Job.Definition[_, _ <: HList, _], runId: UUID)
 
 object RunInfo {
 
-  // Circe encoders/decoders
-  implicit val encodeNothing = new Encoder[Nothing] {
-    final def apply(o: Nothing): Json = ???
-  }
+  implicit val encoder: Encoder[RunInfo] = (o: RunInfo) =>
+    Json.obj(
+      "job" -> o.job.asJson,
+      "runId" -> o.runId.asJson
+  )
 
-  implicit val decodeNothing = new Decoder[Nothing] {
-    final def apply(c: HCursor): Decoder.Result[Nothing] = ???
-  }
+  implicit val decoder: Decoder[RunInfo] = (c: HCursor) =>
+    for {
+      job <- c.downField("job").as[Job.Definition[_, _ <: HList, _]]
+      runId <- c.downField("runId").as[UUID]
+    } yield RunInfo(job, runId)
 
-  implicit val encodeRunInfo = new Encoder[RunInfo] {
-    final def apply(o: RunInfo): Json = Json.obj(
-      "job" -> Json.obj(
-        "id" -> o.job.id.asJson,
-        "name" -> Json.fromString(o.job.name)
-      ),
-      "runIdMaybe" -> o.runIdMaybe.asJson
+  def decodeWithFallbackRunId(runInfoJson: String, fallBackRunId: UUID) =
+    decode[RunInfo](runInfoJson).fold(
+      _ => RunInfo(decode[Job.Definition[_, _ <: HList, _]](runInfoJson).fold(throw _, identity), fallBackRunId),
+      identity
     )
-  }
-
-  implicit val decodeRunInfo = new Decoder[RunInfo] {
-    final def apply(c: HCursor): Decoder.Result[RunInfo] =
-      for {
-        id <- c.downField("job").downField("id").as[Symbol]
-        name <- c.downField("job").downField("name").as[String]
-        job = Job.Definition[Nothing, HNil, Nothing](id, name)
-        runIdMaybe <- c.downField("runIdMaybe").as[Option[UUID]]
-      } yield RunInfo(job, runIdMaybe)
-  }
 }

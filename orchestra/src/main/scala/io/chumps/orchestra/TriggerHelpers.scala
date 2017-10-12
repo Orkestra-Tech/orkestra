@@ -41,7 +41,10 @@ trait TriggerHelpers {
   private def triggerMessage(job: Job.Runner[_, _, _]) = println(s"Triggering ${job.definition.id.name}")
 
   private def jobRunInfo(job: Job.Runner[_ <: HList, _, _]) =
-    RunInfo(job.definition, OrchestraConfig.runInfo.map(_.runId))
+    RunInfo(job.definition,
+            OrchestraConfig.runInfo
+              .map(_.runId)
+              .getOrElse(throw new IllegalStateException("ORCHESTRA_RUN_INFO should be set")))
 
   private def awaitJobResult(runInfo: RunInfo) = {
     def isInProgress() = ARunStatus.current(runInfo) match {

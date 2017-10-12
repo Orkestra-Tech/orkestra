@@ -3,7 +3,7 @@ package io.chumps.orchestra.cron
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 
-import io.chumps.orchestra.{JVMApp, OrchestraConfig, RunInfo}
+import io.chumps.orchestra.{JVMApp, OrchestraConfig}
 import io.chumps.orchestra.AkkaImplicits._
 import io.chumps.orchestra.kubernetes.{JobSpecUtils, Kubernetes, MasterPod}
 import com.typesafe.scalalogging.Logger
@@ -45,15 +45,15 @@ trait Cron extends JVMApp {
 
   private def applyCronJobs(masterPod: Pod, currentCronJobNames: Seq[String]) =
     cronTriggers.foreach { cronTrigger =>
-      val runInfo = RunInfo(cronTrigger.job.definition, None)
-      val newCronJobName = cronJobName(runInfo.job.id)
+      val newCronJobName = cronJobName(cronTrigger.job.definition.id)
       val cronJob = CronJob(
         metadata = Option(ObjectMeta(name = Option(newCronJobName))),
         spec = Option(
           CronJobSpec(
             schedule = cronTrigger.schedule,
             jobTemplate = JobTemplateSpec(
-              spec = Option(JobSpecUtils.createJobSpec(masterPod, runInfo, cronTrigger.job.podConfig))
+              spec =
+                Option(JobSpecUtils.createJobSpec(masterPod, cronTrigger.job.definition, cronTrigger.job.podConfig))
             )
           )
         )

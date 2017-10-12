@@ -10,6 +10,7 @@ import io.circe._
 import io.circe.parser._
 import io.circe.syntax._
 import org.scalajs.dom.ext.Ajax
+import shapeless.HList
 
 import io.chumps.orchestra.kubernetes.Kubernetes
 
@@ -69,8 +70,7 @@ object CommonApiServer extends CommonApi {
       container <- podSpec.containers.headOption
       envs <- container.env
       env <- envs.find(_.name == "ORCHESTRA_RUN_INFO")
-      envValue <- env.value
-      runInfo = decode[RunInfo](envValue).fold(throw _, identity)
-    } yield runInfo.copy(runIdMaybe = runInfo.runIdMaybe.orElse(Option(UUID.fromString(job.metadata.get.uid.get))))
+      runInfoJson <- env.value
+    } yield RunInfo.decodeWithFallbackRunId(runInfoJson, UUID.fromString(job.metadata.get.uid.get))
   }
 }

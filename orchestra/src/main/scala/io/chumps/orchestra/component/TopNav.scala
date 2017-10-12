@@ -1,7 +1,5 @@
 package io.chumps.orchestra.component
 
-import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
-
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.Reusability
 import japgolly.scalajs.react.extra.router.RouterCtl

@@ -13,18 +13,20 @@ import scala.language.{higherKinds, implicitConversions}
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import autowire.Core
+import io.circe.Decoder.Result
 import io.circe.generic.auto._
 import io.circe.java8.time._
 import io.circe.shapes._
 
 import io.chumps.orchestra.ARunStatus._
+import io.chumps.orchestra.BaseEncoders._
 import io.chumps.orchestra.kubernetes.{JobUtils, PodConfig}
 import shapeless._
 import shapeless.ops.function.FnToProduct
 
 import io.chumps.orchestra.ARunStatus._
 import io.circe.parser._
-import io.circe.{Decoder, Encoder}
+import io.circe.{Decoder, Encoder, HCursor, Json}
 import io.circe.syntax._
 import org.scalajs.dom.ext.Ajax
 
@@ -65,7 +67,7 @@ object Job {
       def trigger(runId: UUID, params: ParamValues, tags: Seq[String] = Seq.empty): ARunStatus
       def stop(runId: UUID): Unit
       def tags(): Seq[String]
-      def runs(page: Page[Instant]): Seq[(UUID, Instant, ARunStatus)]
+      def runs(page: Page[Instant]): Seq[(UUID, Instant, ARunStatus, Seq[AStageStatus])]
     }
 
     object Api {
@@ -88,6 +90,30 @@ object Job {
         override def write[T: Encoder](obj: T) = obj.asJson.noSpaces
       }.apply[Api]
     }
+  }
+
+  object Definition {
+
+    implicit def encoder[JobFn, ParamValues <: HList, Result]: Encoder[Definition[JobFn, ParamValues, Result]] =
+      (o: Job.Definition[JobFn, ParamValues, Result]) =>
+        Json.obj(
+          "id" -> o.id.asJson,
+          "name" -> Json.fromString(o.name)
+      )
+
+    implicit def decoder[JobFn, ParamValues <: HList: Encoder: Decoder, Result: Encoder: Decoder]
+      : Decoder[Definition[JobFn, ParamValues, Result]] =
+      (c: HCursor) =>
+        for {
+          id <- c.downField("id").as[Symbol]
+          name <- c.downField("name").as[String]
+        } yield Job.Definition[JobFn, ParamValues, Result](id, name)
+
+    implicit val decoderDefault: Decoder[Definition[_, _ <: HList, _]] = (c: HCursor) =>
+      for {
+        id <- c.downField("id").as[Symbol]
+        name <- c.downField("name").as[String]
+      } yield Job.Definition[Nothing, HNil, Nothing](id, name)
   }
 
   case class Runner[ParamValues <: HList: Encoder: Decoder, Result: Encoder: Decoder, Containers <: HList](
@@ -127,7 +153,7 @@ object Job {
 
     object ApiServer extends definition.Api {
       override def trigger(runId: UUID, params: ParamValues, tags: Seq[String] = Seq.empty): ARunStatus = {
-        val runInfo = RunInfo(definition, Option(runId))
+        val runInfo = RunInfo(definition, runId)
         if (OrchestraConfig.statusFile(runInfo).toFile.exists()) ARunStatus.current(runInfo)
         else {
           Utils.runInit(runInfo, tags)
@@ -140,11 +166,11 @@ object Job {
         }
       }
 
-      override def stop(runId: UUID): Unit = JobUtils.delete(RunInfo(definition, Option(runId)))
+      override def stop(runId: UUID): Unit = JobUtils.delete(RunInfo(definition, runId))
 
       override def tags(): Seq[String] = OrchestraConfig.tagsDir(definition.id).toFile.list()
 
-      override def runs(page: Page[Instant]): Seq[(UUID, Instant, ARunStatus)] = {
+      override def runs(page: Page[Instant]): Seq[(UUID, Instant, ARunStatus, Seq[AStageStatus])] = {
         val from = page.from.fold(LocalDateTime.MAX)(LocalDateTime.ofInstant(_, ZoneOffset.UTC))
 
         val runs = for {
@@ -163,7 +189,7 @@ object Job {
             .dropWhile(_.getName.toInt > from.toEpochSecond(ZoneOffset.UTC))
           runId <- secondDir.list().toStream
 
-          runInfo = RunInfo(definition, Option(UUID.fromString(runId)))
+          runInfo = RunInfo(definition, UUID.fromString(runId))
           if OrchestraConfig.statusFile(runInfo).toFile.exists()
           at <- ARunStatus.history(runInfo).headOption.map {
             case status: Triggered => status.at
@@ -171,7 +197,7 @@ object Job {
             case status =>
               throw new IllegalStateException(s"$status is not of status type ${classOf[Triggered].getName}")
           }
-        } yield (runInfo.runId, at, ARunStatus.current(runInfo))
+        } yield (runInfo.runId, at, ARunStatus.current(runInfo), AStageStatus.history(runInfo.runId))
 
         runs.take(page.size)
       }
