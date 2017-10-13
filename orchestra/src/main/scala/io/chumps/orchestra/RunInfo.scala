@@ -11,13 +11,13 @@ case class RunInfo(job: Job.Definition[_, _ <: HList, _], runId: UUID)
 
 object RunInfo {
 
-  implicit val encoder: Encoder[RunInfo] = (o: RunInfo) =>
+  implicit val encoder: Encoder[RunInfo] = runInfo =>
     Json.obj(
-      "job" -> o.job.asJson,
-      "runId" -> o.runId.asJson
+      "job" -> runInfo.job.asJson,
+      "runId" -> runInfo.runId.asJson
   )
 
-  implicit val decoder: Decoder[RunInfo] = (c: HCursor) =>
+  implicit val decoder: Decoder[RunInfo] = c =>
     for {
       job <- c.downField("job").as[Job.Definition[_, _ <: HList, _]]
       runId <- c.downField("runId").as[UUID]

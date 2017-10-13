@@ -3,15 +3,10 @@ package io.chumps.orchestra
 import java.nio.file.{Files, StandardOpenOption}
 import java.time.Instant
 
-import scala.concurrent.Await
-import scala.concurrent.duration._
 import scala.io.Source
 
-import io.circe._
-import io.circe.parser._
-import io.circe.shapes._
-import io.circe.generic.auto._
 import io.circe.java8.time._
+import io.chumps.orchestra.BaseEncoders._
 
 // Start with A because of a compiler bug
 // Should be in the model package
@@ -30,20 +25,6 @@ object ARunStatus {
   case class Failure(at: Instant, e: Throwable) extends ARunStatus
 
   case object Stopped extends ARunStatus
-
-  // Circe encoders/decoders
-  implicit val encodeThrowable = new Encoder[Throwable] {
-    final def apply(o: Throwable): Json = Json.obj(
-      "message" -> Json.fromString(o.getMessage)
-    )
-  }
-
-  implicit val decodeThrowable = new Decoder[Throwable] {
-    final def apply(c: HCursor): Decoder.Result[Throwable] =
-      for {
-        message <- c.downField("message").as[String]
-      } yield new Throwable(message)
-  }
 
   def current(runInfo: RunInfo): ARunStatus =
     history(runInfo).lastOption match {

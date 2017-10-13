@@ -32,8 +32,8 @@ object TopNav {
 
   case class Props(rootBoard: BoardPageRoute, selectedPage: PageRoute, ctl: RouterCtl[PageRoute])
 
-  implicit val currentPageReuse = Reusability.by_==[PageRoute]
-  implicit val propsReuse = Reusability.by((_: Props).selectedPage)
+  implicit val currentPageReuse: Reusability[PageRoute] = Reusability.by_==[PageRoute]
+  implicit val propsReuse: Reusability[Props] = Reusability.by((_: Props).selectedPage)
 
   val component = ScalaComponent
     .builder[Props](getClass.getSimpleName)

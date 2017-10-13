@@ -7,6 +7,7 @@ import japgolly.scalajs.react.vdom.html_<^._
 
 import io.chumps.orchestra.component.{Footer, TopNav}
 import io.chumps.orchestra._
+import io.chumps.orchestra.board.Board
 import io.chumps.orchestra.page.{LogsPage, StatusPage}
 
 object WebRouter {

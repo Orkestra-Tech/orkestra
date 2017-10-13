@@ -1,34 +1,15 @@
-package io.chumps.orchestra
+package io.chumps.orchestra.board
 
-import io.chumps.orchestra.page.FolderBoardPage
-import io.chumps.orchestra.route.WebRouter.{BoardPageRoute, PageRoute}
-import io.chumps.orchestra.page.JobBoardPage
-import io.chumps.orchestra.parameter.{Parameter, ParameterOperations}
 import io.circe.Encoder
-import japgolly.scalajs.react.extra.router.{RouterConfigDsl, StaticDsl}
+import japgolly.scalajs.react.extra.router.RouterConfigDsl
 import japgolly.scalajs.react.vdom.html_<^._
-import shapeless.{::, Generic, HList, HNil, Poly}
+import shapeless._
 import shapeless.ops.hlist.{Comapped, Mapper}
 
-sealed trait Board {
-  lazy val pathName: String = name.toLowerCase.replaceAll("\\s", "")
-  def name: String
-  def route: StaticDsl.Rule[PageRoute]
-}
-
-case class FolderBoard(name: String, childBoards: Seq[Board]) extends Board {
-
-  def route = RouterConfigDsl[PageRoute].buildRule { dsl =>
-    import dsl._
-    staticRoute(pathName, BoardPageRoute(this)) ~>
-      renderR(ctrl => FolderBoardPage.component(FolderBoardPage.Props(name, childBoards, ctrl))) |
-      childBoards.map(_.route).reduce(_ | _).prefixPath_/(pathName)
-  }
-}
-
-object FolderBoard {
-  def apply(name: String): (Board*) => FolderBoard = (childBoards: Seq[Board]) => FolderBoard(name, childBoards)
-}
+import io.chumps.orchestra._
+import io.chumps.orchestra.page.JobBoardPage
+import io.chumps.orchestra.parameter.{Parameter, ParameterOperations}
+import io.chumps.orchestra.route.WebRouter.{BoardPageRoute, PageRoute}
 
 case class JobBoard[ParamValues <: HList: Encoder, Params <: HList](
   job: Job.Definition[_, ParamValues, _],
@@ -40,7 +21,7 @@ case class JobBoard[ParamValues <: HList: Encoder, Params <: HList](
   val route = RouterConfigDsl[PageRoute].buildRule { dsl =>
     import dsl._
     (staticRoute(root, BoardPageRoute(this)) ~> renderR { ctrl =>
-      JobBoardPage.component(JobBoardPage.Props(name, job, params, ctrl))
+      JobBoardPage.component(JobBoardPage.Props(job, params, ctrl))
     }).prefixPath_/(pathName)
   }
 }

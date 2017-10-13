@@ -9,7 +9,7 @@ case class Directory(file: File) {
 }
 
 object Directory {
-  implicit val default = Directory(".")
+  implicit val default: Directory = Directory(".")
 
   def apply(path: String): Directory = Directory(new File(path))
 }

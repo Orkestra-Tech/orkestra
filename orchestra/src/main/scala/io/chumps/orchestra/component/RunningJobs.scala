@@ -19,6 +19,9 @@ object RunningJobs {
     .builder[Unit](getClass.getSimpleName)
     .initialState[(Boolean, Option[Seq[RunInfo]])]((false, None))
     .render { $ =>
+      def stop(runInfo: RunInfo) =
+        Callback.future(runInfo.job.Api.client.stop(runInfo.runId).call().map(Callback(_)))
+
       val runningJobsDisplay = {
         val runs = $.state._2 match {
           case Some(runningJobs) if runningJobs.nonEmpty =>
@@ -26,8 +29,8 @@ object RunningJobs {
               case (runInfo, index) =>
                 <.tr(Global.Style.listItem(index % 2 == 0))(
                   <.td(runInfo.job.name),
-                  <.td(runInfo.runId.toString) //,
-                  // <.td(<.button(^.onClick --> JobBoardPage.stop(runInfo.jobId, runInfo.runId))("X"))
+                  <.td(runInfo.runId.toString),
+                  <.td(<.button(^.onClick --> stop(runInfo))("X"))
                 )
             }
           case Some(runningJobs) if runningJobs.isEmpty => Seq(<.tr(<.td("No running jobs")))

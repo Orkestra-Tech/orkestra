@@ -7,7 +7,7 @@ import scalacss.internal.mutable.GlobalRegistry
 
 import io.chumps.orchestra.page.{JobBoardPage, StatusPage}
 
-object AppCSS {
+object AppCss {
   val CssSettings = scalacss.devOrProdDefaults; import CssSettings._
 
   def load() = {

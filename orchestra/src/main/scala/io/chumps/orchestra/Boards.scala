@@ -6,9 +6,11 @@ import scalajs.html.scripts
 import akka.http.scaladsl.model.{ContentTypes, HttpEntity}
 import akka.http.scaladsl.server.Directives.{complete, pathSingleSlash, _}
 
-import io.chumps.orchestra.css.AppCSS
+import io.chumps.orchestra.css.AppCss
 import io.chumps.orchestra.route.{BackendRoutes, WebRouter}
 import org.scalajs.dom
+
+import io.chumps.orchestra.board.Board
 
 trait Boards extends BackendRoutes with JSApp {
 
@@ -46,7 +48,7 @@ trait Boards extends BackendRoutes with JSApp {
     }
 
   def main(): Unit = {
-    AppCSS.load()
+    AppCss.load()
     WebRouter.router(board).renderIntoDOM(dom.document.getElementById(topElementId))
   }
 }

@@ -5,11 +5,6 @@ trait Converter[T] {
 }
 
 object Converter {
-  implicit val stringConverter = new Converter[String] {
-    def apply(raw: String) = raw
-  }
-
-  implicit val intConverter = new Converter[Int] {
-    def apply(raw: String) = raw.toInt
-  }
+  implicit val stringConverter: Converter[String] = raw => raw
+  implicit val intConverter: Converter[Int] = raw => raw.toInt
 }

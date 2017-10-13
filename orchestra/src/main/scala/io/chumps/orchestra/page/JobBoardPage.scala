@@ -11,6 +11,7 @@ import autowire._
 
 import io.chumps.orchestra._
 import io.chumps.orchestra.ARunStatus._
+import io.chumps.orchestra.BaseEncoders._
 import io.chumps.orchestra.parameter.Parameter.State
 import io.chumps.orchestra.parameter.{ParameterOperations, RunId}
 import io.chumps.orchestra.route.WebRouter.{LogsPageRoute, PageRoute}
@@ -34,13 +35,12 @@ object JobBoardPage {
     import dsl._
 
     val item = style(
-      padding(2.px),
+      padding(4.px),
       display.inlineBlock
     )
   }
 
   case class Props[Params <: HList, ParamValues <: HList](
-    name: String,
     job: Job.Definition[_, ParamValues, _],
     params: Params,
     ctl: RouterCtl[PageRoute]
@@ -59,7 +59,9 @@ object JobBoardPage {
       $ : RenderScope[Props[_, _ <: HList], (UUID, Map[Symbol, Any], Seq[TagMod], SetIntervalHandle), Unit]
     ) = {
       val displayState = State(kv => $.modState(s => s.copy(_2 = s._2 + kv)), key => $.state._2.get(key))
-      paramOperations.displays(params, displayState)
+      paramOperations.displays(params, displayState).zipWithIndex.toTagMod {
+        case (param, index) => param(Global.Style.listItem(index % 2 == 0))
+      }
     }
   }
 
@@ -72,12 +74,12 @@ object JobBoardPage {
       }
       .renderP { ($, props) =>
         <.div(
-          <.div(props.name),
+          <.h1(props.job.name),
           <.form(^.onSubmit ==> props.runJob($.state))(
-            props.displays($) :+
-              <.button(^.`type` := "submit")("Run"): _*
+            props.displays($),
+            <.button(^.`type` := "submit")("Run")
           ),
-          <.div("History"),
+          <.h1("History"),
           <.div($.state._3: _*)
         )
       }
@@ -88,7 +90,7 @@ object JobBoardPage {
       .componentWillUnmount($ => Callback(js.timers.clearInterval($.state._4)))
       .build
 
-  def pullRuns(
+  private def pullRuns(
     $ : ComponentDidMount[Props[_, _ <: HList], (UUID, Map[Symbol, Any], Seq[TagMod], SetIntervalHandle), Unit]
   ) = Callback.future {
     $.props.job.Api.client
