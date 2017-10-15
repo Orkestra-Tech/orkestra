@@ -63,14 +63,14 @@ object Job {
       )
     }
 
-    trait Api {
+    private[orchestra] trait Api {
       def trigger(runId: UUID, params: ParamValues, tags: Seq[String] = Seq.empty): ARunStatus
       def stop(runId: UUID): Unit
       def tags(): Seq[String]
       def runs(page: Page[Instant]): Seq[(UUID, Instant, ARunStatus, Seq[AStageStatus])]
     }
 
-    object Api {
+    private[orchestra] object Api {
       def router(apiServer: Api)(implicit ec: ExecutionContext) = AutowireServer.route[Api](apiServer)
 
       val client = new autowire.Client[String, Decoder, Encoder] {
@@ -122,7 +122,7 @@ object Job {
     job: ParamValues => Result
   ) {
 
-    def run(runInfo: RunInfo): Unit = {
+    private[orchestra] def run(runInfo: RunInfo): Unit = {
       Utils.runInit(runInfo, Seq.empty)
       val logsOut = StagesHelpers(new FileOutputStream(OrchestraConfig.logsFile(runInfo.runId).toFile, true))
 
@@ -132,10 +132,8 @@ object Job {
         try {
           val paramFile = OrchestraConfig.paramsFile(runInfo).toFile
           job(
-            AutowireServer.read[ParamValues](
-              if (paramFile.exists()) Source.fromFile(paramFile).mkString
-              else "[]"
-            )
+            if (paramFile.exists()) decode[ParamValues](Source.fromFile(paramFile).mkString).fold(throw _, identity)
+            else HNil.asInstanceOf[ParamValues]
           )
           println("Job completed")
 
@@ -151,7 +149,7 @@ object Job {
       }
     }
 
-    object ApiServer extends definition.Api {
+    private[orchestra] object ApiServer extends definition.Api {
       override def trigger(runId: UUID, params: ParamValues, tags: Seq[String] = Seq.empty): ARunStatus = {
         val runInfo = RunInfo(definition, runId)
         if (OrchestraConfig.statusFile(runInfo).toFile.exists()) ARunStatus.current(runInfo)
@@ -203,14 +201,12 @@ object Job {
       }
     }
 
-    def apiRoute(implicit ec: ExecutionContext): Route =
+    private[orchestra] def apiRoute(implicit ec: ExecutionContext): Route =
       path(definition.id.name / Segments) { segments =>
-        post {
-          entity(as[String]) { entity =>
-            val body = AutowireServer.read[Map[String, String]](entity)
-            val request = definition.Api.router(ApiServer).apply(Core.Request(segments, body))
-            onSuccess(request)(complete(_))
-          }
+        entity(as[String]) { entity =>
+          val body = AutowireServer.read[Map[String, String]](entity)
+          val request = definition.Api.router(ApiServer).apply(Core.Request(segments, body))
+          onSuccess(request)(complete(_))
         }
       }
   }

@@ -8,6 +8,7 @@ import scalacss.DevDefaults._
 import scalacss.ProdDefaults._
 import scalacss.ScalaCssReact._
 
+import io.chumps.orchestra.css.Global
 import io.chumps.orchestra.model.PageMenu
 import io.chumps.orchestra.route.WebRouter.{BoardPageRoute, PageRoute, StatusPageRoute}
 
@@ -17,7 +18,7 @@ object TopNav {
   object Style extends StyleSheet.Inline {
     import dsl._
 
-    val navMenu = style(backgroundColor(c"#F2706D"), margin.`0`, padding.`0`, listStyle := "none")
+    val navMenu = style(backgroundColor(Global.Style.brandColor), margin.`0`, padding.`0`, listStyle := "none")
 
     val menuItem = styleF.bool { selected =>
       styleS(
@@ -25,7 +26,8 @@ object TopNav {
         fontSize(1.5.em),
         display.inlineBlock,
         cursor.pointer,
-        mixinIfElse(selected)(backgroundColor(c"#E8433F"), fontWeight._500)(&.hover(backgroundColor(c"#B6413E")))
+        mixinIf(selected)(backgroundColor(c"rgba(0, 0, 0, 0.04)")),
+        &.hover(backgroundColor(c"rgba(255, 255, 255, 0.04)"))
       )
     }
   }
@@ -42,8 +44,6 @@ object TopNav {
         PageMenu("Boards", props.rootBoard),
         PageMenu("Status", StatusPageRoute)
       )
-
-      println(props.ctl.baseUrl.value)
 
       <.header(
         <.nav(^.display.block)(

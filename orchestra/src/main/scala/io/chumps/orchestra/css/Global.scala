@@ -9,6 +9,8 @@ object Global {
   object Style extends StyleSheet.Inline {
     import dsl._
 
+    val brandColor = c"#F2706D"
+
     val listItem = styleF.bool { pair =>
       styleS(
         mixinIf(pair)(backgroundColor(c"rgba(255, 255, 255, 0.02)")),

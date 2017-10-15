@@ -16,12 +16,10 @@ trait Jobs extends JVMApp with BackendRoutes {
         jobs.map(_.apiRoute).reduce(_ ~ _)
       } ~
         path(Jobs.commonSegment / Segments) { segments =>
-          post {
-            entity(as[String]) { entity =>
-              val body = AutowireServer.read[Map[String, String]](entity)
-              val request = AutowireServer.route[CommonApi](CommonApiServer).apply(Core.Request(segments, body))
-              onSuccess(request)(complete(_))
-            }
+          entity(as[String]) { entity =>
+            val body = AutowireServer.read[Map[String, String]](entity)
+            val request = AutowireServer.route[CommonApi](CommonApiServer).apply(Core.Request(segments, body))
+            onSuccess(request)(complete(_))
           }
         }
     }

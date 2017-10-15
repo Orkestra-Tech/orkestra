@@ -9,20 +9,26 @@ import io.circe.java8.time._
 trait TriggerHelpers {
 
   implicit class TiggerableNoParamJob(job: Job.Runner[HNil, _, _]) {
-    def trigger() = {
+    def trigger(): Unit = {
       triggerMessage(job)
-      val runInfo = jobRunInfo(job)
-      job.ApiServer.trigger(runInfo.runId, HNil)
-      awaitJobResult(runInfo)
+      job.ApiServer.trigger(jobRunInfo(job).runId, HNil)
+    }
+
+    def triggerAndAwait(): Unit = {
+      trigger()
+      awaitJobResult(job)
     }
   }
 
   implicit class TiggerableOneParamJob[ParamValue](job: Job.Runner[ParamValue :: HNil, _, _]) {
-    def trigger(params: ParamValue) = {
+    def trigger(params: ParamValue): Unit = {
       triggerMessage(job)
-      val runInfo = jobRunInfo(job)
-      job.ApiServer.trigger(runInfo.runId, params :: HNil)
-      awaitJobResult(runInfo)
+      job.ApiServer.trigger(jobRunInfo(job).runId, params :: HNil)
+    }
+
+    def triggerAndAwait(params: ParamValue): Unit = {
+      trigger(params)
+      awaitJobResult(job)
     }
   }
 
@@ -30,11 +36,14 @@ trait TriggerHelpers {
     implicit tupler: Tupler.Aux[ParamValues, TupledValues],
     tupleToHList: Generic.Aux[TupledValues, ParamValues]
   ) {
-    def trigger(params: TupledValues) = {
+    def trigger(params: TupledValues): Unit = {
       triggerMessage(job)
-      val runInfo = jobRunInfo(job)
-      job.ApiServer.trigger(runInfo.runId, tupleToHList.to(params))
-      awaitJobResult(runInfo)
+      job.ApiServer.trigger(jobRunInfo(job).runId, tupleToHList.to(params))
+    }
+
+    def triggerAndAwait(params: TupledValues): Unit = {
+      trigger(params)
+      awaitJobResult(job)
     }
   }
 
@@ -42,15 +51,13 @@ trait TriggerHelpers {
 
   private def jobRunInfo(job: Job.Runner[_ <: HList, _, _]) =
     RunInfo(job.definition,
-            OrchestraConfig.runInfo
-              .map(_.runId)
-              .getOrElse(throw new IllegalStateException("ORCHESTRA_RUN_INFO should be set")))
+            OrchestraConfig.runInfo.fold(throw new IllegalStateException("ORCHESTRA_RUN_INFO should be set"))(_.runId))
 
-  private def awaitJobResult(runInfo: RunInfo) = {
+  private def awaitJobResult(job: Job.Runner[_ <: HList, _, _]): Unit = {
+    val runInfo = jobRunInfo(job)
     def isInProgress() = ARunStatus.current(runInfo) match {
-      case _: Triggered => true
-      case _: Running   => true
-      case _            => false
+      case _: Triggered | _: Running => true
+      case _                         => false
     }
 
     while (isInProgress()) Thread.sleep(500)

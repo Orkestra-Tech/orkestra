@@ -19,13 +19,11 @@ trait Github extends JVMApp {
         complete(OK)
       } ~
         path("webhooks") {
-          post {
-            headerValueByName("X-GitHub-Event") { eventType =>
-              entity(as[String]) { entity =>
-                val json = parse(entity).fold(throw _, identity)
-                githubTriggers.foreach(_.trigger(eventType, json))
-                complete(OK)
-              }
+          headerValueByName("X-GitHub-Event") { eventType =>
+            entity(as[String]) { entity =>
+              val json = parse(entity).fold(throw _, identity)
+              githubTriggers.foreach(_.trigger(eventType, json))
+              complete(OK)
             }
           }
         }

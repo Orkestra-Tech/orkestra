@@ -111,7 +111,7 @@ object JobBoardPage {
                   ^.cursor.pointer,
                   ^.onClick --> $.props.ctl.set(LogsPageRoute(uuid)))(
               <.div(
-                <.span(Style.item, ^.backgroundColor := "#F2706D")(uuid.toString),
+                <.span(Style.item, ^.backgroundColor := Global.Style.brandColor)(uuid.toString),
                 <.span(Style.item)(createdAt.toString),
                 statusDisplay
               ),
