@@ -1,5 +1,6 @@
 package io.chumps.orchestra.page
 
+import java.time.Instant
 import java.util.UUID
 
 import scala.concurrent.duration._
@@ -111,7 +112,7 @@ object JobBoardPage {
                   ^.cursor.pointer,
                   ^.onClick --> $.props.ctl.set(LogsPageRoute(uuid)))(
               <.div(
-                <.span(Style.item, ^.backgroundColor := Global.Style.brandColor)(uuid.toString),
+                <.span(Style.item, ^.backgroundColor := Global.Style.brandColor.value)(uuid.toString),
                 <.span(Style.item)(createdAt.toString),
                 statusDisplay
               ),
@@ -119,8 +120,14 @@ object JobBoardPage {
                 stageStatuses
                   .groupBy(_.name)
                   .map {
+                    case (name, statuses) if statuses.size == 2 =>
+                      <.span(Style.item, ^.backgroundColor := Utils.generateColour(name))(
+                        s"$name ${statuses.last.at.getEpochSecond - statuses.head.at.getEpochSecond}s"
+                      )
                     case (name, statuses) =>
-                      <.span(Style.item, ^.backgroundColor := Utils.generateColour(name))(name)
+                      <.span(Style.item, ^.backgroundColor := Utils.generateColour(name))(
+                        s"$name ${Instant.now().getEpochSecond - statuses.head.at.getEpochSecond}s"
+                      )
                   }
                   .toSeq: _*
               )

@@ -6,6 +6,8 @@ import java.util.UUID
 
 import scala.io.Source
 
+import akka.http.scaladsl.model.Uri
+
 object OrchestraConfig {
   def apply(envVar: String) = Option(System.getenv(s"ORCHESTRA_$envVar")).filter(_.nonEmpty)
 
@@ -13,9 +15,13 @@ object OrchestraConfig {
   val home = OrchestraConfig("DATA").getOrElse(System.getProperty("user.home"))
   lazy val port =
     OrchestraConfig("PORT").map(_.toInt).getOrElse(throw new IllegalStateException("ORCHESTRA_PORT should be set"))
+  lazy val url =
+    OrchestraConfig("URL").fold(throw new IllegalStateException("ORCHESTRA_URL should be set"))(Uri(_))
   lazy val githubPort = OrchestraConfig("GITHUB_PORT")
     .map(_.toInt)
     .getOrElse(throw new IllegalStateException("ORCHESTRA_GITHUB_PORT should be set"))
+  lazy val githubToken =
+    OrchestraConfig("GITHUB_TOKEN").getOrElse(throw new IllegalStateException("ORCHESTRA_GITHUB_TOKEN should be set"))
   val runInfo = OrchestraConfig("RUN_INFO").map(runInfoJson => RunInfo.decodeWithFallbackRunId(runInfoJson, jobUid))
   val kubeUri =
     OrchestraConfig("KUBE_URI").getOrElse(throw new IllegalStateException("ORCHESTRA_KUBE_URI should be set"))

@@ -26,8 +26,9 @@ object TopNav {
         fontSize(1.5.em),
         display.inlineBlock,
         cursor.pointer,
-        mixinIf(selected)(backgroundColor(c"rgba(0, 0, 0, 0.04)")),
-        &.hover(backgroundColor(c"rgba(255, 255, 255, 0.04)"))
+        mixinIfElse(selected)(backgroundColor(c"rgba(0, 0, 0, 0.06)"))(
+          &.hover(backgroundColor(c"rgba(255, 255, 255, 0.06)"))
+        )
       )
     }
   }

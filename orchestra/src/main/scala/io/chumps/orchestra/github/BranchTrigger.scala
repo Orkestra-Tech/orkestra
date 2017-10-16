@@ -6,7 +6,7 @@ import scala.concurrent.ExecutionContext
 
 import akka.actor.ActorSystem
 import akka.stream.Materializer
-import io.chumps.orchestra.{Job, RunInfo}
+import io.chumps.orchestra.Job
 import io.circe.Json
 import shapeless.{::, HList, HNil}
 
@@ -41,10 +41,9 @@ case class PullRequestTrigger(repoName: String, job: Job.Runner[String :: HNil, 
         val eventRepoName =
           json.hcursor.downField("repository").downField("full_name").as[String].fold(throw _, identity)
         val prBranch =
-          json.hcursor.downField("pull_request").downField("head").downField("ref").as[String].fold(throw _, identity)
+          json.hcursor.downField("pull_request").downField("head").downField("sha").as[String].fold(throw _, identity)
 
-        if (eventRepoName == repoName)
-          job.ApiServer.trigger(UUID.randomUUID(), prBranch :: HNil, Seq(prBranch))
+        if (eventRepoName == repoName) job.ApiServer.trigger(UUID.randomUUID(), prBranch :: HNil, Seq(prBranch))
       case _ =>
     }
 }

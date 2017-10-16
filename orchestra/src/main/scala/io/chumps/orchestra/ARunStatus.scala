@@ -29,12 +29,9 @@ object ARunStatus {
   def current(runInfo: RunInfo): ARunStatus =
     history(runInfo).lastOption match {
       case Some(running @ ARunStatus.Running(_)) if CommonApiServer.runningJobs().contains(runInfo) => running
-      case Some(ARunStatus.Running(_)) =>
-        println("CommonApiServer.runningJobs(): " + CommonApiServer.runningJobs())
-        println("runInfo: " + runInfo)
-        ARunStatus.Stopped
-      case Some(status) => status
-      case None         => throw new IllegalStateException(s"No status found for job ${runInfo.job.id} ${runInfo.runId}")
+      case Some(ARunStatus.Running(_))                                                              => ARunStatus.Stopped
+      case Some(status)                                                                             => status
+      case None                                                                                     => throw new IllegalStateException(s"No status found for job ${runInfo.job.id} ${runInfo.runId}")
     }
 
   def history(runInfo: RunInfo): Seq[ARunStatus] =
