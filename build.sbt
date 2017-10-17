@@ -26,7 +26,7 @@ lazy val orchestra = crossProject
     libraryDependencies ++= Seq(
       "com.chuusai" %%% "shapeless" % "2.3.2",
       "com.vmunier" %% "scalajs-scripts" % "1.1.1",
-      "com.beachape" %%% "enumeratum" % "1.5.12",
+      "com.beachape" %%% "enumeratum" % "1.5.12" % Provided,
       "com.lihaoyi" %%% "autowire" % "0.2.6",
       "com.goyeau" %% "kubernetes-client" % "0.0.1+8-7b308de9+20171009-1921-SNAPSHOT",
       "org.eclipse.jgit" % "org.eclipse.jgit" % "4.9.0.201710071750-r"
