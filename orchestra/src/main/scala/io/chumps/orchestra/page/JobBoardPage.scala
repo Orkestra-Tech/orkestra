@@ -17,6 +17,7 @@ import io.chumps.orchestra.parameter.Parameter.State
 import io.chumps.orchestra.parameter.{ParameterOperations, RunId}
 import io.chumps.orchestra.route.WebRouter.{LogsPageRoute, PageRoute}
 import io.circe._
+import io.circe.generic.auto._
 import io.circe.java8.time._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.component.builder.Lifecycle.{ComponentDidMount, RenderScope}

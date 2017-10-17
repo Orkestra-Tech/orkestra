@@ -8,14 +8,14 @@ import akka.actor.ActorSystem
 import akka.stream.Materializer
 import io.chumps.orchestra.Job
 import io.circe.Json
-import shapeless.{::, HList, HNil}
+import shapeless.{::, HNil}
 
 sealed trait GithubTrigger {
   private[github] def trigger(eventType: String,
                               json: Json)(implicit ec: ExecutionContext, system: ActorSystem, mat: Materializer): Unit
 }
 
-case class BranchTrigger(repoName: String, branchRegex: String, job: Job.Runner[String :: HNil, _, _ <: HList])
+case class BranchTrigger(repoName: String, branchRegex: String, job: Job.Runner[String :: HNil, _])
     extends GithubTrigger {
   private[github] def trigger(eventType: String, json: Json)(implicit ec: ExecutionContext,
                                                              system: ActorSystem,
@@ -32,7 +32,7 @@ case class BranchTrigger(repoName: String, branchRegex: String, job: Job.Runner[
     }
 }
 
-case class PullRequestTrigger(repoName: String, job: Job.Runner[String :: HNil, _, _ <: HList]) extends GithubTrigger {
+case class PullRequestTrigger(repoName: String, job: Job.Runner[String :: HNil, _]) extends GithubTrigger {
   private[github] def trigger(eventType: String, json: Json)(implicit ec: ExecutionContext,
                                                              system: ActorSystem,
                                                              mat: Materializer): Unit =

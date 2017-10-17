@@ -3,12 +3,13 @@ package io.chumps.orchestra
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Directives.{entity, _}
 import autowire.Core
+import io.circe.generic.auto._
 import io.chumps.orchestra.route.BackendRoutes
 import io.chumps.orchestra.AkkaImplicits._
 
 trait Jobs extends JVMApp with BackendRoutes {
 
-  def jobs: Seq[Job.Runner[_, _, _]]
+  def jobs: Seq[Job.Runner[_, _]]
 
   override lazy val routes = super.routes ~
     pathPrefix(Jobs.apiSegment) {
@@ -18,7 +19,7 @@ trait Jobs extends JVMApp with BackendRoutes {
         path(Jobs.commonSegment / Segments) { segments =>
           entity(as[String]) { entity =>
             val body = AutowireServer.read[Map[String, String]](entity)
-            val request = AutowireServer.route[CommonApi](CommonApiServer).apply(Core.Request(segments, body))
+            val request = AutowireServer.route[CommonApi](CommonApiServer)(Core.Request(segments, body))
             onSuccess(request)(complete(_))
           }
         }

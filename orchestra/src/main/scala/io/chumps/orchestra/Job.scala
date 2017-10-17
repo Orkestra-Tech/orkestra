@@ -20,7 +20,7 @@ import io.circe.shapes._
 
 import io.chumps.orchestra.ARunStatus._
 import io.chumps.orchestra.BaseEncoders._
-import io.chumps.orchestra.kubernetes.{JobUtils, PodConfig}
+import io.chumps.orchestra.kubernetes.JobUtils
 import shapeless._
 import shapeless.ops.function.FnToProduct
 
@@ -28,6 +28,7 @@ import io.chumps.orchestra.ARunStatus._
 import io.circe.parser._
 import io.circe.{Decoder, Encoder, HCursor, Json}
 import io.circe.syntax._
+import io.k8s.api.core.v1.PodSpec
 import org.scalajs.dom.ext.Ajax
 
 object Job {
@@ -48,20 +49,10 @@ object Job {
                                                                                                  name: String) {
 
     def apply(job: JobFn)(implicit fnToProd: FnToProduct.Aux[JobFn, ParamValues => Result]) =
-      Runner(this, PodConfig(), fnToProd(job))
+      Runner(this, PodSpec(Seq.empty), fnToProd(job))
 
-    def apply[Containers <: HList](podConfig: PodConfig[Containers]) = new RunnerBuilder[Containers](podConfig)
-
-    class RunnerBuilder[Containers <: HList](podConfig: PodConfig[Containers]) {
-      def apply[PodJobFn](job: PodJobFn)(
-        implicit fnToProd: FnToProduct.Aux[JobFn, ParamValues => Result],
-        podFnToProd: FnToProduct.Aux[PodJobFn, Containers => JobFn]
-      ) = Runner[ParamValues, Result, Containers](
-        Definition.this,
-        podConfig,
-        fnToProd(podFnToProd(job)(podConfig.containers))
-      )
-    }
+    def apply(podConfig: PodSpec)(job: JobFn)(implicit fnToProd: FnToProduct.Aux[JobFn, ParamValues => Result]) =
+      Runner[ParamValues, Result](Definition.this, podConfig, fnToProd(job))
 
     private[orchestra] trait Api {
       def trigger(runId: UUID, params: ParamValues, tags: Seq[String] = Seq.empty): ARunStatus
@@ -116,9 +107,9 @@ object Job {
       } yield Job.Definition[Nothing, HNil, Nothing](id, name)
   }
 
-  case class Runner[ParamValues <: HList: Encoder: Decoder, Result: Encoder: Decoder, Containers <: HList](
+  case class Runner[ParamValues <: HList: Encoder: Decoder, Result: Encoder: Decoder](
     definition: Definition[_, ParamValues, Result],
-    podConfig: PodConfig[Containers],
+    podSpec: PodSpec,
     job: ParamValues => Result
   ) {
 
@@ -159,7 +150,7 @@ object Job {
           val triggered = ARunStatus.persist(runInfo, ARunStatus.Triggered(Instant.now()))
           Files.write(OrchestraConfig.paramsFile(runInfo), AutowireServer.write(params).getBytes)
 
-          Await.result(JobUtils.create(runInfo, podConfig), Duration.Inf)
+          Await.result(JobUtils.create(runInfo, podSpec), Duration.Inf)
           triggered
         }
       }

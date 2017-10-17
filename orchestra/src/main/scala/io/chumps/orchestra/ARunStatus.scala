@@ -5,6 +5,7 @@ import java.time.Instant
 
 import scala.io.Source
 
+import io.circe.generic.auto._
 import io.circe.java8.time._
 import io.chumps.orchestra.BaseEncoders._
 

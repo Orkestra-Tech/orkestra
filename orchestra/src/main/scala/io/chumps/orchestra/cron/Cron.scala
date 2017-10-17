@@ -52,8 +52,7 @@ trait Cron extends JVMApp {
           CronJobSpec(
             schedule = cronTrigger.schedule,
             jobTemplate = JobTemplateSpec(
-              spec =
-                Option(JobSpecUtils.createJobSpec(masterPod, cronTrigger.job.definition, cronTrigger.job.podConfig))
+              spec = Option(JobSpecUtils.createJobSpec(masterPod, cronTrigger.job.definition, cronTrigger.job.podSpec))
             )
           )
         )

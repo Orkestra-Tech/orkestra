@@ -8,7 +8,7 @@ import io.circe.java8.time._
 
 trait TriggerHelpers {
 
-  implicit class TiggerableNoParamJob(job: Job.Runner[HNil, _, _]) {
+  implicit class TiggerableNoParamJob(job: Job.Runner[HNil, _]) {
     def trigger(): Unit = {
       triggerMessage(job)
       job.ApiServer.trigger(jobRunInfo(job).runId, HNil)
@@ -20,7 +20,7 @@ trait TriggerHelpers {
     }
   }
 
-  implicit class TiggerableOneParamJob[ParamValue](job: Job.Runner[ParamValue :: HNil, _, _]) {
+  implicit class TiggerableOneParamJob[ParamValue](job: Job.Runner[ParamValue :: HNil, _]) {
     def trigger(params: ParamValue): Unit = {
       triggerMessage(job)
       job.ApiServer.trigger(jobRunInfo(job).runId, params :: HNil)
@@ -32,7 +32,7 @@ trait TriggerHelpers {
     }
   }
 
-  implicit class TiggerableMultipleParamJob[ParamValues <: HList, TupledValues](job: Job.Runner[ParamValues, _, _])(
+  implicit class TiggerableMultipleParamJob[ParamValues <: HList, TupledValues](job: Job.Runner[ParamValues, _])(
     implicit tupler: Tupler.Aux[ParamValues, TupledValues],
     tupleToHList: Generic.Aux[TupledValues, ParamValues]
   ) {
@@ -47,13 +47,13 @@ trait TriggerHelpers {
     }
   }
 
-  private def triggerMessage(job: Job.Runner[_, _, _]) = println(s"Triggering ${job.definition.id.name}")
+  private def triggerMessage(job: Job.Runner[_, _]) = println(s"Triggering ${job.definition.id.name}")
 
-  private def jobRunInfo(job: Job.Runner[_ <: HList, _, _]) =
+  private def jobRunInfo(job: Job.Runner[_ <: HList, _]) =
     RunInfo(job.definition,
             OrchestraConfig.runInfo.fold(throw new IllegalStateException("ORCHESTRA_RUN_INFO should be set"))(_.runId))
 
-  private def awaitJobResult(job: Job.Runner[_ <: HList, _, _]): Unit = {
+  private def awaitJobResult(job: Job.Runner[_ <: HList, _]): Unit = {
     val runInfo = jobRunInfo(job)
     def isInProgress() = ARunStatus.current(runInfo) match {
       case _: Triggered | _: Running => true

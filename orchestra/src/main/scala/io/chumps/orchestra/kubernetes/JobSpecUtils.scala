@@ -36,7 +36,7 @@ object JobSpecUtils {
       )
     )
 
-  def createJobSpec[RunInfo: Encoder](masterPod: Pod, runInfo: RunInfo, podConfig: PodConfig[_]) = {
+  def createJobSpec[RunInfo: Encoder](masterPod: Pod, runInfo: RunInfo, podSpec: PodSpec) = {
     val masterSpec = masterPod.spec.get
     val masterContainer = masterSpec.containers.head
     val runInfoEnvVar = EnvVar("ORCHESTRA_RUN_INFO", value = Option(AutowireServer.write(runInfo)))
@@ -50,12 +50,11 @@ object JobSpecUtils {
     JobSpec(
       template = PodTemplateSpec(
         spec = Option(
-          PodSpec(
-            nodeSelector = Option(podConfig.nodeSelector),
-            containers = slaveContainer +: podConfig.containerSeq.map(createContainer(_, masterContainer)),
+          podSpec.copy(
+            slaveContainer +: podSpec.containers.map(createContainer(_, masterContainer)),
             volumes = Option(
               distinctOnName(
-                podConfig.volumes ++ masterSpec.volumes.toSeq.flatten :+ homeDirVolume :+ downwardApiVolume
+                podSpec.volumes.toSeq.flatten ++ masterSpec.volumes.toSeq.flatten :+ homeDirVolume :+ downwardApiVolume
               )
             ),
             restartPolicy = Option("Never")
