@@ -5,6 +5,6 @@ import io.chumps.orchestra.route.WebRouter.PageRoute
 
 trait Board {
   lazy val pathName: String = name.toLowerCase.replaceAll("\\s", "")
-  def name: String
-  def route: StaticDsl.Rule[PageRoute]
+  val name: String
+  def route(parentBreadcrumb: Seq[String]): StaticDsl.Rule[PageRoute]
 }

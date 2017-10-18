@@ -18,11 +18,12 @@ case class JobBoard[ParamValues <: HList: Encoder, Params <: HList](
     extends Board {
   val name = job.name
 
-  val route = RouterConfigDsl[PageRoute].buildRule { dsl =>
+  def route(parentBreadcrumb: Seq[String]) = RouterConfigDsl[PageRoute].buildRule { dsl =>
     import dsl._
-    (staticRoute(root, BoardPageRoute(this)) ~> renderR { ctrl =>
-      JobBoardPage.component(JobBoardPage.Props(job, params, ctrl))
-    }).prefixPath_/(pathName)
+    val breadcrumb = parentBreadcrumb :+ pathName
+    dynamicRoute(pathName ~ ("/" ~ uuid).option.xmap(BoardPageRoute(breadcrumb, _))(_.runId)) {
+      case p @ BoardPageRoute(bc, _) if bc == breadcrumb => p
+    } ~> dynRenderR((page, ctrl) => JobBoardPage.component(JobBoardPage.Props(job, params, page.runId, ctrl)))
   }
 }
 

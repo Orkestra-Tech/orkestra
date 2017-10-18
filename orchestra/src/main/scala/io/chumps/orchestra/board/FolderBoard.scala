@@ -8,11 +8,12 @@ import io.chumps.orchestra.route.WebRouter.{BoardPageRoute, PageRoute}
 
 case class FolderBoard(name: String, childBoards: Seq[Board]) extends Board {
 
-  def route = RouterConfigDsl[PageRoute].buildRule { dsl =>
+  def route(parentBreadcrumb: Seq[String]) = RouterConfigDsl[PageRoute].buildRule { dsl =>
     import dsl._
-    staticRoute(pathName, BoardPageRoute(this)) ~>
-      renderR(ctrl => FolderBoardPage.component(FolderBoardPage.Props(name, childBoards, ctrl))) |
-      childBoards.map(_.route).reduce(_ | _).prefixPath_/(pathName)
+    val breadcrumb = parentBreadcrumb :+ pathName
+    staticRoute(pathName, BoardPageRoute(breadcrumb)) ~>
+      renderR(ctrl => FolderBoardPage.component(FolderBoardPage.Props(name, breadcrumb, childBoards, ctrl))) |
+      childBoards.map(_.route(breadcrumb)).reduce(_ | _).prefixPath_/(pathName)
   }
 }
 

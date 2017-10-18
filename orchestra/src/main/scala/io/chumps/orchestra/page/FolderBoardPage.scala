@@ -10,7 +10,7 @@ import io.chumps.orchestra.css.Global
 import scalacss.ScalaCssReact._
 
 object FolderBoardPage {
-  case class Props(name: String, childBoards: Seq[Board], ctrl: RouterCtl[PageRoute])
+  case class Props(name: String, breadcrumb: Seq[String], childBoards: Seq[Board], ctrl: RouterCtl[PageRoute])
 
   val component =
     ScalaComponent
@@ -24,7 +24,7 @@ object FolderBoardPage {
                 <.div(Global.Style.listItem(index % 2 == 0),
                       ^.cursor.pointer,
                       ^.padding := "4px",
-                      props.ctrl.setOnClick(BoardPageRoute(board)))(board.name)
+                      props.ctrl.setOnClick(BoardPageRoute(props.breadcrumb :+ board.pathName)))(board.name)
             }
           )
         )

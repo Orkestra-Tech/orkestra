@@ -45,20 +45,21 @@ object JobBoardPage {
   case class Props[Params <: HList, ParamValues <: HList](
     job: Job.Definition[_, ParamValues, _],
     params: Params,
+    runId: Option[UUID],
     ctl: RouterCtl[PageRoute]
   )(
     implicit paramOperations: ParameterOperations[Params, ParamValues],
     encoder: Encoder[ParamValues]
   ) {
 
-    def runJob(state: (UUID, Map[Symbol, Any], Seq[TagMod], SetIntervalHandle))(event: ReactEventFromInput) =
+    def runJob(state: (UUID, Map[Symbol, Any], TagMod, SetIntervalHandle))(event: ReactEventFromInput) =
       Callback.future {
         event.preventDefault()
         job.Api.client.trigger(state._1, paramOperations.values(params, state._2)).call().map(Callback(_))
       }
 
     def displays(
-      $ : RenderScope[Props[_, _ <: HList], (UUID, Map[Symbol, Any], Seq[TagMod], SetIntervalHandle), Unit]
+      $ : RenderScope[Props[_, _ <: HList], (UUID, Map[Symbol, Any], TagMod, SetIntervalHandle), Unit]
     ) = {
       val displayState = State(kv => $.modState(s => s.copy(_2 = s._2 + kv)), key => $.state._2.get(key))
       paramOperations.displays(params, displayState).zipWithIndex.toTagMod {
@@ -70,9 +71,9 @@ object JobBoardPage {
   val component =
     ScalaComponent
       .builder[Props[_, _ <: HList]](getClass.getSimpleName)
-      .initialState[(UUID, Map[Symbol, Any], Seq[TagMod], SetIntervalHandle)] {
-        val runId = UUID.randomUUID()
-        (runId, Map(RunId.id -> runId), Seq(<.tr(<.td("Loading runs"))), null)
+      .initialStateFromProps[(UUID, Map[Symbol, Any], TagMod, SetIntervalHandle)] { props =>
+        val runId = props.runId.getOrElse(UUID.randomUUID())
+        (runId, Map(RunId.id -> runId), "Loading runs", null)
       }
       .renderP { ($, props) =>
         <.div(
@@ -82,7 +83,7 @@ object JobBoardPage {
             <.button(^.`type` := "submit")("Run")
           ),
           <.h1("History"),
-          <.div($.state._3: _*)
+          <.div($.state._3)
         )
       }
       .componentDidMount { $ =>
@@ -93,13 +94,13 @@ object JobBoardPage {
       .build
 
   private def pullRuns(
-    $ : ComponentDidMount[Props[_, _ <: HList], (UUID, Map[Symbol, Any], Seq[TagMod], SetIntervalHandle), Unit]
+    $ : ComponentDidMount[Props[_, _ <: HList], (UUID, Map[Symbol, Any], TagMod, SetIntervalHandle), Unit]
   ) = Callback.future {
     $.props.job.Api.client
       .runs(Page(None, 50)) // TODO load more as we scroll
       .call()
       .map { runs =>
-        val runDisplays = runs.zipWithIndex.map {
+        val runDisplays = runs.zipWithIndex.toTagMod {
           case ((uuid, createdAt, runStatus, stageStatuses), index) =>
             val statusDisplay = runStatus match {
               case _: Triggered    => <.div(Style.item)("Triggered")
@@ -134,11 +135,12 @@ object JobBoardPage {
               )
             )
         }
-        $.modState(_.copy(_3 = if (runDisplays.nonEmpty) runDisplays else Seq(<.div("No job ran yet"))))
+
+        $.modState(_.copy(_3 = if (runs.nonEmpty) runDisplays else "No job ran yet"))
       }
   }
 
-  def stop(job: Job.Definition[_, _, _], runId: UUID)(event: ReactEventFromInput) = Callback.future {
+  private def stop(job: Job.Definition[_, _, _], runId: UUID)(event: ReactEventFromInput) = Callback.future {
     event.stopPropagation()
     job.Api.client.stop(runId).call().map(Callback(_))
   }

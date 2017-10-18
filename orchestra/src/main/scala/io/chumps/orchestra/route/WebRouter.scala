@@ -13,21 +13,23 @@ import io.chumps.orchestra.page.{LogsPage, StatusPage}
 object WebRouter {
 
   sealed trait PageRoute
-  case class BoardPageRoute(board: Board) extends PageRoute
+  case class BoardPageRoute(breadcrumb: Seq[String], runId: Option[UUID] = None) extends PageRoute
   case class LogsPageRoute(runId: UUID) extends PageRoute
   case object StatusPageRoute extends PageRoute
 
-  def config(board: Board) = RouterConfigDsl[PageRoute].buildConfig { dsl =>
+  private def config(board: Board) = RouterConfigDsl[PageRoute].buildConfig { dsl =>
     import dsl._
 
-    val rootBoard = BoardPageRoute(board)
+    val rootBoard = BoardPageRoute(Seq(board.pathName))
     val logsRoute =
       dynamicRouteCT(uuid.caseClass[LogsPageRoute]) ~> dynRender(page => LogsPage.component(LogsPage.Props(page)))
     val statusRoute = staticRoute(root, StatusPageRoute) ~> render(StatusPage())
 
     (trimSlashes |
       (
-        board.route.prefixPath_/("boards") | logsRoute.prefixPath_/("logs") | statusRoute.prefixPath_/("status")
+        board.route(Seq.empty).prefixPath_/("boards") |
+          logsRoute.prefixPath_/("logs") |
+          statusRoute.prefixPath_/("status")
       ).prefixPath_/("#"))
       .notFound(redirectToPage(rootBoard)(Redirect.Replace))
       .renderWith { (ctl: RouterCtl[PageRoute], resolution: Resolution[PageRoute]) =>
