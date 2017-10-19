@@ -1,12 +1,12 @@
 package io.chumps.orchestra.parameter
 
-import io.chumps.orchestra.model
-
 import io.chumps.orchestra.parameter.Parameter.State
 import enumeratum._
 import japgolly.scalajs.react.vdom.TagMod
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{Callback, ReactEventFromInput}
+
+import io.chumps.orchestra.model.RunId
 
 trait Parameter[T] {
   lazy val id: Symbol = Symbol(name.toLowerCase.replaceAll("\\s", ""))
@@ -87,9 +87,4 @@ case class Select[Entry <: EnumEntry](name: String, enum: Enum[Entry], defaultVa
       )
     )
   }
-}
-
-object JobRunId extends Parameter[model.RunId] {
-  val name = "Run ID"
-  def defaultValue = None
 }

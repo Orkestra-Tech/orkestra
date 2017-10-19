@@ -12,7 +12,7 @@ import autowire._
 import io.chumps.orchestra._
 import io.chumps.orchestra.BaseEncoders._
 import io.chumps.orchestra.parameter.Parameter.State
-import io.chumps.orchestra.parameter.{JobRunId, ParameterOperations}
+import io.chumps.orchestra.parameter.ParameterOperations
 import io.chumps.orchestra.route.WebRouter.{LogsPageRoute, PageRoute}
 import io.circe._
 import io.circe.generic.auto._
@@ -55,7 +55,7 @@ object JobBoardPage {
     def runJob(state: (RunId, Map[Symbol, Any], TagMod, SetIntervalHandle))(event: ReactEventFromInput) =
       Callback.future {
         event.preventDefault()
-        job.Api.client.trigger(state._1, paramOperations.values(params, state._2)).call().map(Callback(_))
+        job.Api.client.trigger(state._1, paramOperations.values(params, state._2, state._1)).call().map(Callback(_))
       }
 
     def displays(
@@ -73,7 +73,7 @@ object JobBoardPage {
       .builder[Props[_, _ <: HList]](getClass.getSimpleName)
       .initialStateFromProps[(RunId, Map[Symbol, Any], TagMod, SetIntervalHandle)] { props =>
         val runId = props.runId.getOrElse(RunId.random())
-        (runId, Map(JobRunId.id -> runId), "Loading runs", null)
+        (runId, Map.empty, "Loading runs", null)
       }
       .renderP { ($, props) =>
         <.div(
