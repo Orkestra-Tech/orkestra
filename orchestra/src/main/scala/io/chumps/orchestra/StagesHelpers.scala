@@ -5,7 +5,7 @@ import java.time.Instant
 
 import scala.util.DynamicVariable
 
-import io.chumps.orchestra.AStageStatus.{StageEnd, StageStart}
+import io.chumps.orchestra.AStageStatus._
 
 trait StagesHelpers {
 

@@ -1,20 +1,19 @@
 package io.chumps.orchestra.route
 
-import java.util.UUID
-
 import japgolly.scalajs.react.extra.router.{Resolution, RouterConfigDsl, RouterCtl, _}
 import japgolly.scalajs.react.vdom.html_<^._
 
 import io.chumps.orchestra.component.{Footer, TopNav}
 import io.chumps.orchestra._
 import io.chumps.orchestra.board.Board
+import io.chumps.orchestra.model.RunId
 import io.chumps.orchestra.page.{LogsPage, StatusPage}
 
 object WebRouter {
 
   sealed trait PageRoute
-  case class BoardPageRoute(breadcrumb: Seq[String], runId: Option[UUID] = None) extends PageRoute
-  case class LogsPageRoute(runId: UUID) extends PageRoute
+  case class BoardPageRoute(breadcrumb: Seq[String], runId: Option[RunId] = None) extends PageRoute
+  case class LogsPageRoute(runId: RunId) extends PageRoute
   case object StatusPageRoute extends PageRoute
 
   private def config(board: Board) = RouterConfigDsl[PageRoute].buildConfig { dsl =>
@@ -22,7 +21,9 @@ object WebRouter {
 
     val rootBoard = BoardPageRoute(Seq(board.pathName))
     val logsRoute =
-      dynamicRouteCT(uuid.caseClass[LogsPageRoute]) ~> dynRender(page => LogsPage.component(LogsPage.Props(page)))
+      dynamicRouteCT(uuid.xmap(uuid => LogsPageRoute(RunId(uuid)))(_.runId.value)) ~> dynRender(
+        page => LogsPage.component(LogsPage.Props(page))
+      )
     val statusRoute = staticRoute(root, StatusPageRoute) ~> render(StatusPage())
 
     (trimSlashes |

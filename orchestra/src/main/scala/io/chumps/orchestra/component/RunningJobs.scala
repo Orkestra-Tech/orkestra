@@ -8,10 +8,11 @@ import japgolly.scalajs.react.component.builder.Lifecycle.RenderScope
 import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
 
-import io.chumps.orchestra.{CommonApi, RunInfo}
+import io.chumps.orchestra.CommonApi
 import io.circe.generic.auto._
 
 import io.chumps.orchestra.css.Global
+import io.chumps.orchestra.model.RunInfo
 
 object RunningJobs {
 

@@ -10,4 +10,7 @@ package object orchestra
     with DirectoryHelpers
     with ShellHelpers
     with TriggerHelpers
-    with StagesHelpers
+    with StagesHelpers {
+
+  implicit def autoTuple1[T](o: T): Tuple1[T] = Tuple1(o)
+}

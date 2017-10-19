@@ -7,14 +7,16 @@ import scala.scalajs.js.Dynamic._
 import scala.scalajs.js.timers.SetIntervalHandle
 
 import autowire._
-
 import io.circe.generic.auto._
-import io.chumps.orchestra.{CommonApi, Page, Utils}
+
+import io.chumps.orchestra.{CommonApi, Utils}
 import io.chumps.orchestra.route.WebRouter.LogsPageRoute
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.component.builder.Lifecycle.ComponentDidMount
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.{document, window}
+
+import io.chumps.orchestra.model.Page
 
 object LogsPage {
   case class Props(page: LogsPageRoute)

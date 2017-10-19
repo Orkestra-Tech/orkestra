@@ -1,7 +1,6 @@
 package io.chumps.orchestra.page
 
 import java.time.Instant
-import java.util.UUID
 
 import scala.concurrent.duration._
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
@@ -11,10 +10,9 @@ import scala.scalajs.js
 import autowire._
 
 import io.chumps.orchestra._
-import io.chumps.orchestra.ARunStatus._
 import io.chumps.orchestra.BaseEncoders._
 import io.chumps.orchestra.parameter.Parameter.State
-import io.chumps.orchestra.parameter.{ParameterOperations, RunId}
+import io.chumps.orchestra.parameter.{JobRunId, ParameterOperations}
 import io.chumps.orchestra.route.WebRouter.{LogsPageRoute, PageRoute}
 import io.circe._
 import io.circe.generic.auto._
@@ -29,6 +27,8 @@ import scalacss.ProdDefaults._
 import scalacss.ScalaCssReact._
 
 import io.chumps.orchestra.css.Global
+import io.chumps.orchestra.ARunStatus._
+import io.chumps.orchestra.model.{Page, RunId}
 
 object JobBoardPage {
   val CssSettings = scalacss.devOrProdDefaults; import CssSettings._
@@ -45,21 +45,21 @@ object JobBoardPage {
   case class Props[Params <: HList, ParamValues <: HList](
     job: Job.Definition[_, ParamValues, _],
     params: Params,
-    runId: Option[UUID],
+    runId: Option[RunId],
     ctl: RouterCtl[PageRoute]
   )(
     implicit paramOperations: ParameterOperations[Params, ParamValues],
     encoder: Encoder[ParamValues]
   ) {
 
-    def runJob(state: (UUID, Map[Symbol, Any], TagMod, SetIntervalHandle))(event: ReactEventFromInput) =
+    def runJob(state: (RunId, Map[Symbol, Any], TagMod, SetIntervalHandle))(event: ReactEventFromInput) =
       Callback.future {
         event.preventDefault()
         job.Api.client.trigger(state._1, paramOperations.values(params, state._2)).call().map(Callback(_))
       }
 
     def displays(
-      $ : RenderScope[Props[_, _ <: HList], (UUID, Map[Symbol, Any], TagMod, SetIntervalHandle), Unit]
+      $ : RenderScope[Props[_, _ <: HList], (RunId, Map[Symbol, Any], TagMod, SetIntervalHandle), Unit]
     ) = {
       val displayState = State(kv => $.modState(s => s.copy(_2 = s._2 + kv)), key => $.state._2.get(key))
       paramOperations.displays(params, displayState).zipWithIndex.toTagMod {
@@ -71,9 +71,9 @@ object JobBoardPage {
   val component =
     ScalaComponent
       .builder[Props[_, _ <: HList]](getClass.getSimpleName)
-      .initialStateFromProps[(UUID, Map[Symbol, Any], TagMod, SetIntervalHandle)] { props =>
-        val runId = props.runId.getOrElse(UUID.randomUUID())
-        (runId, Map(RunId.id -> runId), "Loading runs", null)
+      .initialStateFromProps[(RunId, Map[Symbol, Any], TagMod, SetIntervalHandle)] { props =>
+        val runId = props.runId.getOrElse(RunId.random())
+        (runId, Map(JobRunId.id -> runId), "Loading runs", null)
       }
       .renderP { ($, props) =>
         <.div(
@@ -94,17 +94,17 @@ object JobBoardPage {
       .build
 
   private def pullRuns(
-    $ : ComponentDidMount[Props[_, _ <: HList], (UUID, Map[Symbol, Any], TagMod, SetIntervalHandle), Unit]
+    $ : ComponentDidMount[Props[_, _ <: HList], (RunId, Map[Symbol, Any], TagMod, SetIntervalHandle), Unit]
   ) = Callback.future {
     $.props.job.Api.client
       .runs(Page(None, 50)) // TODO load more as we scroll
       .call()
       .map { runs =>
         val runDisplays = runs.zipWithIndex.toTagMod {
-          case ((uuid, createdAt, runStatus, stageStatuses), index) =>
+          case ((runId, createdAt, runStatus, stageStatuses), index) =>
             val statusDisplay = runStatus match {
               case _: Triggered    => <.div(Style.item)("Triggered")
-              case _: Running      => <.button(^.onClick ==> stop($.props.job, uuid))("X")
+              case _: Running      => <.button(^.onClick ==> stop($.props.job, runId))("X")
               case _: Success      => <.span(Style.item)("Success")
               case _: Failure      => <.span(Style.item)("Failure")
               case _: Stopped.type => <.span(Style.item)("Stopped")
@@ -112,9 +112,9 @@ object JobBoardPage {
 
             <.div(Global.Style.listItem(index % 2 == 0),
                   ^.cursor.pointer,
-                  ^.onClick --> $.props.ctl.set(LogsPageRoute(uuid)))(
+                  ^.onClick --> $.props.ctl.set(LogsPageRoute(runId)))(
               <.div(
-                <.span(Style.item, ^.backgroundColor := Global.Style.brandColor.value)(uuid.toString),
+                <.span(Style.item, ^.backgroundColor := Global.Style.brandColor.value)(runId.toString),
                 <.span(Style.item)(createdAt.toString),
                 statusDisplay
               ),
@@ -140,7 +140,7 @@ object JobBoardPage {
       }
   }
 
-  private def stop(job: Job.Definition[_, _, _], runId: UUID)(event: ReactEventFromInput) = Callback.future {
+  private def stop(job: Job.Definition[_, _, _], runId: RunId)(event: ReactEventFromInput) = Callback.future {
     event.stopPropagation()
     job.Api.client.stop(runId).call().map(Callback(_))
   }

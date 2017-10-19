@@ -1,9 +1,8 @@
 package io.chumps.orchestra
 
-import java.io.{FileOutputStream, _}
+import java.io.FileOutputStream
 import java.nio.file.Files
 import java.time.{Instant, LocalDateTime, ZoneOffset}
-import java.util.UUID
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContext, Future}
@@ -13,7 +12,6 @@ import scala.language.{higherKinds, implicitConversions}
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import autowire.Core
-import io.circe.Decoder.Result
 import io.circe.generic.auto._
 import io.circe.java8.time._
 import io.circe.shapes._
@@ -24,12 +22,13 @@ import io.chumps.orchestra.kubernetes.JobUtils
 import shapeless._
 import shapeless.ops.function.FnToProduct
 
-import io.chumps.orchestra.ARunStatus._
 import io.circe.parser._
 import io.circe.{Decoder, Encoder, HCursor, Json}
 import io.circe.syntax._
 import io.k8s.api.core.v1.PodSpec
 import org.scalajs.dom.ext.Ajax
+
+import io.chumps.orchestra.model._
 
 object Job {
 
@@ -55,10 +54,10 @@ object Job {
       Runner[ParamValues, Result](Definition.this, podConfig, fnToProd(job))
 
     private[orchestra] trait Api {
-      def trigger(runId: UUID, params: ParamValues, tags: Seq[String] = Seq.empty): ARunStatus
-      def stop(runId: UUID): Unit
+      def trigger(runId: RunId, params: ParamValues, tags: Seq[String] = Seq.empty): ARunStatus
+      def stop(runId: RunId): Unit
       def tags(): Seq[String]
-      def runs(page: Page[Instant]): Seq[(UUID, Instant, ARunStatus, Seq[AStageStatus])]
+      def runs(page: Page[Instant]): Seq[(RunId, Instant, ARunStatus, Seq[AStageStatus])]
     }
 
     private[orchestra] object Api {
@@ -141,7 +140,7 @@ object Job {
     }
 
     private[orchestra] object ApiServer extends definition.Api {
-      override def trigger(runId: UUID, params: ParamValues, tags: Seq[String] = Seq.empty): ARunStatus = {
+      override def trigger(runId: RunId, params: ParamValues, tags: Seq[String] = Seq.empty): ARunStatus = {
         val runInfo = RunInfo(definition, runId)
         if (OrchestraConfig.statusFile(runInfo).toFile.exists()) ARunStatus.current(runInfo)
         else {
@@ -155,11 +154,11 @@ object Job {
         }
       }
 
-      override def stop(runId: UUID): Unit = JobUtils.delete(RunInfo(definition, runId))
+      override def stop(runId: RunId): Unit = JobUtils.delete(RunInfo(definition, runId))
 
       override def tags(): Seq[String] = OrchestraConfig.tagsDir(definition.id).toFile.list()
 
-      override def runs(page: Page[Instant]): Seq[(UUID, Instant, ARunStatus, Seq[AStageStatus])] = {
+      override def runs(page: Page[Instant]): Seq[(RunId, Instant, ARunStatus, Seq[AStageStatus])] = {
         val from = page.from.fold(LocalDateTime.MAX)(LocalDateTime.ofInstant(_, ZoneOffset.UTC))
 
         val runs = for {
@@ -178,7 +177,7 @@ object Job {
             .dropWhile(_.getName.toInt > from.toEpochSecond(ZoneOffset.UTC))
           runId <- secondDir.list().toStream
 
-          runInfo = RunInfo(definition, UUID.fromString(runId))
+          runInfo = RunInfo(definition, RunId(runId))
           if OrchestraConfig.statusFile(runInfo).toFile.exists()
           at <- ARunStatus.history(runInfo).headOption.map {
             case status: Triggered => status.at

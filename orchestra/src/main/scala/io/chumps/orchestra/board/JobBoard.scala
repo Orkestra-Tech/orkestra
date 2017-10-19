@@ -7,6 +7,7 @@ import shapeless._
 import shapeless.ops.hlist.{Comapped, Mapper}
 
 import io.chumps.orchestra._
+import io.chumps.orchestra.model.RunId
 import io.chumps.orchestra.page.JobBoardPage
 import io.chumps.orchestra.parameter.{Parameter, ParameterOperations}
 import io.chumps.orchestra.route.WebRouter.{BoardPageRoute, PageRoute}
@@ -21,7 +22,9 @@ case class JobBoard[ParamValues <: HList: Encoder, Params <: HList](
   def route(parentBreadcrumb: Seq[String]) = RouterConfigDsl[PageRoute].buildRule { dsl =>
     import dsl._
     val breadcrumb = parentBreadcrumb :+ pathName
-    dynamicRoute(pathName ~ ("/" ~ uuid).option.xmap(BoardPageRoute(breadcrumb, _))(_.runId)) {
+    dynamicRoute(
+      pathName ~ ("/" ~ uuid).option.xmap(uuid => BoardPageRoute(breadcrumb, uuid.map(RunId(_))))(_.runId.map(_.value))
+    ) {
       case p @ BoardPageRoute(bc, _) if bc == breadcrumb => p
     } ~> dynRenderR((page, ctrl) => JobBoardPage.component(JobBoardPage.Props(job, params, page.runId, ctrl)))
   }

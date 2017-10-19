@@ -9,7 +9,6 @@ import scalacss.ProdDefaults._
 import scalacss.ScalaCssReact._
 
 import io.chumps.orchestra.css.Global
-import io.chumps.orchestra.model.PageMenu
 import io.chumps.orchestra.route.WebRouter.{BoardPageRoute, PageRoute, StatusPageRoute}
 
 object TopNav {
@@ -32,6 +31,8 @@ object TopNav {
       )
     }
   }
+
+  case class PageMenu(name: String, route: PageRoute)
 
   case class Props(rootBoard: BoardPageRoute, selectedPage: PageRoute, ctl: RouterCtl[PageRoute])
 

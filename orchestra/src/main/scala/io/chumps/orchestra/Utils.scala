@@ -4,6 +4,8 @@ import java.io.PrintStream
 import java.nio.file.{Files, Paths}
 import java.time.{LocalDateTime, ZoneOffset}
 
+import io.chumps.orchestra.model.RunInfo
+
 object Utils {
 
   /** Sets the standard out and err across all thread.

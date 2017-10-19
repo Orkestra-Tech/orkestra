@@ -1,7 +1,5 @@
 package io.chumps.orchestra
 
-import java.util.UUID
-
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 import scala.io.Source
@@ -10,12 +8,12 @@ import io.circe._
 import io.circe.parser._
 import io.circe.syntax._
 import org.scalajs.dom.ext.Ajax
-import shapeless.HList
 
 import io.chumps.orchestra.kubernetes.Kubernetes
+import io.chumps.orchestra.model.{Page, RunId, RunInfo}
 
 trait CommonApi {
-  def logs(runId: UUID, page: Page[Int]): Seq[(Option[Symbol], String)]
+  def logs(runId: RunId, page: Page[Int]): Seq[(Option[Symbol], String)]
   def runningJobs(): Seq[RunInfo]
 }
 
@@ -43,7 +41,7 @@ object CommonApi {
 object CommonApiServer extends CommonApi {
   import AkkaImplicits._
 
-  override def logs(runId: UUID, page: Page[Int]): Seq[(Option[Symbol], String)] = {
+  override def logs(runId: RunId, page: Page[Int]): Seq[(Option[Symbol], String)] = {
     val stageRegex = s"(.*)${StagesHelpers.delimiter}(.+)".r
     Seq(OrchestraConfig.logsFile(runId).toFile)
       .filter(_.exists())
@@ -71,6 +69,6 @@ object CommonApiServer extends CommonApi {
       envs <- container.env
       env <- envs.find(_.name == "ORCHESTRA_RUN_INFO")
       runInfoJson <- env.value
-    } yield RunInfo.decodeWithFallbackRunId(runInfoJson, UUID.fromString(job.metadata.get.uid.get))
+    } yield RunInfo.decodeWithFallbackRunId(runInfoJson, RunId(job.metadata.get.uid.get))
   }
 }

@@ -6,6 +6,8 @@ import io.k8s.api.batch.v1.{Job => KubeJob}
 import io.k8s.api.core.v1.PodSpec
 import io.k8s.apimachinery.pkg.apis.meta.v1.{DeleteOptions, ObjectMeta}
 
+import io.chumps.orchestra.model.RunInfo
+
 object JobUtils {
 
   def jobName(runInfo: RunInfo) =

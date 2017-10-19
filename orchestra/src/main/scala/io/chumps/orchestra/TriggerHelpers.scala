@@ -2,9 +2,9 @@ package io.chumps.orchestra
 
 import shapeless._
 import shapeless.ops.hlist.Tupler
-import io.circe.generic.auto._
+
 import io.chumps.orchestra.ARunStatus._
-import io.circe.java8.time._
+import io.chumps.orchestra.model.{RunId, RunInfo}
 
 trait TriggerHelpers {
 
@@ -20,25 +20,30 @@ trait TriggerHelpers {
     }
   }
 
-  implicit class TiggerableOneParamJob[ParamValue](job: Job.Runner[ParamValue :: HNil, _]) {
-    def trigger(params: ParamValue): Unit = {
+  implicit class TiggerableRunIdJob(job: Job.Runner[RunId :: HNil, _]) {
+    def trigger(): Unit = {
       triggerMessage(job)
-      job.ApiServer.trigger(jobRunInfo(job).runId, params :: HNil)
+      val runId = jobRunInfo(job).runId
+      job.ApiServer.trigger(runId, runId :: HNil)
     }
 
-    def triggerAndAwait(params: ParamValue): Unit = {
-      trigger(params)
+    def triggerAndAwait(): Unit = {
+      trigger()
       awaitJobResult(job)
     }
   }
 
-  implicit class TiggerableMultipleParamJob[ParamValues <: HList, TupledValues](job: Job.Runner[ParamValues, _])(
-    implicit tupler: Tupler.Aux[ParamValues, TupledValues],
-    tupleToHList: Generic.Aux[TupledValues, ParamValues]
+  implicit class TiggerableMultipleParamJob[ParamValues <: HList, ParamValuesNoRunId <: HList, TupledValues](
+    job: Job.Runner[ParamValues, _]
+  )(
+    implicit runIdInjector: RunIdInjector[ParamValuesNoRunId, ParamValues],
+    tupler: Tupler.Aux[ParamValuesNoRunId, TupledValues],
+    tupleToHList: Generic.Aux[TupledValues, ParamValuesNoRunId]
   ) {
     def trigger(params: TupledValues): Unit = {
       triggerMessage(job)
-      job.ApiServer.trigger(jobRunInfo(job).runId, tupleToHList.to(params))
+      val runId = jobRunInfo(job).runId
+      job.ApiServer.trigger(runId, runIdInjector(tupleToHList.to(params), runId))
     }
 
     def triggerAndAwait(params: TupledValues): Unit = {
@@ -67,5 +72,32 @@ trait TriggerHelpers {
       case Failure(_, e) => throw new IllegalStateException(s"Run of job ${runInfo.job.id.name} failed", e)
       case s             => throw new IllegalStateException(s"Run of job ${runInfo.job.id.name} failed with status $s")
     }
+  }
+}
+
+trait RunIdInjector[ParamValuesNoRunId <: HList, ParamValues <: HList] {
+  def apply(params: ParamValuesNoRunId, runId: RunId): ParamValues
+}
+
+object RunIdInjector {
+  implicit val hNil = new RunIdInjector[HNil, HNil] {
+    override def apply(params: HNil, runId: RunId) = HNil
+  }
+
+  implicit def hConsRunId[ParamValuesNoRunId <: HList, TailParamValues <: HList](
+    implicit tailParamOperations: RunIdInjector[ParamValuesNoRunId, TailParamValues]
+  ) = new RunIdInjector[ParamValuesNoRunId, RunId :: TailParamValues] {
+
+    override def apply(valuesNoRunId: ParamValuesNoRunId, runId: RunId) =
+      runId :: tailParamOperations(valuesNoRunId, runId)
+  }
+
+  implicit def hCons[HeadParamValue, TailParamValuesNoRunId <: HList, TailParamValues <: HList](
+    implicit tailParamOperations: RunIdInjector[TailParamValuesNoRunId, TailParamValues],
+    ev: HeadParamValue <:!< RunId
+  ) = new RunIdInjector[HeadParamValue :: TailParamValuesNoRunId, HeadParamValue :: TailParamValues] {
+
+    override def apply(params: HeadParamValue :: TailParamValuesNoRunId, runId: RunId) =
+      params.head :: tailParamOperations(params.tail, runId)
   }
 }

@@ -1,6 +1,6 @@
 package io.chumps.orchestra.parameter
 
-import java.util.UUID
+import io.chumps.orchestra.model
 
 import io.chumps.orchestra.parameter.Parameter.State
 import enumeratum._
@@ -89,7 +89,7 @@ case class Select[Entry <: EnumEntry](name: String, enum: Enum[Entry], defaultVa
   }
 }
 
-object RunId extends Parameter[UUID] {
+object JobRunId extends Parameter[model.RunId] {
   val name = "Run ID"
   def defaultValue = None
 }

@@ -2,11 +2,12 @@ package io.chumps.orchestra
 
 import java.io.IOException
 import java.nio.file.Paths
-import java.util.UUID
 
 import scala.io.Source
 
 import akka.http.scaladsl.model.Uri
+
+import io.chumps.orchestra.model.{RunId, RunInfo}
 
 object OrchestraConfig {
   def apply(envVar: String) = Option(System.getenv(s"ORCHESTRA_$envVar")).filter(_.nonEmpty)
@@ -36,7 +37,7 @@ object OrchestraConfig {
       .fromFile(Paths.get(OrchestraConfig.downwardApi.toString, "labels").toFile)
       .getLines()
       .collectFirst {
-        case controllerUidRegex(jobUid) => UUID.fromString(jobUid)
+        case controllerUidRegex(jobUid) => RunId(jobUid)
       }
       .getOrElse(throw new IOException("Cannot find label controller-uid"))
   }
@@ -44,9 +45,9 @@ object OrchestraConfig {
   lazy val downwardApi = Paths.get("/var/run/downward-api")
   val jobsDirName = "jobs"
   val runsDirName = "runs"
-  def runDir(runId: UUID) = Paths.get(home, runsDirName, runId.toString)
-  def logsFile(runId: UUID) = Paths.get(runDir(runId).toString, "logs")
-  def stagesFile(runId: UUID) = Paths.get(runDir(runId).toString, "stages")
+  def runDir(runId: RunId) = Paths.get(home, runsDirName, runId.value.toString)
+  def logsFile(runId: RunId) = Paths.get(runDir(runId).toString, "logs")
+  def stagesFile(runId: RunId) = Paths.get(runDir(runId).toString, "stages")
   def jobDir(jobId: Symbol) = Paths.get(home, jobsDirName, jobId.name)
   def jobRunsDir(jobId: Symbol) = Paths.get(jobDir(jobId).toString, runsDirName)
   def jobRunDir(runInfo: RunInfo) = Paths.get(jobRunsDir(runInfo.job.id).toString, runInfo.runId.toString)
