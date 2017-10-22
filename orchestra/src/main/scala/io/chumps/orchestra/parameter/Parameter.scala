@@ -6,8 +6,6 @@ import japgolly.scalajs.react.vdom.TagMod
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{Callback, ReactEventFromInput}
 
-import io.chumps.orchestra.model.RunId
-
 trait Parameter[T] {
   lazy val id: Symbol = Symbol(name.toLowerCase.replaceAll("\\s", ""))
   def name: String
@@ -39,7 +37,7 @@ case class Input[T: Converter](name: String, defaultValue: Option[T] = None) ext
       <.span(name),
       <.input.text(
         ^.key := id.name,
-        ^.value :=? state.get(id).map(_.asInstanceOf[T]).orElse(defaultValue).map(_.toString),
+        ^.value := state.get(id).map(_.asInstanceOf[T]).orElse(defaultValue).fold("")(_.toString),
         ^.onChange ==> modValue
       )
     )
@@ -58,7 +56,7 @@ case class Checkbox(name: String, checked: Boolean = false) extends Parameter[Bo
     <.label(^.display.block)(
       <.input.checkbox(
         ^.key := id.name,
-        ^.checked :=? state.get(id).map(_.asInstanceOf[Boolean]).orElse(defaultValue),
+        ^.checked := state.get(id).map(_.asInstanceOf[Boolean]).orElse(defaultValue).getOrElse(false),
         ^.onChange ==> modValue
       ),
       <.span(name)

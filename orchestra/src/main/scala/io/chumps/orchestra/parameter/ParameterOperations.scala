@@ -29,8 +29,7 @@ object ParameterOperations {
   }
 
   implicit def hCons[HeadParam <: Parameter[HeadParamValue], TailParams <: HList, HeadParamValue, TailParamValues <: HList](
-    implicit tailParamOperations: ParameterOperations[TailParams, TailParamValues],
-    ev: HeadParamValue <:!< RunId
+    implicit tailParamOperations: ParameterOperations[TailParams, TailParamValues]
   ) = new ParameterOperations[HeadParam :: TailParams, HeadParamValue :: TailParamValues] {
     override def displays(params: HeadParam :: TailParams, state: State) =
       params.head.display(state) +: tailParamOperations.displays(params.tail, state)

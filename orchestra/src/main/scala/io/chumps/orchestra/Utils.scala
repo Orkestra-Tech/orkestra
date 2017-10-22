@@ -36,7 +36,7 @@ object Utils {
       tags.foreach { tag =>
         val tagDir = OrchestraConfig.tagDir(runInfo.job.id, tag)
         tagDir.toFile.mkdirs()
-        Files.createSymbolicLink(Paths.get(tagDir.toString, runInfo.runId.toString), runDir)
+        Files.createSymbolicLink(Paths.get(tagDir.toString, runInfo.runId.value.toString), runDir)
       }
 
       val now = LocalDateTime.now()
@@ -46,7 +46,7 @@ object Utils {
              now.getDayOfYear.toString,
              now.toEpochSecond(ZoneOffset.UTC).toString)
       dateDir.toFile.mkdirs()
-      Files.createSymbolicLink(Paths.get(dateDir.toString, runInfo.runId.toString), runDir)
+      Files.createSymbolicLink(Paths.get(dateDir.toString, runInfo.runId.value.toString), runDir)
     }
   }
 

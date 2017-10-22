@@ -6,6 +6,7 @@ import scala.concurrent.duration._
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.scalajs.js.timers.SetIntervalHandle
 import scala.scalajs.js
+import scala.util.Try
 
 import autowire._
 
@@ -52,10 +53,15 @@ object JobBoardPage {
     encoder: Encoder[ParamValues]
   ) {
 
-    def runJob(state: (RunId, Map[Symbol, Any], TagMod, SetIntervalHandle))(event: ReactEventFromInput) =
+    def runJob(
+      $ : RenderScope[Props[_, _ <: HList], (RunId, Map[Symbol, Any], TagMod, SetIntervalHandle), Unit]
+    )(event: ReactEventFromInput) =
       Callback.future {
         event.preventDefault()
-        job.Api.client.trigger(state._1, paramOperations.values(params, state._2, state._1)).call().map(Callback(_))
+        job.Api.client
+          .trigger($.state._1, paramOperations.values(params, $.state._2, $.state._1))
+          .call()
+          .map(_ => $.modState(_.copy(_1 = RunId.random(), _2 = Map.empty)))
       }
 
     def displays(
@@ -78,7 +84,7 @@ object JobBoardPage {
       .renderP { ($, props) =>
         <.div(
           <.h1(props.job.name),
-          <.form(^.onSubmit ==> props.runJob($.state))(
+          <.form(^.onSubmit ==> props.runJob($))(
             props.displays($),
             <.button(^.`type` := "submit")("Run")
           ),
@@ -103,35 +109,36 @@ object JobBoardPage {
         val runDisplays = runs.zipWithIndex.toTagMod {
           case ((runId, createdAt, runStatus, stageStatuses), index) =>
             val statusDisplay = runStatus match {
-              case _: Triggered    => <.div(Style.item)("Triggered")
-              case _: Running      => <.button(^.onClick ==> stop($.props.job, runId))("X")
-              case _: Success      => <.span(Style.item)("Success")
-              case _: Failure      => <.span(Style.item)("Failure")
-              case _: Stopped.type => <.span(Style.item)("Stopped")
+              case Triggered(_)  => <.div(Style.item)("Triggered")
+              case Running(_)    => <.button(^.onClick ==> stop($.props.job, runId))("X")
+              case Success(_)    => <.span(Style.item)("Success")
+              case Failure(_, t) => <.span(Style.item, ^.title := t.getMessage)("Failure")
+              case Stopped       => <.span(Style.item)("Stopped")
             }
 
             <.div(Global.Style.listItem(index % 2 == 0),
                   ^.cursor.pointer,
                   ^.onClick --> $.props.ctl.set(LogsPageRoute(runId)))(
               <.div(
-                <.span(Style.item, ^.backgroundColor := Global.Style.brandColor.value)(runId.toString),
+                <.span(Style.item, ^.backgroundColor := Global.Style.brandColor.value)(runId.value.toString),
                 <.span(Style.item)(createdAt.toString),
                 statusDisplay
               ),
               <.div(
                 stageStatuses
                   .groupBy(_.name)
+                  .values
+                  .map(statuses => (statuses.head.name, statuses.head.at, statuses.tail.headOption.map(_.at)))
+                  .toSeq
+                  .sortBy(_._2)
                   .map {
-                    case (name, statuses) if statuses.size == 2 =>
-                      <.span(Style.item, ^.backgroundColor := Utils.generateColour(name))(
-                        s"$name ${statuses.last.at.getEpochSecond - statuses.head.at.getEpochSecond}s"
-                      )
-                    case (name, statuses) =>
-                      <.span(Style.item, ^.backgroundColor := Utils.generateColour(name))(
-                        s"$name ${Instant.now().getEpochSecond - statuses.head.at.getEpochSecond}s"
-                      )
-                  }
-                  .toSeq: _*
+                    case (name, start, end) =>
+                      val time =
+                        if (runStatus == Stopped) ""
+                        else s" ${end.getOrElse(Instant.now()).getEpochSecond - start.getEpochSecond}s"
+
+                      <.span(Style.item, ^.backgroundColor := Utils.generateColour(name))(s"$name$time")
+                  }: _*
               )
             )
         }
