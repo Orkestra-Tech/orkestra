@@ -89,7 +89,7 @@ object Github extends LazyLogging {
             CheckStatus(
               state,
               s"${OrchestraConfig.url}/#/logs/${OrchestraConfig.runInfo
-                .fold(throw new IllegalStateException("ORCHESTRA_RUN_INFO should be set"))(_.runId)}",
+                .fold(throw new IllegalStateException("ORCHESTRA_RUN_INFO should be set"))(_.runId.value)}",
               state.description,
               s"${BuildInfo.name.toLowerCase}/pull-request"
             ).asJson.noSpaces
