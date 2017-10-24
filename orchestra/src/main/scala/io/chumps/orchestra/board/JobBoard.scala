@@ -1,6 +1,6 @@
 package io.chumps.orchestra.board
 
-import io.circe.Encoder
+import io.circe.{Decoder, Encoder}
 import japgolly.scalajs.react.extra.router.RouterConfigDsl
 import japgolly.scalajs.react.vdom.html_<^._
 import shapeless._
@@ -11,7 +11,7 @@ import io.chumps.orchestra.page.JobBoardPage
 import io.chumps.orchestra.parameter.{Parameter, ParameterOperations}
 import io.chumps.orchestra.route.WebRouter.{BoardPageRoute, PageRoute}
 
-case class JobBoard[ParamValues <: HList: Encoder, Params <: HList](
+case class JobBoard[ParamValues <: HList: Encoder: Decoder, Params <: HList](
   job: Job.Definition[_, ParamValues, _],
   params: Params
 )(implicit paramGetter: ParameterOperations[Params, ParamValues])
@@ -39,7 +39,7 @@ object JobBoard {
   )(implicit dummyImplicit: DummyImplicit): JobBoard[RunId :: HNil, HNil] =
     JobBoard[RunId :: HNil, HNil](job, HNil)
 
-  def apply[Param <: Parameter[ParamValue], ParamValue: Encoder](
+  def apply[Param <: Parameter[ParamValue], ParamValue: Encoder: Decoder](
     job: Job.Definition[_, ParamValue :: HNil, _]
   )(
     param: Param
@@ -48,7 +48,7 @@ object JobBoard {
   ): JobBoard[ParamValue :: HNil, Param :: HNil] =
     JobBoard(job, param :: HNil)
 
-  def apply[Param <: Parameter[ParamValue], ParamValue: Encoder](
+  def apply[Param <: Parameter[ParamValue], ParamValue: Encoder: Decoder](
     job: Job.Definition[_, ParamValue :: RunId :: HNil, _]
   )(
     param: Param
@@ -58,7 +58,7 @@ object JobBoard {
   ): JobBoard[ParamValue :: RunId :: HNil, Param :: HNil] =
     JobBoard(job, param :: HNil)
 
-  def apply[Param <: Parameter[ParamValue], ParamValue: Encoder](
+  def apply[Param <: Parameter[ParamValue], ParamValue: Encoder: Decoder](
     job: Job.Definition[_, RunId :: ParamValue :: HNil, _]
   )(
     param: Param
@@ -69,7 +69,7 @@ object JobBoard {
   ): JobBoard[RunId :: ParamValue :: HNil, Param :: HNil] =
     JobBoard(job, param :: HNil)
 
-  def apply[TupledParams, Params <: HList, ParamValues <: HList: Encoder](
+  def apply[TupledParams, Params <: HList, ParamValues <: HList: Encoder: Decoder](
     job: Job.Definition[_, ParamValues, _]
   )(
     params: TupledParams

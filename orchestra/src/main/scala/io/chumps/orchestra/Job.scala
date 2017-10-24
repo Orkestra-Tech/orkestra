@@ -57,7 +57,7 @@ object Job {
       def trigger(runId: RunId, params: ParamValues, tags: Seq[String] = Seq.empty): ARunStatus
       def stop(runId: RunId): Unit
       def tags(): Seq[String]
-      def runs(page: Page[Instant]): Seq[(RunId, Instant, ARunStatus, Seq[AStageStatus])]
+      def runs(page: Page[Instant]): Seq[(RunId, Instant, ParamValues, ARunStatus, Seq[AStageStatus])]
     }
 
     private[orchestra] object Api {
@@ -158,7 +158,7 @@ object Job {
 
       override def tags(): Seq[String] = OrchestraConfig.tagsDir(definition.id).toFile.list()
 
-      override def runs(page: Page[Instant]): Seq[(RunId, Instant, ARunStatus, Seq[AStageStatus])] = {
+      override def runs(page: Page[Instant]): Seq[(RunId, Instant, ParamValues, ARunStatus, Seq[AStageStatus])] = {
         val from = page.from.fold(LocalDateTime.MAX)(LocalDateTime.ofInstant(_, ZoneOffset.UTC))
 
         val runs = for {
@@ -179,13 +179,18 @@ object Job {
 
           runInfo = RunInfo(definition, RunId(runId))
           if OrchestraConfig.statusFile(runInfo).toFile.exists()
-          at <- ARunStatus.history(runInfo).headOption.map {
+          startAt <- ARunStatus.history(runInfo).headOption.map {
             case status: Triggered => status.at
             case status: Running   => status.at
             case status =>
               throw new IllegalStateException(s"$status is not of status type ${classOf[Triggered].getName}")
           }
-        } yield (runInfo.runId, at, ARunStatus.current(runInfo), AStageStatus.history(runInfo.runId))
+
+          paramFile = OrchestraConfig.paramsFile(runInfo).toFile
+          paramValues = if (paramFile.exists())
+            decode[ParamValues](Source.fromFile(paramFile).mkString).fold(throw _, identity)
+          else HNil.asInstanceOf[ParamValues]
+        } yield (runInfo.runId, startAt, paramValues, ARunStatus.current(runInfo), AStageStatus.history(runInfo.runId))
 
         runs.take(page.size)
       }

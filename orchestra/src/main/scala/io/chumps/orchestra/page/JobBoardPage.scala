@@ -6,7 +6,6 @@ import scala.concurrent.duration._
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.scalajs.js.timers.SetIntervalHandle
 import scala.scalajs.js
-import scala.util.Try
 
 import autowire._
 
@@ -37,13 +36,23 @@ object JobBoardPage {
   object Style extends StyleSheet.Inline {
     import dsl._
 
-    val item = style(
-      padding(4.px),
-      display.inlineBlock
+    val button = style(
+      textAlign.center,
+      width(22.px)
+    )
+
+    val reRunButton = style(
+      button,
+      &.hover(backgroundColor(Global.Style.brandColor))
+    )
+
+    val stopButton = style(
+      button,
+      &.hover(backgroundColor(c"#d55d5c"))
     )
   }
 
-  case class Props[Params <: HList, ParamValues <: HList](
+  case class Props[Params <: HList, ParamValues <: HList: Decoder](
     job: Job.Definition[_, ParamValues, _],
     params: Params,
     runId: Option[RunId],
@@ -63,6 +72,91 @@ object JobBoardPage {
           .call()
           .map(_ => $.modState(_.copy(_1 = RunId.random(), _2 = Map.empty)))
       }
+
+    def pullRuns(
+      $ : ComponentDidMount[Props[_, _ <: HList], (RunId, Map[Symbol, Any], TagMod, SetIntervalHandle), Unit]
+    ) = Callback.future {
+      job.Api.client
+        .runs(Page(None, 50)) // TODO load more as we scroll
+        .call()
+        .map { runs =>
+          val runDisplays = runs.zipWithIndex.toTagMod {
+            case ((runId, createdAt, paramValues, runStatus, stageStatuses), index) =>
+              val paramsDescription =
+                paramOperations
+                  .paramsState(params, paramValues)
+                  .map(param => s"${param._1}: ${param._2}")
+                  .mkString("\n")
+              val rerunButton =
+                <.td(Style.reRunButton, ^.title := paramsDescription, ^.onClick ==> reRun(paramValues))("↻")
+              val stopButton = <.td(Style.stopButton, ^.onClick ==> stop(runId))("x")
+              def runIdDisplay(icon: String, runId: RunId, color: String, title: String) =
+                TagMod(
+                  <.td(^.width := "20px", ^.textAlign.center, ^.backgroundColor := color, ^.title := title)(icon),
+                  <.td(^.width := "280px", ^.backgroundColor := color, ^.title := title)(
+                    runId.value.toString
+                  )
+                )
+              def datesDisplay(from: Instant, to: Option[Instant]) =
+                <.td(^.width.auto, ^.textAlign.center)(s"$createdAt ⟼ ${to.fold("-")(_.toString)}")
+
+              val statusDisplay = runStatus match {
+                case Triggered(_) =>
+                  <.tr(runIdDisplay("○", runId, Global.Style.brandColor.value, "Triggered"),
+                       datesDisplay(createdAt, Option(Instant.now())))
+                case Running(_) =>
+                  <.tr(runIdDisplay("≻", runId, Global.Style.brandColor.value, "Running"),
+                       datesDisplay(createdAt, Option(Instant.now())),
+                       stopButton)
+                case Success(at) =>
+                  <.tr(runIdDisplay("✓", runId, "green", "Success"), datesDisplay(createdAt, Option(at)), rerunButton)
+                case Failure(at, t) =>
+                  <.tr(runIdDisplay("✗", runId, "firebrick", s"Failed: ${t.getMessage}"),
+                       datesDisplay(createdAt, Option(at)),
+                       rerunButton)
+                case Stopped =>
+                  <.tr(runIdDisplay("✗", runId, "firebrick", "Stopped"), datesDisplay(createdAt, None), rerunButton)
+              }
+
+              <.div(Global.Style.listItem(index % 2 == 0),
+                    ^.cursor.pointer,
+                    ^.title := paramsDescription,
+                    ^.onClick --> $.props.ctl.set(LogsPageRoute(runId)))(
+                <.table(^.width := "100%", ^.borderCollapse.collapse)(<.tbody(statusDisplay)),
+                <.div(
+                  stageStatuses
+                    .groupBy(_.name)
+                    .values
+                    .map(statuses => (statuses.head.name, statuses.head.at, statuses.tail.headOption.map(_.at)))
+                    .toSeq
+                    .sortBy(_._2)
+                    .map {
+                      case (name, start, end) =>
+                        val time =
+                          if (runStatus == Stopped && end.isEmpty) ""
+                          else s" ${end.getOrElse(Instant.now()).getEpochSecond - start.getEpochSecond}s"
+
+                        <.div(^.padding := "4px",
+                              ^.display.`inline-block`,
+                              ^.backgroundColor := Utils.generateColour(name))(s"$name$time")
+                    }: _*
+                )
+              )
+          }
+
+          $.modState(_.copy(_3 = if (runs.nonEmpty) runDisplays else "No job ran yet"))
+        }
+    }
+
+    private def stop(runId: RunId)(event: ReactEventFromInput) = Callback.future {
+      event.stopPropagation()
+      job.Api.client.stop(runId).call().map(Callback(_))
+    }
+
+    private def reRun(paramValues: ParamValues)(event: ReactEventFromInput) = Callback.future {
+      event.stopPropagation()
+      job.Api.client.trigger(RunId.random(), paramValues).call().map(Callback(_))
+    }
 
     def displays(
       $ : RenderScope[Props[_, _ <: HList], (RunId, Map[Symbol, Any], TagMod, SetIntervalHandle), Unit]
@@ -93,62 +187,9 @@ object JobBoardPage {
         )
       }
       .componentDidMount { $ =>
-        $.setState($.state.copy(_4 = js.timers.setInterval(1.second)(pullRuns($).runNow())))
-          .flatMap(_ => pullRuns($))
+        $.setState($.state.copy(_4 = js.timers.setInterval(1.second)($.props.pullRuns($).runNow())))
+          .flatMap(_ => $.props.pullRuns($))
       }
       .componentWillUnmount($ => Callback(js.timers.clearInterval($.state._4)))
       .build
-
-  private def pullRuns(
-    $ : ComponentDidMount[Props[_, _ <: HList], (RunId, Map[Symbol, Any], TagMod, SetIntervalHandle), Unit]
-  ) = Callback.future {
-    $.props.job.Api.client
-      .runs(Page(None, 50)) // TODO load more as we scroll
-      .call()
-      .map { runs =>
-        val runDisplays = runs.zipWithIndex.toTagMod {
-          case ((runId, createdAt, runStatus, stageStatuses), index) =>
-            val statusDisplay = runStatus match {
-              case Triggered(_)  => <.div(Style.item)("Triggered")
-              case Running(_)    => <.button(^.onClick ==> stop($.props.job, runId))("X")
-              case Success(_)    => <.span(Style.item)("Success")
-              case Failure(_, t) => <.span(Style.item, ^.title := t.getMessage)("Failure")
-              case Stopped       => <.span(Style.item)("Stopped")
-            }
-
-            <.div(Global.Style.listItem(index % 2 == 0),
-                  ^.cursor.pointer,
-                  ^.onClick --> $.props.ctl.set(LogsPageRoute(runId)))(
-              <.div(
-                <.span(Style.item, ^.backgroundColor := Global.Style.brandColor.value)(runId.value.toString),
-                <.span(Style.item)(createdAt.toString),
-                statusDisplay
-              ),
-              <.div(
-                stageStatuses
-                  .groupBy(_.name)
-                  .values
-                  .map(statuses => (statuses.head.name, statuses.head.at, statuses.tail.headOption.map(_.at)))
-                  .toSeq
-                  .sortBy(_._2)
-                  .map {
-                    case (name, start, end) =>
-                      val time =
-                        if (runStatus == Stopped) ""
-                        else s" ${end.getOrElse(Instant.now()).getEpochSecond - start.getEpochSecond}s"
-
-                      <.span(Style.item, ^.backgroundColor := Utils.generateColour(name))(s"$name$time")
-                  }: _*
-              )
-            )
-        }
-
-        $.modState(_.copy(_3 = if (runs.nonEmpty) runDisplays else "No job ran yet"))
-      }
-  }
-
-  private def stop(job: Job.Definition[_, _, _], runId: RunId)(event: ReactEventFromInput) = Callback.future {
-    event.stopPropagation()
-    job.Api.client.stop(runId).call().map(Callback(_))
-  }
 }

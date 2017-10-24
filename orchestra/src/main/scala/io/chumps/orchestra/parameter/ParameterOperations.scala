@@ -9,6 +9,7 @@ import io.chumps.orchestra.model.RunId
 trait ParameterOperations[Params <: HList, ParamValues <: HList] {
   def displays(params: Params, state: State): Seq[TagMod]
   def values(params: Params, valueMap: Map[Symbol, Any], runId: RunId): ParamValues
+  def paramsState(params: Params, paramValues: ParamValues): Map[String, Any]
 }
 
 object ParameterOperations {
@@ -16,6 +17,7 @@ object ParameterOperations {
   implicit val hNil = new ParameterOperations[HNil, HNil] {
     override def displays(params: HNil, state: State) = Seq.empty
     override def values(params: HNil, map: Map[Symbol, Any], runId: RunId) = HNil
+    def paramsState(params: HNil, paramValues: HNil) = Map.empty
   }
 
   implicit def hConsRunId[Params <: HList, TailParamValues <: HList](
@@ -26,6 +28,9 @@ object ParameterOperations {
 
     override def values(params: Params, valueMap: Map[Symbol, Any], runId: RunId) =
       runId :: tailParamOperations.values(params, valueMap, runId)
+
+    override def paramsState(params: Params, paramValues: RunId :: TailParamValues) =
+      tailParamOperations.paramsState(params, paramValues.tail)
   }
 
   implicit def hCons[HeadParam <: Parameter[HeadParamValue], TailParams <: HList, HeadParamValue, TailParamValues <: HList](
@@ -36,5 +41,8 @@ object ParameterOperations {
 
     override def values(params: HeadParam :: TailParams, valueMap: Map[Symbol, Any], runId: RunId) =
       params.head.getValue(valueMap) :: tailParamOperations.values(params.tail, valueMap, runId)
+
+    override def paramsState(params: HeadParam :: TailParams, paramValues: HeadParamValue :: TailParamValues) =
+      tailParamOperations.paramsState(params.tail, paramValues.tail) + (params.head.name -> paramValues.head)
   }
 }

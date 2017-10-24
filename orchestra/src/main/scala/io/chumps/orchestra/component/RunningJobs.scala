@@ -30,7 +30,7 @@ object RunningJobs {
               case (runInfo, index) =>
                 <.tr(Global.Style.listItem(index % 2 == 0))(
                   <.td(runInfo.job.name),
-                  <.td(runInfo.runId.toString),
+                  <.td(runInfo.runId.value.toString),
                   <.td(<.button(^.onClick --> stop(runInfo))("X"))
                 )
             }

@@ -9,12 +9,12 @@ object Global {
   object Style extends StyleSheet.Inline {
     import dsl._
 
-    val brandColor = c"#F2706D"
+    val brandColor = c"#3570e5"
 
     val listItem = styleF.bool { pair =>
       styleS(
-        mixinIf(pair)(backgroundColor(c"rgba(255, 255, 255, 0.02)")),
-        &.hover(backgroundColor(c"rgba(255, 255, 255, 0.04)"))
+        mixinIf(pair)(boxShadow := "inset 0 0 10000px rgba(255, 255, 255, 0.02)"),
+        &.hover(boxShadow := "inset 0 0 10000px rgba(255, 255, 255, 0.04)")
       )
     }
 

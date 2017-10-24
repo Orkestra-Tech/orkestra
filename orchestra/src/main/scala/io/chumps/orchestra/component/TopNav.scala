@@ -25,8 +25,8 @@ object TopNav {
         fontSize(1.5.em),
         display.inlineBlock,
         cursor.pointer,
-        mixinIfElse(selected)(backgroundColor(c"rgba(0, 0, 0, 0.06)"))(
-          &.hover(backgroundColor(c"rgba(255, 255, 255, 0.06)"))
+        mixinIfElse(selected)(boxShadow := "inset 0 0 10000px rgba(0, 0, 0, 0.06)")(
+          &.hover(boxShadow := "inset 0 0 10000px rgba(255, 255, 255, 0.06)")
         )
       )
     }
