@@ -41,7 +41,8 @@ object TopNav {
 
   val component = ScalaComponent
     .builder[Props](getClass.getSimpleName)
-    .render_P { props =>
+    .initialState[Boolean](false)
+    .renderP { ($, props) =>
       val leftMenu = Seq(
         PageMenu("Boards", props.rootBoard),
         PageMenu("Status", StatusPageRoute)
@@ -56,7 +57,17 @@ object TopNav {
                 props.ctl.setOnClick(item.route)
               )(item.name)
             },
-            RunningJobs.component()
+            <.li(^.float.right,
+                 ^.position.relative,
+                 ^.tabIndex := 0,
+                 ^.outline := "none",
+                 ^.onBlur --> $.setState(false))(
+              <.div(
+                TopNav.Style.menuItem($.state),
+                ^.onClick --> $.modState(!_)
+              )("Running Jobs"),
+              if ($.state) RunningJobs.component() else TagMod()
+            )
           )
         )
       )

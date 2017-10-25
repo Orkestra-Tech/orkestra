@@ -18,6 +18,21 @@ object Global {
       )
     }
 
+    val runId = style(width(280.px))
+
+    val button = style(
+      display.flex,
+      alignItems.center,
+      justifyContent.center,
+      cursor.pointer,
+      padding(3.px)
+    )
+
+    val brandColorButton = style(
+      button,
+      &.hover(backgroundColor(Global.Style.brandColor))
+    )
+
     style(
       unsafeRoot("body")(
         backgroundColor(c"#2b2b2b"),

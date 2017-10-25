@@ -22,35 +22,14 @@ import japgolly.scalajs.react.component.builder.Lifecycle.{ComponentDidMount, Re
 import japgolly.scalajs.react.extra.router.RouterCtl
 import japgolly.scalajs.react.vdom.html_<^._
 import shapeless.HList
-import scalacss.DevDefaults._
-import scalacss.ProdDefaults._
 import scalacss.ScalaCssReact._
 
 import io.chumps.orchestra.css.Global
 import io.chumps.orchestra.ARunStatus._
-import io.chumps.orchestra.model.{Page, RunId}
+import io.chumps.orchestra.component.StopButton
+import io.chumps.orchestra.model.{Page, RunId, RunInfo}
 
 object JobBoardPage {
-  val CssSettings = scalacss.devOrProdDefaults; import CssSettings._
-
-  object Style extends StyleSheet.Inline {
-    import dsl._
-
-    val button = style(
-      textAlign.center,
-      width(22.px)
-    )
-
-    val reRunButton = style(
-      button,
-      &.hover(backgroundColor(Global.Style.brandColor))
-    )
-
-    val stopButton = style(
-      button,
-      &.hover(backgroundColor(c"#d55d5c"))
-    )
-  }
 
   case class Props[Params <: HList, ParamValues <: HList: Decoder](
     job: Job.Definition[_, ParamValues, _],
@@ -82,23 +61,33 @@ object JobBoardPage {
         .map { runs =>
           val runDisplays = runs.zipWithIndex.toTagMod {
             case ((runId, createdAt, paramValues, runStatus, stageStatuses), index) =>
+              val cellPadding = ^.padding := "3px"
               val paramsDescription =
                 paramOperations
                   .paramsState(params, paramValues)
                   .map(param => s"${param._1}: ${param._2}")
                   .mkString("\n")
               val rerunButton =
-                <.td(Style.reRunButton, ^.title := paramsDescription, ^.onClick ==> reRun(paramValues))("↻")
-              val stopButton = <.td(Style.stopButton, ^.onClick ==> stop(runId))("x")
+                <.td(^.title := paramsDescription, ^.width := "1px")(
+                  <.div(Global.Style.brandColorButton,
+                        ^.width := "22px",
+                        ^.height := "22px",
+                        ^.onClick ==> reRun(paramValues))("↻")
+                )
+              val stopButton = <.td(^.padding := "0", ^.width := "1px")(StopButton.component(RunInfo(job, runId)))
               def runIdDisplay(icon: String, runId: RunId, color: String, title: String) =
                 TagMod(
-                  <.td(^.width := "20px", ^.textAlign.center, ^.backgroundColor := color, ^.title := title)(icon),
-                  <.td(^.width := "280px", ^.backgroundColor := color, ^.title := title)(
+                  <.td(cellPadding,
+                       ^.width := "20px",
+                       ^.textAlign.center,
+                       ^.backgroundColor := color,
+                       ^.title := title)(icon),
+                  <.td(cellPadding, Global.Style.runId, ^.backgroundColor := color, ^.title := title)(
                     runId.value.toString
                   )
                 )
               def datesDisplay(from: Instant, to: Option[Instant]) =
-                <.td(^.width.auto, ^.textAlign.center)(s"$createdAt ⟼ ${to.fold("-")(_.toString)}")
+                <.td(cellPadding, ^.width.auto, ^.textAlign.center)(s"$createdAt ⟼ ${to.fold("-")(_.toString)}")
 
               val statusDisplay = runStatus match {
                 case Triggered(_) =>
@@ -122,7 +111,7 @@ object JobBoardPage {
                     ^.cursor.pointer,
                     ^.title := paramsDescription,
                     ^.onClick --> $.props.ctl.set(LogsPageRoute(runId)))(
-                <.table(^.width := "100%", ^.borderCollapse.collapse)(<.tbody(statusDisplay)),
+                <.table(^.width := "100%", ^.cellPadding := 0, ^.cellSpacing := 0)(<.tbody(statusDisplay)),
                 <.div(
                   stageStatuses
                     .groupBy(_.name)
@@ -148,11 +137,6 @@ object JobBoardPage {
         }
     }
 
-    private def stop(runId: RunId)(event: ReactEventFromInput) = Callback.future {
-      event.stopPropagation()
-      job.Api.client.stop(runId).call().map(Callback(_))
-    }
-
     private def reRun(paramValues: ParamValues)(event: ReactEventFromInput) = Callback.future {
       event.stopPropagation()
       job.Api.client.trigger(RunId.random(), paramValues).call().map(Callback(_))
@@ -176,7 +160,7 @@ object JobBoardPage {
         (runId, Map.empty, "Loading runs", null)
       }
       .renderP { ($, props) =>
-        <.div(
+        <.main(
           <.h1(props.job.name),
           <.form(^.onSubmit ==> props.runJob($))(
             props.displays($),
@@ -187,7 +171,7 @@ object JobBoardPage {
         )
       }
       .componentDidMount { $ =>
-        $.setState($.state.copy(_4 = js.timers.setInterval(1.second)($.props.pullRuns($).runNow())))
+        $.modState(_.copy(_4 = js.timers.setInterval(1.second)($.props.pullRuns($).runNow())))
           .flatMap(_ => $.props.pullRuns($))
       }
       .componentWillUnmount($ => Callback(js.timers.clearInterval($.state._4)))

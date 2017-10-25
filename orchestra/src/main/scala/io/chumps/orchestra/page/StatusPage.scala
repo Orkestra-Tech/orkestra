@@ -14,7 +14,7 @@ object StatusPage {
   }
 
   val component =
-    ScalaComponent.builder.static(getClass.getSimpleName)(<.div(Style.content, "Status")).build
+    ScalaComponent.builder.static(getClass.getSimpleName)(<.main(Style.content, "Status")).build
 
   def apply() = component()
 }

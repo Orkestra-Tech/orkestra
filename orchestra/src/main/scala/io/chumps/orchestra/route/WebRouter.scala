@@ -37,11 +37,10 @@ object WebRouter {
         <.div(
           TopNav.component(TopNav.Props(rootBoard, resolution.page, ctl)),
           resolution.render(),
-          Footer()
+          Footer.component()
         )
       }
   }
 
   def router(board: Board) = Router(BaseUrl.fromWindowOrigin, config(board))()
-
 }

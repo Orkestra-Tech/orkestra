@@ -1,16 +1,19 @@
 package io.chumps.orchestra.component
 
+import scala.concurrent.duration._
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
+import scala.scalajs.js
+import scala.scalajs.js.timers.SetIntervalHandle
 
 import autowire._
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.component.builder.Lifecycle.RenderScope
+import japgolly.scalajs.react.component.builder.Lifecycle.ComponentDidMount
 import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
 
-import io.chumps.orchestra.CommonApi
 import io.circe.generic.auto._
 
+import io.chumps.orchestra.CommonApi
 import io.chumps.orchestra.css.Global
 import io.chumps.orchestra.model.RunInfo
 
@@ -18,49 +21,45 @@ object RunningJobs {
 
   val component = ScalaComponent
     .builder[Unit](getClass.getSimpleName)
-    .initialState[(Boolean, Option[Seq[RunInfo]])]((false, None))
+    .initialState[(Option[Seq[RunInfo]], SetIntervalHandle)]((None, null))
     .render { $ =>
-      def stop(runInfo: RunInfo) =
-        Callback.future(runInfo.job.Api.client.stop(runInfo.runId).call().map(Callback(_)))
+      val cellPadding = ^.padding := "3px"
 
-      val runningJobsDisplay = {
-        val runs = $.state._2 match {
-          case Some(runningJobs) if runningJobs.nonEmpty =>
-            runningJobs.zipWithIndex.map {
-              case (runInfo, index) =>
-                <.tr(Global.Style.listItem(index % 2 == 0))(
-                  <.td(runInfo.job.name),
-                  <.td(runInfo.runId.value.toString),
-                  <.td(<.button(^.onClick --> stop(runInfo))("X"))
-                )
-            }
-          case Some(runningJobs) if runningJobs.isEmpty => Seq(<.tr(<.td("No running jobs")))
-          case None                                     => Seq(<.tr(<.td("Loading running jobs")))
-        }
-
-        <.table(^.position.absolute, ^.right := "0", ^.whiteSpace.nowrap, ^.backgroundColor := "green")(
-          <.tbody(runs: _*)
-        )
+      val runs = $.state._1 match {
+        case Some(runningJobs) if runningJobs.nonEmpty =>
+          runningJobs.zipWithIndex.toTagMod {
+            case (runInfo, index) =>
+              <.tr(Global.Style.listItem(index % 2 == 0))(
+                <.td(cellPadding, ^.overflow.hidden)(runInfo.job.name),
+                <.td(cellPadding, Global.Style.runId)(runInfo.runId.value.toString),
+                <.td(^.padding := "0", ^.width := "1px")(StopButton.component(runInfo))
+              )
+          }
+        case Some(runningJobs) if runningJobs.isEmpty => <.tr(<.td(cellPadding)("No running jobs"))
+        case None                                     => <.tr(<.td(cellPadding)("Loading running jobs"))
       }
 
-      <.li(^.float.right,
-           ^.position.relative,
-           ^.tabIndex := 0,
-           ^.outline := "none",
-           ^.onBlur --> $.modState(_.copy(_1 = false)))(
-        <.div(
-          TopNav.Style.menuItem($.state._1),
-          ^.onClick --> $.modState(_.copy(_1 = ! $.state._1)).flatMap(_ => pullRunningJobs($))
-        )("Running Jobs"),
-        if ($.state._1) runningJobsDisplay else TagMod()
-      )
+      <.table(
+        ^.position.absolute,
+        ^.right := "0",
+        ^.width := "600px",
+        ^.cellPadding := 0,
+        ^.cellSpacing := 0,
+        ^.backgroundColor := Global.Style.brandColor.value,
+        ^.boxShadow := "inset 0 0 10000px rgba(0, 0, 0, 0.06)"
+      )(<.tbody(runs))
     }
+    .componentDidMount { $ =>
+      $.modState(_.copy(_2 = js.timers.setInterval(1.second)(pullRunningJobs($).runNow())))
+        .flatMap(_ => pullRunningJobs($))
+    }
+    .componentWillUnmount($ => Callback(js.timers.clearInterval($.state._2)))
     .build
 
-  private def pullRunningJobs($ : RenderScope[Unit, (Boolean, Option[Seq[RunInfo]]), Unit]) =
+  private def pullRunningJobs($ : ComponentDidMount[Unit, (Option[Seq[RunInfo]], SetIntervalHandle), Unit]) =
     Callback.future {
       CommonApi.client.runningJobs().call().map { runningJobs =>
-        $.modState(_.copy(_2 = Option(runningJobs)))
+        $.modState(_.copy(_1 = Option(runningJobs)))
       }
     }
 }
