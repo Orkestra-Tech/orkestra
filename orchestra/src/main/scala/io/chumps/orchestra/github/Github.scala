@@ -15,7 +15,7 @@ import com.typesafe.scalalogging.LazyLogging
 import io.circe.{Encoder, Json}
 
 import io.chumps.orchestra.{BuildInfo, JVMApp, OrchestraConfig}
-import io.chumps.orchestra.AkkaImplicits._
+import io.chumps.orchestra.utils.AkkaImplicits._
 import io.chumps.orchestra.github.State._
 import io.circe.parser._
 import io.circe.syntax._

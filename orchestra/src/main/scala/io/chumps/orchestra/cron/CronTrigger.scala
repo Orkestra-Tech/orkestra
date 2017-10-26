@@ -1,6 +1,7 @@
 package io.chumps.orchestra.cron
 
-import io.chumps.orchestra.Job
-import shapeless.{HList, HNil}
+import shapeless.HNil
 
-case class CronTrigger(schedule: String, job: Job.Runner[HNil, _])
+import io.chumps.orchestra.job.JobRunner
+
+case class CronTrigger(schedule: String, jobRunner: JobRunner[HNil, _])

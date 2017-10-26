@@ -1,4 +1,4 @@
-package io.chumps.orchestra
+package io.chumps.orchestra.utils
 
 import java.io.{OutputStream, PrintStream}
 import java.time.Instant
@@ -6,6 +6,7 @@ import java.time.Instant
 import scala.util.DynamicVariable
 
 import io.chumps.orchestra.AStageStatus._
+import io.chumps.orchestra.{AStageStatus, OrchestraConfig}
 
 trait StagesHelpers {
 

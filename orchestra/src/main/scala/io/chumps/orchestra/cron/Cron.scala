@@ -4,7 +4,7 @@ import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 
 import io.chumps.orchestra.{JVMApp, OrchestraConfig}
-import io.chumps.orchestra.AkkaImplicits._
+import io.chumps.orchestra.utils.AkkaImplicits._
 import io.chumps.orchestra.kubernetes.{JobSpecUtils, Kubernetes, MasterPod}
 import com.typesafe.scalalogging.Logger
 import io.k8s.api.batch.v1beta1.{CronJob, CronJobSpec, JobTemplateSpec}
@@ -35,7 +35,7 @@ trait Cron extends JVMApp {
   }
 
   private def deleteStaleCronJobs(currentCronJobNames: Seq[String]) = {
-    val cronJobNames = cronTriggers.map(cronTrigger => cronJobName(cronTrigger.job.definition.id))
+    val cronJobNames = cronTriggers.map(cronTrigger => cronJobName(cronTrigger.jobRunner.job.id))
     val jobsToRemove = currentCronJobNames.diff(cronJobNames)
     jobsToRemove.foreach { cronJobName =>
       Kubernetes.client.cronJobs.namespace(OrchestraConfig.namespace)(cronJobName).delete()
@@ -45,14 +45,15 @@ trait Cron extends JVMApp {
 
   private def applyCronJobs(masterPod: Pod, currentCronJobNames: Seq[String]) =
     cronTriggers.foreach { cronTrigger =>
-      val newCronJobName = cronJobName(cronTrigger.job.definition.id)
+      val newCronJobName = cronJobName(cronTrigger.jobRunner.job.id)
       val cronJob = CronJob(
         metadata = Option(ObjectMeta(name = Option(newCronJobName))),
         spec = Option(
           CronJobSpec(
             schedule = cronTrigger.schedule,
             jobTemplate = JobTemplateSpec(
-              spec = Option(JobSpecUtils.createJobSpec(masterPod, cronTrigger.job.definition, cronTrigger.job.podSpec))
+              spec =
+                Option(JobSpecUtils.createJobSpec(masterPod, cronTrigger.jobRunner.job, cronTrigger.jobRunner.podSpec))
             )
           )
         )

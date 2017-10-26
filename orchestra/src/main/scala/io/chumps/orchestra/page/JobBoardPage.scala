@@ -10,7 +10,7 @@ import scala.scalajs.js
 import autowire._
 
 import io.chumps.orchestra._
-import io.chumps.orchestra.BaseEncoders._
+import io.chumps.orchestra.utils.BaseEncoders._
 import io.chumps.orchestra.parameter.Parameter.State
 import io.chumps.orchestra.parameter.ParameterOperations
 import io.chumps.orchestra.route.WebRouter.{LogsPageRoute, PageRoute}
@@ -26,19 +26,20 @@ import scalacss.ScalaCssReact._
 
 import io.chumps.orchestra.css.Global
 import io.chumps.orchestra.ARunStatus._
+import io.chumps.orchestra.board.Job
 import io.chumps.orchestra.component.StopButton
 import io.chumps.orchestra.model.{Page, RunId, RunInfo}
+import io.chumps.orchestra.utils.Utils
 
 object JobBoardPage {
 
-  case class Props[Params <: HList, ParamValues <: HList: Decoder](
-    job: Job.Definition[_, ParamValues, _],
+  case class Props[Params <: HList, ParamValues <: HList: Encoder: Decoder](
+    job: Job[_, ParamValues],
     params: Params,
     runId: Option[RunId],
     ctl: RouterCtl[PageRoute]
   )(
-    implicit paramOperations: ParameterOperations[Params, ParamValues],
-    encoder: Encoder[ParamValues]
+    implicit paramOperations: ParameterOperations[Params, ParamValues]
   ) {
 
     def runJob(

@@ -4,7 +4,7 @@ import java.io.File
 
 import scala.io.Source
 
-import io.chumps.orchestra.AkkaImplicits._
+import io.chumps.orchestra.utils.AkkaImplicits._
 import io.chumps.orchestra.OrchestraConfig
 import com.goyeau.kubernetesclient.KubernetesClient
 import com.goyeau.kubernetesclient.KubeConfig

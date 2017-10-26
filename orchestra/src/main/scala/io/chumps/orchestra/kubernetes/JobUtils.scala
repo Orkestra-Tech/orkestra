@@ -1,7 +1,7 @@
 package io.chumps.orchestra.kubernetes
 
 import io.chumps.orchestra._
-import io.chumps.orchestra.AkkaImplicits._
+import io.chumps.orchestra.utils.AkkaImplicits._
 import io.k8s.api.batch.v1.{Job => KubeJob}
 import io.k8s.api.core.v1.PodSpec
 import io.k8s.apimachinery.pkg.apis.meta.v1.{DeleteOptions, ObjectMeta}

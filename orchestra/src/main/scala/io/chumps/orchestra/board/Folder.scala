@@ -6,7 +6,7 @@ import japgolly.scalajs.react.vdom.html_<^._
 import io.chumps.orchestra.page.FolderBoardPage
 import io.chumps.orchestra.route.WebRouter.{BoardPageRoute, PageRoute}
 
-case class FolderBoard(name: String, childBoards: Seq[Board]) extends Board {
+case class Folder(name: String, childBoards: Seq[Board]) extends Board {
 
   def route(parentBreadcrumb: Seq[String]) = RouterConfigDsl[PageRoute].buildRule { dsl =>
     import dsl._
@@ -17,6 +17,6 @@ case class FolderBoard(name: String, childBoards: Seq[Board]) extends Board {
   }
 }
 
-object FolderBoard {
-  def apply(name: String): (Board*) => FolderBoard = (childBoards: Seq[Board]) => FolderBoard(name, childBoards)
+object Folder {
+  def apply(name: String): (Board*) => Folder = (childBoards: Seq[Board]) => Folder(name, childBoards)
 }

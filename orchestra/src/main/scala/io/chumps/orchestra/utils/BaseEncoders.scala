@@ -1,4 +1,4 @@
-package io.chumps.orchestra
+package io.chumps.orchestra.utils
 
 import io.circe.{Decoder, Encoder, Json}
 

@@ -1,19 +1,20 @@
-package io.chumps.orchestra
+package io.chumps.orchestra.utils
 
 import java.io.IOException
 
-import scala.sys.process
-
-import io.chumps.orchestra.AkkaImplicits._
-import io.chumps.orchestra.filesystem.Directory
-import io.chumps.orchestra.kubernetes.Kubernetes
-import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
+import scala.sys.process
 
 import akka.http.scaladsl.model.ws.Message
 import akka.stream.scaladsl.{Flow, Keep, Sink, Source}
 import io.k8s.api.core.v1.Container
 import io.k8s.apimachinery.pkg.apis.meta.v1.Status
+
+import AkkaImplicits._
+import io.chumps.orchestra.OrchestraConfig
+import io.chumps.orchestra.filesystem.Directory
+import io.chumps.orchestra.kubernetes.Kubernetes
 
 trait ShellHelpers {
   private def runningMessage(script: String) = println(s"Running: $script")

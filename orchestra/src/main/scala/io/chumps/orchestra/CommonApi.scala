@@ -11,6 +11,7 @@ import org.scalajs.dom.ext.Ajax
 
 import io.chumps.orchestra.kubernetes.Kubernetes
 import io.chumps.orchestra.model.{Page, RunId, RunInfo}
+import io.chumps.orchestra.utils.StagesHelpers
 
 trait CommonApi {
   def logs(runId: RunId, page: Page[Int]): Seq[(Option[Symbol], String)]
@@ -39,7 +40,7 @@ object CommonApi {
 }
 
 object CommonApiServer extends CommonApi {
-  import AkkaImplicits._
+  import io.chumps.orchestra.utils.AkkaImplicits._
 
   override def logs(runId: RunId, page: Page[Int]): Seq[(Option[Symbol], String)] = {
     val stageRegex = s"(.*)${StagesHelpers.delimiter}(.+)".r

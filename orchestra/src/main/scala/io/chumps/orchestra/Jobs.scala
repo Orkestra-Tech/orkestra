@@ -4,12 +4,14 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Directives.{entity, _}
 import autowire.Core
 import io.circe.generic.auto._
+
 import io.chumps.orchestra.route.BackendRoutes
-import io.chumps.orchestra.AkkaImplicits._
+import io.chumps.orchestra.utils.AkkaImplicits._
+import io.chumps.orchestra.job.JobRunner
 
 trait Jobs extends JVMApp with BackendRoutes {
 
-  def jobs: Seq[Job.Runner[_, _]]
+  def jobs: Seq[JobRunner[_, _]]
 
   override lazy val routes = super.routes ~
     pathPrefix(Jobs.apiSegment) {
@@ -32,7 +34,7 @@ trait Jobs extends JVMApp with BackendRoutes {
       Http().bindAndHandle(routes, "0.0.0.0", OrchestraConfig.port)
     } { runInfo =>
       jobs
-        .find(_.definition.id == runInfo.job.id)
+        .find(_.job.id == runInfo.job.id)
         .getOrElse(throw new IllegalArgumentException(s"No job found for id ${runInfo.job.id}"))
         .run(runInfo)
     }

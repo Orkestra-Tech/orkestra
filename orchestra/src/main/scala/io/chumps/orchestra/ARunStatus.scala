@@ -8,7 +8,7 @@ import scala.io.Source
 import io.circe.generic.auto._
 import io.circe.java8.time._
 
-import io.chumps.orchestra.BaseEncoders._
+import io.chumps.orchestra.utils.BaseEncoders._
 import io.chumps.orchestra.model.RunInfo
 
 // Start with A because of a compiler bug

@@ -4,6 +4,8 @@ import io.chumps.orchestra.filesystem.DirectoryHelpers
 import io.circe.shapes.HListInstances
 import io.circe.generic.AutoDerivation
 
+import io.chumps.orchestra.utils.{ShellHelpers, StagesHelpers, TriggerHelpers}
+
 package object orchestra
     extends HListInstances
     with AutoDerivation

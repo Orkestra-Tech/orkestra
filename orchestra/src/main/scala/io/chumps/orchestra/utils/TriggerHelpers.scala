@@ -1,14 +1,16 @@
-package io.chumps.orchestra
+package io.chumps.orchestra.utils
 
 import shapeless._
 import shapeless.ops.hlist.Tupler
 
 import io.chumps.orchestra.ARunStatus._
+import io.chumps.orchestra.job.JobRunner
 import io.chumps.orchestra.model.{RunId, RunInfo}
+import io.chumps.orchestra.{ARunStatus, OrchestraConfig}
 
 trait TriggerHelpers {
 
-  implicit class TiggerableNoParamJob(job: Job.Runner[HNil, _]) {
+  implicit class TiggerableNoParamJob(job: JobRunner[HNil, _]) {
     def trigger(): Unit = {
       triggerMessage(job)
       job.ApiServer.trigger(jobRunInfo(job).runId, HNil)
@@ -20,7 +22,7 @@ trait TriggerHelpers {
     }
   }
 
-  implicit class TiggerableRunIdJob(job: Job.Runner[RunId :: HNil, _]) {
+  implicit class TiggerableRunIdJob(job: JobRunner[RunId :: HNil, _]) {
     def trigger(): Unit = {
       triggerMessage(job)
       val runId = jobRunInfo(job).runId
@@ -34,7 +36,7 @@ trait TriggerHelpers {
   }
 
   implicit class TiggerableMultipleParamJob[ParamValues <: HList, ParamValuesNoRunId <: HList, TupledValues](
-    job: Job.Runner[ParamValues, _]
+    job: JobRunner[ParamValues, _]
   )(
     implicit runIdInjector: RunIdInjector[ParamValuesNoRunId, ParamValues],
     tupler: Tupler.Aux[ParamValuesNoRunId, TupledValues],
@@ -52,13 +54,13 @@ trait TriggerHelpers {
     }
   }
 
-  private def triggerMessage(job: Job.Runner[_, _]) = println(s"Triggering ${job.definition.id.name}")
+  private def triggerMessage(jobRunner: JobRunner[_, _]) = println(s"Triggering ${jobRunner.job.id.name}")
 
-  private def jobRunInfo(job: Job.Runner[_ <: HList, _]) =
-    RunInfo(job.definition,
+  private def jobRunInfo(jobRunner: JobRunner[_ <: HList, _]) =
+    RunInfo(jobRunner.job,
             OrchestraConfig.runInfo.fold(throw new IllegalStateException("ORCHESTRA_RUN_INFO should be set"))(_.runId))
 
-  private def awaitJobResult(job: Job.Runner[_ <: HList, _]): Unit = {
+  private def awaitJobResult(job: JobRunner[_ <: HList, _]): Unit = {
     val runInfo = jobRunInfo(job)
     def isInProgress() = ARunStatus.current(runInfo) match {
       case _: Triggered | _: Running => true

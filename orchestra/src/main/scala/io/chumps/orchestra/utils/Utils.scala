@@ -1,9 +1,10 @@
-package io.chumps.orchestra
+package io.chumps.orchestra.utils
 
 import java.io.PrintStream
 import java.nio.file.{Files, Paths}
 import java.time.{LocalDateTime, ZoneOffset}
 
+import io.chumps.orchestra.OrchestraConfig
 import io.chumps.orchestra.model.RunInfo
 
 object Utils {

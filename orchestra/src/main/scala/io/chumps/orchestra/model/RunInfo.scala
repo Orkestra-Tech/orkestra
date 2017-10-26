@@ -5,9 +5,9 @@ import io.circe.parser._
 import io.circe.syntax._
 import shapeless._
 
-import io.chumps.orchestra.Job
+import io.chumps.orchestra.board.Job
 
-case class RunInfo(job: Job.Definition[_, _ <: HList, _], runId: RunId)
+case class RunInfo(job: Job[_, _ <: HList], runId: RunId)
 
 object RunInfo {
 
@@ -19,13 +19,13 @@ object RunInfo {
 
   implicit val decoder: Decoder[RunInfo] = c =>
     for {
-      job <- c.downField("job").as[Job.Definition[_, _ <: HList, _]]
+      job <- c.downField("job").as[Job[_, _ <: HList]]
       runId <- c.downField("runId").as[RunId]
     } yield RunInfo(job, runId)
 
   def decodeWithFallbackRunId(runInfoJson: String, fallBackRunId: => RunId) =
     decode[RunInfo](runInfoJson).fold(
-      _ => RunInfo(decode[Job.Definition[_, _ <: HList, _]](runInfoJson).fold(throw _, identity), fallBackRunId),
+      _ => RunInfo(decode[Job[_, _ <: HList]](runInfoJson).fold(throw _, identity), fallBackRunId),
       identity
     )
 }
