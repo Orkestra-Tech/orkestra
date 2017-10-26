@@ -52,15 +52,15 @@ object JobBoardPage {
           .map(_ => $.modState(_.copy(_1 = RunId.random(), _2 = Map.empty)))
       }
 
-    def pullRuns(
+    def pullHistory(
       $ : ComponentDidMount[Props[_, _ <: HList], (RunId, Map[Symbol, Any], TagMod, SetIntervalHandle), Unit]
     ) = Callback.future {
       job.Api.client
-        .runs(Page(None, 50)) // TODO load more as we scroll
+        .history(Page(None, 50)) // TODO load more as we scroll
         .call()
         .map { runs =>
           val runDisplays = runs.zipWithIndex.toTagMod {
-            case ((runId, createdAt, paramValues, runStatus, stageStatuses), index) =>
+            case ((runId, createdAt, paramValues, tags, runStatus, stageStatuses), index) =>
               val cellPadding = ^.padding := "3px"
               val paramsDescription =
                 paramOperations
@@ -72,7 +72,7 @@ object JobBoardPage {
                   <.div(Global.Style.brandColorButton,
                         ^.width := "22px",
                         ^.height := "22px",
-                        ^.onClick ==> reRun(paramValues))("↻")
+                        ^.onClick ==> reRun(paramValues, tags))("↻")
                 )
               val stopButton = <.td(^.padding := "0", ^.width := "1px")(StopButton.component(RunInfo(job, runId)))
               def runIdDisplay(icon: String, runId: RunId, color: String, title: String) =
@@ -137,9 +137,9 @@ object JobBoardPage {
         }
     }
 
-    private def reRun(paramValues: ParamValues)(event: ReactEventFromInput) = Callback.future {
+    private def reRun(paramValues: ParamValues, tags: Seq[String])(event: ReactEventFromInput) = Callback.future {
       event.stopPropagation()
-      job.Api.client.trigger(RunId.random(), paramValues).call().map(Callback(_))
+      job.Api.client.trigger(RunId.random(), paramValues, tags).call().map(Callback(_))
     }
 
     def displays(
@@ -171,8 +171,8 @@ object JobBoardPage {
         )
       }
       .componentDidMount { $ =>
-        $.modState(_.copy(_4 = js.timers.setInterval(1.second)($.props.pullRuns($).runNow())))
-          .flatMap(_ => $.props.pullRuns($))
+        $.modState(_.copy(_4 = js.timers.setInterval(1.second)($.props.pullHistory($).runNow())))
+          .flatMap(_ => $.props.pullHistory($))
       }
       .componentWillUnmount($ => Callback(js.timers.clearInterval($.state._4)))
       .build

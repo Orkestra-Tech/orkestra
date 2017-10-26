@@ -57,7 +57,7 @@ object Job {
       def trigger(runId: RunId, params: ParamValues, tags: Seq[String] = Seq.empty): ARunStatus
       def stop(runId: RunId): Unit
       def tags(): Seq[String]
-      def runs(page: Page[Instant]): Seq[(RunId, Instant, ParamValues, ARunStatus, Seq[AStageStatus])]
+      def history(page: Page[Instant]): Seq[(RunId, Instant, ParamValues, Seq[String], ARunStatus, Seq[AStageStatus])]
     }
 
     private[orchestra] object Api {
@@ -158,7 +158,9 @@ object Job {
 
       override def tags(): Seq[String] = OrchestraConfig.tagsDir(definition.id).toFile.list()
 
-      override def runs(page: Page[Instant]): Seq[(RunId, Instant, ParamValues, ARunStatus, Seq[AStageStatus])] = {
+      override def history(
+        page: Page[Instant]
+      ): Seq[(RunId, Instant, ParamValues, Seq[String], ARunStatus, Seq[AStageStatus])] = {
         val from = page.from.fold(LocalDateTime.MAX)(LocalDateTime.ofInstant(_, ZoneOffset.UTC))
 
         val runs = for {
@@ -190,7 +192,12 @@ object Job {
           paramValues = if (paramFile.exists())
             decode[ParamValues](Source.fromFile(paramFile).mkString).fold(throw _, identity)
           else HNil.asInstanceOf[ParamValues]
-        } yield (runInfo.runId, startAt, paramValues, ARunStatus.current(runInfo), AStageStatus.history(runInfo.runId))
+
+          tagsFile = OrchestraConfig.tagsDir(definition.id).toFile
+          if tagsFile.exists()
+          tags = tagsFile.list().toSeq
+        } yield
+          (runInfo.runId, startAt, paramValues, tags, ARunStatus.current(runInfo), AStageStatus.history(runInfo.runId))
 
         runs.take(page.size)
       }
