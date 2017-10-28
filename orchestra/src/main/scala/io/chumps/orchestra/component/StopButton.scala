@@ -9,8 +9,11 @@ import scalacss.DevDefaults._
 import scalacss.ProdDefaults._
 import scalacss.ScalaCssReact._
 
+import shapeless.HList
+
+import io.chumps.orchestra.board.Job
 import io.chumps.orchestra.css.Global
-import io.chumps.orchestra.model.RunInfo
+import io.chumps.orchestra.model.RunId
 
 object StopButton {
   val CssSettings = scalacss.devOrProdDefaults; import CssSettings._
@@ -24,15 +27,17 @@ object StopButton {
     )
   }
 
+  case class Props(job: Job[_, _ <: HList], runId: RunId)
+
   val component = ScalaComponent
-    .builder[RunInfo](getClass.getSimpleName)
-    .render_P { runInfo =>
-      <.div(Style.redButton, ^.width := "22px", ^.height := "22px", ^.onClick ==> stop(runInfo))("x")
+    .builder[Props](getClass.getSimpleName)
+    .render_P { props =>
+      <.div(Style.redButton, ^.width := "28px", ^.height := "28px", ^.onClick ==> stop(props.job, props.runId))("x")
     }
     .build
 
-  private def stop(runInfo: RunInfo)(event: ReactEventFromInput) = Callback.future {
+  private def stop(job: Job[_, _], runId: RunId)(event: ReactEventFromInput) = Callback.future {
     event.stopPropagation()
-    runInfo.job.Api.client.stop(runInfo.runId).call().map(Callback(_))
+    job.Api.client.stop(runId).call().map(Callback(_))
   }
 }

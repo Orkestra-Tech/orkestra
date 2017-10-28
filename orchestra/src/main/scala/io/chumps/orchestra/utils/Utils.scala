@@ -27,7 +27,7 @@ object Utils {
     }
   }
 
-  def runInit(runInfo: RunInfo, tags: Seq[String]) = {
+  def runInit(runInfo: RunInfo, tags: Seq[String]): Unit = {
     val runDir = OrchestraConfig.jobRunDir(runInfo)
     val firstTimeInit = runDir.toFile.mkdirs()
 
@@ -35,14 +35,14 @@ object Utils {
       OrchestraConfig.runDir(runInfo.runId).toFile.mkdirs()
 
       tags.foreach { tag =>
-        val tagDir = OrchestraConfig.tagDir(runInfo.job.id, tag)
+        val tagDir = OrchestraConfig.tagDir(runInfo.jobId, tag)
         tagDir.toFile.mkdirs()
         Files.createSymbolicLink(Paths.get(tagDir.toString, runInfo.runId.value.toString), runDir)
       }
 
       val now = LocalDateTime.now()
       val dateDir = Paths
-        .get(OrchestraConfig.runsByDateDir(runInfo.job.id).toString,
+        .get(OrchestraConfig.runsByDateDir(runInfo.jobId).toString,
              now.getYear.toString,
              now.getDayOfYear.toString,
              now.toEpochSecond(ZoneOffset.UTC).toString)

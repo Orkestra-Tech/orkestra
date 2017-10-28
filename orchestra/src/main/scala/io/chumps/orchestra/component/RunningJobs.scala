@@ -12,31 +12,35 @@ import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
 
 import io.circe.generic.auto._
+import shapeless.HList
 
 import io.chumps.orchestra.CommonApi
+import io.chumps.orchestra.board.Job
 import io.chumps.orchestra.css.Global
 import io.chumps.orchestra.model.RunInfo
 
 object RunningJobs {
 
   val component = ScalaComponent
-    .builder[Unit](getClass.getSimpleName)
+    .builder[Seq[Job[_, _ <: HList]]](getClass.getSimpleName)
     .initialState[(Option[Seq[RunInfo]], SetIntervalHandle)]((None, null))
-    .render { $ =>
-      val cellPadding = ^.padding := "3px"
-
+    .renderP { ($, jobs) =>
       val runs = $.state._1 match {
         case Some(runningJobs) if runningJobs.nonEmpty =>
           runningJobs.zipWithIndex.toTagMod {
             case (runInfo, index) =>
+              val job = jobs
+                .find(_.id == runInfo.jobId)
+                .getOrElse(throw new IllegalStateException(s"Can't find the job with id ${runInfo.jobId}"))
+
               <.tr(Global.Style.listItem(index % 2 == 0))(
-                <.td(cellPadding, ^.overflow.hidden)(runInfo.job.name),
-                <.td(cellPadding, Global.Style.runId)(runInfo.runId.value.toString),
-                <.td(^.padding := "0", ^.width := "1px")(StopButton.component(runInfo))
+                <.td(Global.Style.tableCell, ^.overflow.hidden)(job.name),
+                <.td(Global.Style.tableCell, Global.Style.runId)(runInfo.runId.value.toString),
+                <.td(^.padding := "0", ^.width := "1px")(StopButton.component(StopButton.Props(job, runInfo.runId)))
               )
           }
-        case Some(runningJobs) if runningJobs.isEmpty => <.tr(<.td(cellPadding)("No running jobs"))
-        case None                                     => <.tr(<.td(cellPadding)("Loading running jobs"))
+        case Some(runningJobs) if runningJobs.isEmpty => <.tr(<.td(Global.Style.tableCell)("No running jobs"))
+        case None                                     => <.tr(<.td(Global.Style.tableCell)("Loading running jobs"))
       }
 
       <.table(
@@ -56,7 +60,9 @@ object RunningJobs {
     .componentWillUnmount($ => Callback(js.timers.clearInterval($.state._2)))
     .build
 
-  private def pullRunningJobs($ : ComponentDidMount[Unit, (Option[Seq[RunInfo]], SetIntervalHandle), Unit]) =
+  private def pullRunningJobs(
+    $ : ComponentDidMount[Seq[Job[_, _ <: HList]], (Option[Seq[RunInfo]], SetIntervalHandle), Unit]
+  ) =
     Callback.future {
       CommonApi.client.runningJobs().call().map { runningJobs =>
         $.modState(_.copy(_1 = Option(runningJobs)))

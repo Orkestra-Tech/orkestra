@@ -8,6 +8,9 @@ import scalacss.DevDefaults._
 import scalacss.ProdDefaults._
 import scalacss.ScalaCssReact._
 
+import shapeless.HList
+
+import io.chumps.orchestra.board.Job
 import io.chumps.orchestra.css.Global
 import io.chumps.orchestra.route.WebRouter.{BoardPageRoute, PageRoute, StatusPageRoute}
 
@@ -34,7 +37,10 @@ object TopNav {
 
   case class PageMenu(name: String, route: PageRoute)
 
-  case class Props(rootBoard: BoardPageRoute, selectedPage: PageRoute, ctl: RouterCtl[PageRoute])
+  case class Props(rootPage: BoardPageRoute,
+                   selectedPage: PageRoute,
+                   ctl: RouterCtl[PageRoute],
+                   jobs: Seq[Job[_, _ <: HList]])
 
   implicit val currentPageReuse: Reusability[PageRoute] = Reusability.by_==[PageRoute]
   implicit val propsReuse: Reusability[Props] = Reusability.by((_: Props).selectedPage)
@@ -44,7 +50,7 @@ object TopNav {
     .initialState[Boolean](false)
     .renderP { ($, props) =>
       val leftMenu = Seq(
-        PageMenu("Boards", props.rootBoard),
+        PageMenu("Boards", props.rootPage),
         PageMenu("Status", StatusPageRoute)
       )
 
@@ -62,11 +68,8 @@ object TopNav {
                  ^.tabIndex := 0,
                  ^.outline := "none",
                  ^.onBlur --> $.setState(false))(
-              <.div(
-                TopNav.Style.menuItem($.state),
-                ^.onClick --> $.modState(!_)
-              )("Running Jobs"),
-              if ($.state) RunningJobs.component() else TagMod()
+              <.div(TopNav.Style.menuItem($.state), ^.onClick --> $.modState(!_))("Running Jobs"),
+              if ($.state) RunningJobs.component(props.jobs) else TagMod()
             )
           )
         )

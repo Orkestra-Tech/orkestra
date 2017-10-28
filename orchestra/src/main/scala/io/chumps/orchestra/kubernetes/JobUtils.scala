@@ -11,7 +11,7 @@ import io.chumps.orchestra.model.RunInfo
 object JobUtils {
 
   def jobName(runInfo: RunInfo) =
-    s"${runInfo.job.id.name.toLowerCase}-${runInfo.runId.value.toString.split("-").head}"
+    s"${runInfo.jobId.name.toLowerCase}-${runInfo.runId.value.toString.split("-").head}"
 
   def create(runInfo: RunInfo, podSpec: PodSpec) =
     for {

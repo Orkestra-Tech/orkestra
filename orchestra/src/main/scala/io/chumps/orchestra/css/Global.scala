@@ -18,14 +18,19 @@ object Global {
       )
     }
 
+    val tableCell = style(
+      verticalAlign.middle,
+      padding(3.px),
+      height(22.px)
+    )
+
     val runId = style(width(280.px))
 
     val button = style(
       display.flex,
       alignItems.center,
       justifyContent.center,
-      cursor.pointer,
-      padding(3.px)
+      cursor.pointer
     )
 
     val brandColorButton = style(

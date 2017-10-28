@@ -28,10 +28,10 @@ import io.chumps.orchestra.css.Global
 import io.chumps.orchestra.ARunStatus._
 import io.chumps.orchestra.board.Job
 import io.chumps.orchestra.component.StopButton
-import io.chumps.orchestra.model.{Page, RunId, RunInfo}
+import io.chumps.orchestra.model.{Page, RunId}
 import io.chumps.orchestra.utils.Utils
 
-object JobBoardPage {
+object JobPage {
 
   case class Props[Params <: HList, ParamValues <: HList: Encoder: Decoder](
     job: Job[_, ParamValues],
@@ -62,33 +62,35 @@ object JobBoardPage {
         .map { runs =>
           val runDisplays = runs.zipWithIndex.toTagMod {
             case ((runId, createdAt, paramValues, tags, runStatus, stageStatuses), index) =>
-              val cellPadding = ^.padding := "3px"
               val paramsDescription =
                 paramOperations
                   .paramsState(params, paramValues)
                   .map(param => s"${param._1}: ${param._2}")
                   .mkString("\n")
               val rerunButton =
-                <.td(^.title := paramsDescription, ^.width := "1px")(
+                <.td(^.padding := "0", ^.width := "1px")(
                   <.div(Global.Style.brandColorButton,
-                        ^.width := "22px",
-                        ^.height := "22px",
+                        ^.width := "28px",
+                        ^.height := "28px",
                         ^.onClick ==> reRun(paramValues, tags))("↻")
                 )
-              val stopButton = <.td(^.padding := "0", ^.width := "1px")(StopButton.component(RunInfo(job, runId)))
+              val stopButton =
+                <.td(^.padding := "0", ^.width := "1px")(StopButton.component(StopButton.Props(job, runId)))
               def runIdDisplay(icon: String, runId: RunId, color: String, title: String) =
                 TagMod(
-                  <.td(cellPadding,
+                  <.td(Global.Style.tableCell,
                        ^.width := "20px",
                        ^.textAlign.center,
                        ^.backgroundColor := color,
                        ^.title := title)(icon),
-                  <.td(cellPadding, Global.Style.runId, ^.backgroundColor := color, ^.title := title)(
+                  <.td(Global.Style.tableCell, Global.Style.runId, ^.backgroundColor := color, ^.title := title)(
                     runId.value.toString
                   )
                 )
               def datesDisplay(from: Instant, to: Option[Instant]) =
-                <.td(cellPadding, ^.width.auto, ^.textAlign.center)(s"$createdAt ⟼ ${to.fold("-")(_.toString)}")
+                <.td(Global.Style.tableCell, ^.width.auto, ^.textAlign.center)(
+                  s"$createdAt ⟼ ${to.fold("-")(_.toString)}"
+                )
 
               val statusDisplay = runStatus match {
                 case Triggered(_) =>

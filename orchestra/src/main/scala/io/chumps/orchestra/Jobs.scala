@@ -34,8 +34,8 @@ trait Jobs extends JVMApp with BackendRoutes {
       Http().bindAndHandle(routes, "0.0.0.0", OrchestraConfig.port)
     } { runInfo =>
       jobs
-        .find(_.job.id == runInfo.job.id)
-        .getOrElse(throw new IllegalArgumentException(s"No job found for id ${runInfo.job.id}"))
+        .find(_.job.id == runInfo.jobId)
+        .getOrElse(throw new IllegalArgumentException(s"No job found for id ${runInfo.jobId}"))
         .run(runInfo)
     }
   }

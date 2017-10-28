@@ -50,7 +50,7 @@ object OrchestraConfig {
   def stagesFile(runId: RunId) = Paths.get(runDir(runId).toString, "stages")
   def jobDir(jobId: Symbol) = Paths.get(home, jobsDirName, jobId.name)
   def jobRunsDir(jobId: Symbol) = Paths.get(jobDir(jobId).toString, runsDirName)
-  def jobRunDir(runInfo: RunInfo) = Paths.get(jobRunsDir(runInfo.job.id).toString, runInfo.runId.value.toString)
+  def jobRunDir(runInfo: RunInfo) = Paths.get(jobRunsDir(runInfo.jobId).toString, runInfo.runId.value.toString)
   def runsByDateDir(jobId: Symbol) = Paths.get(jobDir(jobId).toString, "runsByDate")
   def tagsDir(jobId: Symbol) = Paths.get(jobDir(jobId).toString, "tags")
   def tagDir(jobId: Symbol, tag: String) = Paths.get(tagsDir(jobId).toString, tag)

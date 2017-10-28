@@ -25,8 +25,6 @@ object StagesHelpers {
   private[orchestra] val delimiter = "_ColumnDelimiter_"
   private[orchestra] val stageVar = new DynamicVariable[Option[Symbol]](None)
 
-  def apply(out: OutputStream) = new LogsPrintStream(out)
-
   class LogsPrintStream(out: OutputStream) extends PrintStream(out, true) {
     private def stageInfo() = stageVar.value.map(stageId => s"$delimiter${stageId.name}")
     private def insertStageInfo(s: String) =

@@ -27,8 +27,6 @@ trait Job[Func, ParamValues <: HList] extends Board {
   val id: Symbol
   val name: String
 
-  override lazy val pathName = id.name.toLowerCase
-
   def apply[Result](job: Func)(implicit fnToProd: FnToProduct.Aux[Func, ParamValues => Result],
                                encoderP: Encoder[ParamValues],
                                decoderP: Decoder[ParamValues],
@@ -111,34 +109,4 @@ object Job {
       decoderR: Decoder[Result]
     ) = SimpleJob[Func, ParamValues, Params](id, name, tupleToHList.to(params))
   }
-
-  implicit def encoder[Func, ParamValues <: HList]: Encoder[Job[Func, ParamValues]] =
-    (o: Job[Func, ParamValues]) =>
-      Json.obj(
-        "id" -> o.id.asJson,
-        "name" -> Json.fromString(o.name)
-    )
-
-  implicit def decoder[Func, ParamValues <: HList: Encoder: Decoder]: Decoder[Job[Func, ParamValues]] =
-    (c: HCursor) =>
-      for {
-        jobId <- c.downField("id").as[Symbol]
-        jobName <- c.downField("name").as[String]
-      } yield
-        new Job[Func, ParamValues] {
-          override val id = jobId
-          override val name = jobName
-          override def route(parentBreadcrumb: Seq[String]) = ???
-      }
-
-  implicit val decoderDefault: Decoder[Job[_, _ <: HList]] = (c: HCursor) =>
-    for {
-      jobId <- c.downField("id").as[Symbol]
-      jobName <- c.downField("name").as[String]
-    } yield
-      new Job[Nothing, HNil] {
-        override val id = jobId
-        override val name = jobName
-        override def route(parentBreadcrumb: Seq[String]) = ???
-    }
 }

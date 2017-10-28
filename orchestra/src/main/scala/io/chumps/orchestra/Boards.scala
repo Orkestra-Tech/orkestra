@@ -10,7 +10,7 @@ import io.chumps.orchestra.css.AppCss
 import io.chumps.orchestra.route.{BackendRoutes, WebRouter}
 import org.scalajs.dom
 
-import io.chumps.orchestra.board.Board
+import io.chumps.orchestra.board.{Board, Folder, Job}
 
 trait Boards extends BackendRoutes with JSApp {
 

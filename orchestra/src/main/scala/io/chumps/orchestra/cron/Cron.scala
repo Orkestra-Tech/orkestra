@@ -3,6 +3,8 @@ package io.chumps.orchestra.cron
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 
+import io.circe.generic.auto._
+
 import io.chumps.orchestra.{JVMApp, OrchestraConfig}
 import io.chumps.orchestra.utils.AkkaImplicits._
 import io.chumps.orchestra.kubernetes.{JobSpecUtils, Kubernetes, MasterPod}
@@ -52,8 +54,9 @@ trait Cron extends JVMApp {
           CronJobSpec(
             schedule = cronTrigger.schedule,
             jobTemplate = JobTemplateSpec(
-              spec =
-                Option(JobSpecUtils.createJobSpec(masterPod, cronTrigger.jobRunner.job, cronTrigger.jobRunner.podSpec))
+              spec = Option(
+                JobSpecUtils.createJobSpec(masterPod, cronTrigger.jobRunner.job.id, cronTrigger.jobRunner.podSpec)
+              )
             )
           )
         )

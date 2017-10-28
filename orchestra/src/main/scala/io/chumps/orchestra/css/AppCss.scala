@@ -11,7 +11,7 @@ object AppCss {
   val CssSettings = scalacss.devOrProdDefaults; import CssSettings._
 
   def load() = {
-    GlobalRegistry.register(Global.Style, TopNav.Style, StatusPage.Style, StopButton.Style)
+    GlobalRegistry.register(Global.Style, TopNav.Style, StopButton.Style)
     GlobalRegistry.onRegistration(_.addToDocument())
   }
 }

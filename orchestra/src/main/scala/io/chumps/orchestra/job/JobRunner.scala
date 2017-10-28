@@ -21,7 +21,8 @@ import io.chumps.orchestra.ARunStatus._
 import io.chumps.orchestra.board.Job
 import io.chumps.orchestra.kubernetes.JobUtils
 import io.chumps.orchestra.model._
-import io.chumps.orchestra.utils.{StagesHelpers, Utils}
+import io.chumps.orchestra.utils.StagesHelpers.LogsPrintStream
+import io.chumps.orchestra.utils.Utils
 import io.chumps.orchestra.{ARunStatus, AStageStatus, AutowireServer, OrchestraConfig}
 
 case class JobRunner[ParamValues <: HList: Encoder: Decoder, Result: Encoder: Decoder](
@@ -32,12 +33,12 @@ case class JobRunner[ParamValues <: HList: Encoder: Decoder, Result: Encoder: De
 
   private[orchestra] def run(runInfo: RunInfo): Unit = {
     Utils.runInit(runInfo, Seq.empty)
-    val logsOut = StagesHelpers(new FileOutputStream(OrchestraConfig.logsFile(runInfo.runId).toFile, true))
+    val logsOut = new LogsPrintStream(new FileOutputStream(OrchestraConfig.logsFile(runInfo.runId).toFile, true))
 
     Utils.withOutErr(logsOut) {
-      val running = ARunStatus.persist(runInfo, ARunStatus.Running(Instant.now()))
-
       try {
+        persist(runInfo, Running(Instant.now()))
+
         val paramFile = OrchestraConfig.paramsFile(runInfo).toFile
         func(
           if (paramFile.exists()) decode[ParamValues](Source.fromFile(paramFile).mkString).fold(throw _, identity)
@@ -45,11 +46,11 @@ case class JobRunner[ParamValues <: HList: Encoder: Decoder, Result: Encoder: De
         )
         println("Job completed")
 
-        running.succeed(runInfo)
+        persist(runInfo, Success(Instant.now()))
       } catch {
         case e: Throwable =>
           e.printStackTrace()
-          running.fail(runInfo, e)
+          persist(runInfo, Failure(Instant.now(), e))
       } finally {
         logsOut.close()
         JobUtils.selfDelete()
@@ -59,20 +60,31 @@ case class JobRunner[ParamValues <: HList: Encoder: Decoder, Result: Encoder: De
 
   private[orchestra] object ApiServer extends job.Api {
     override def trigger(runId: RunId, params: ParamValues, tags: Seq[String] = Seq.empty): ARunStatus = {
-      val runInfo = RunInfo(job, runId)
+      val runInfo = RunInfo(job.id, runId)
       if (OrchestraConfig.statusFile(runInfo).toFile.exists()) ARunStatus.current(runInfo)
       else {
         Utils.runInit(runInfo, tags)
+        val logsOut = new LogsPrintStream(new FileOutputStream(OrchestraConfig.logsFile(runInfo.runId).toFile, true))
 
-        val triggered = ARunStatus.persist(runInfo, ARunStatus.Triggered(Instant.now()))
-        Files.write(OrchestraConfig.paramsFile(runInfo), AutowireServer.write(params).getBytes)
+        Utils.withOutErr(logsOut) {
+          try {
+            val triggered = persist(runInfo, Triggered(Instant.now()))
+            Files.write(OrchestraConfig.paramsFile(runInfo), AutowireServer.write(params).getBytes)
 
-        Await.result(JobUtils.create(runInfo, podSpec), Duration.Inf)
-        triggered
+            Await.result(JobUtils.create(runInfo, podSpec), Duration.Inf)
+
+            triggered
+          } catch {
+            case e: Throwable =>
+              e.printStackTrace()
+              persist(runInfo, Failure(Instant.now(), e))
+              throw e
+          } finally logsOut.close()
+        }
       }
     }
 
-    override def stop(runId: RunId): Unit = JobUtils.delete(RunInfo(job, runId))
+    override def stop(runId: RunId): Unit = JobUtils.delete(RunInfo(job.id, runId))
 
     override def tags(): Seq[String] = Seq(OrchestraConfig.tagsDir(job.id).toFile).filter(_.exists()).flatMap(_.list())
 
@@ -97,7 +109,7 @@ case class JobRunner[ParamValues <: HList: Encoder: Decoder, Result: Encoder: De
           .dropWhile(_.getName.toInt > from.toEpochSecond(ZoneOffset.UTC))
         runId <- secondDir.list().toStream
 
-        runInfo = RunInfo(job, RunId(runId))
+        runInfo = RunInfo(job.id, RunId(runId))
         if OrchestraConfig.statusFile(runInfo).toFile.exists()
         startAt <- ARunStatus.history(runInfo).headOption.map {
           case status: Triggered => status.at

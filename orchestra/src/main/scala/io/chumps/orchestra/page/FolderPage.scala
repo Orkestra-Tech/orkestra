@@ -9,7 +9,7 @@ import io.chumps.orchestra.board.Board
 import io.chumps.orchestra.css.Global
 import scalacss.ScalaCssReact._
 
-object FolderBoardPage {
+object FolderPage {
   case class Props(name: String, breadcrumb: Seq[String], childBoards: Seq[Board], ctrl: RouterCtl[PageRoute])
 
   val component =
@@ -21,10 +21,15 @@ object FolderBoardPage {
           <.div(
             props.childBoards.zipWithIndex.toTagMod {
               case (board, index) =>
-                <.div(Global.Style.listItem(index % 2 == 0),
-                      ^.cursor.pointer,
-                      ^.padding := "4px",
-                      props.ctrl.setOnClick(BoardPageRoute(props.breadcrumb :+ board.pathName)))(board.name)
+                <.div(
+                  Global.Style.listItem(index % 2 == 0),
+                  ^.display.flex,
+                  ^.alignItems.center,
+                  ^.padding := "3px",
+                  ^.height := "22px",
+                  ^.cursor.pointer,
+                  props.ctrl.setOnClick(BoardPageRoute(props.breadcrumb :+ board.id.name.toLowerCase))
+                )(board.name)
             }
           )
         )

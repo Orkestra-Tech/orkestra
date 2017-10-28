@@ -57,7 +57,7 @@ trait TriggerHelpers {
   private def triggerMessage(jobRunner: JobRunner[_, _]) = println(s"Triggering ${jobRunner.job.id.name}")
 
   private def jobRunInfo(jobRunner: JobRunner[_ <: HList, _]) =
-    RunInfo(jobRunner.job,
+    RunInfo(jobRunner.job.id,
             OrchestraConfig.runInfo.fold(throw new IllegalStateException("ORCHESTRA_RUN_INFO should be set"))(_.runId))
 
   private def awaitJobResult(job: JobRunner[_ <: HList, _]): Unit = {
@@ -70,9 +70,9 @@ trait TriggerHelpers {
     while (isInProgress()) Thread.sleep(500)
 
     ARunStatus.current(runInfo) match {
-      case _: Success    =>
-      case Failure(_, e) => throw new IllegalStateException(s"Run of job ${runInfo.job.id.name} failed", e)
-      case s             => throw new IllegalStateException(s"Run of job ${runInfo.job.id.name} failed with status $s")
+      case Success(_)    =>
+      case Failure(_, e) => throw new IllegalStateException(s"Run of job ${runInfo.jobId.name} failed", e)
+      case s             => throw new IllegalStateException(s"Run of job ${runInfo.jobId.name} failed with status $s")
     }
   }
 }
