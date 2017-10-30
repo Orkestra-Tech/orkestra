@@ -45,8 +45,8 @@ object WebRouter {
       }
   }
 
-  private def jobs(board: Board): Seq[Job[_, _ <: HList]] = board match {
-    case folder: Folder => folder.childBoards.flatMap(jobs)
-    case job: Job[_, _] => Seq(job)
+  private def jobs(board: Board): Seq[Job[_, _ <: HList, _]] = board match {
+    case folder: Folder    => folder.childBoards.flatMap(jobs)
+    case job: Job[_, _, _] => Seq(job)
   }
 }

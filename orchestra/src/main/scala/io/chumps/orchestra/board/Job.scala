@@ -22,36 +22,40 @@ import io.chumps.orchestra.model._
 import io.chumps.orchestra.parameter.{Parameter, ParameterOperations}
 import io.chumps.orchestra.{ARunStatus, AStageStatus, AutowireServer, Jobs}
 
-trait Job[Func, ParamValues <: HList] extends Board {
+trait Job[Func, ParamValues <: HList, Result] extends Board {
 
   val id: Symbol
   val name: String
 
-  def apply[Result](job: Func)(implicit fnToProd: FnToProduct.Aux[Func, ParamValues => Result],
+  def apply(job: Func)(implicit fnToProd: FnToProduct.Aux[Func, ParamValues => Result],
+                       encoderP: Encoder[ParamValues],
+                       decoderP: Decoder[ParamValues],
+                       encoderR: Encoder[Result],
+                       decoderR: Decoder[Result]) =
+    JobRunner(this, PodSpec(Seq.empty), fnToProd(job))
+
+  def apply(podConfig: PodSpec)(job: Func)(implicit fnToProd: FnToProduct.Aux[Func, ParamValues => Result],
+                                           encoderP: Encoder[ParamValues],
+                                           decoderP: Decoder[ParamValues],
+                                           encoderR: Encoder[Result],
+                                           decoderR: Decoder[Result]) =
+    JobRunner[ParamValues, Result](this, podConfig, fnToProd(job))
+
+  private[orchestra] trait Api {
+    def trigger(runId: RunId, params: ParamValues, tags: Seq[String] = Seq.empty): Unit
+    def stop(runId: RunId): Unit
+    def tags(): Seq[String]
+    def history(
+      page: Page[Instant]
+    ): Seq[(RunId, Instant, ParamValues, Seq[String], ARunStatus[Result], Seq[AStageStatus])]
+  }
+
+  private[orchestra] object Api {
+    def router(apiServer: Api)(implicit ec: ExecutionContext,
                                encoderP: Encoder[ParamValues],
                                decoderP: Decoder[ParamValues],
                                encoderR: Encoder[Result],
                                decoderR: Decoder[Result]) =
-    JobRunner(this, PodSpec(Seq.empty), fnToProd(job))
-
-  def apply[Result](podConfig: PodSpec)(job: Func)(implicit fnToProd: FnToProduct.Aux[Func, ParamValues => Result],
-                                                   encoderP: Encoder[ParamValues],
-                                                   decoderP: Decoder[ParamValues],
-                                                   encoderR: Encoder[Result],
-                                                   decoderR: Decoder[Result]) =
-    JobRunner[ParamValues, Result](this, podConfig, fnToProd(job))
-
-  private[orchestra] trait Api {
-    def trigger(runId: RunId, params: ParamValues, tags: Seq[String] = Seq.empty): ARunStatus
-    def stop(runId: RunId): Unit
-    def tags(): Seq[String]
-    def history(page: Page[Instant]): Seq[(RunId, Instant, ParamValues, Seq[String], ARunStatus, Seq[AStageStatus])]
-  }
-
-  private[orchestra] object Api {
-    def router(
-      apiServer: Api
-    )(implicit ec: ExecutionContext, encoder: Encoder[ParamValues], decoder: Decoder[ParamValues]) =
       AutowireServer.route[Api](apiServer)
 
     val client = new autowire.Client[String, Decoder, Encoder] {
@@ -86,7 +90,7 @@ object Job {
       decoderP: Decoder[ParamValues],
       encoderR: Encoder[Result],
       decoderR: Decoder[Result]
-    ) = SimpleJob[Func, ParamValues, HNil](id, name, HNil)
+    ) = SimpleJob[Func, ParamValues, HNil, Result](id, name, HNil)
 
     // One param
     def apply[ParamValues <: HList, Param <: Parameter[_], Result](param: Param)(
@@ -96,7 +100,7 @@ object Job {
       decoderP: Decoder[ParamValues],
       encoderR: Encoder[Result],
       decoderR: Decoder[Result]
-    ) = SimpleJob[Func, ParamValues, Param :: HNil](id, name, param :: HNil)
+    ) = SimpleJob[Func, ParamValues, Param :: HNil, Result](id, name, param :: HNil)
 
     // Multi params
     def apply[ParamValues <: HList, TupledParams, Params <: HList, Result](params: TupledParams)(
@@ -107,6 +111,6 @@ object Job {
       decoderP: Decoder[ParamValues],
       encoderR: Encoder[Result],
       decoderR: Decoder[Result]
-    ) = SimpleJob[Func, ParamValues, Params](id, name, tupleToHList.to(params))
+    ) = SimpleJob[Func, ParamValues, Params, Result](id, name, tupleToHList.to(params))
   }
 }

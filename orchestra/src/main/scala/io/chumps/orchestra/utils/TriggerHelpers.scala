@@ -1,5 +1,6 @@
 package io.chumps.orchestra.utils
 
+import io.circe.Decoder
 import shapeless._
 import shapeless.ops.hlist.Tupler
 
@@ -10,33 +11,36 @@ import io.chumps.orchestra.{ARunStatus, OrchestraConfig}
 
 trait TriggerHelpers {
 
-  implicit class TiggerableNoParamJob(job: JobRunner[HNil, _]) {
+  implicit class TriggerableNoParamJob[Result: Decoder](job: JobRunner[HNil, Result]) {
     def trigger(): Unit = {
       triggerMessage(job)
       job.ApiServer.trigger(jobRunInfo(job).runId, HNil)
     }
 
-    def triggerAndAwait(): Unit = {
+    def triggerAndAwait(): Result = {
       trigger()
       awaitJobResult(job)
     }
   }
 
-  implicit class TiggerableRunIdJob(job: JobRunner[RunId :: HNil, _]) {
+  implicit class TriggerableRunIdJob[Result: Decoder](job: JobRunner[RunId :: HNil, Result]) {
     def trigger(): Unit = {
       triggerMessage(job)
       val runId = jobRunInfo(job).runId
       job.ApiServer.trigger(runId, runId :: HNil)
     }
 
-    def triggerAndAwait(): Unit = {
+    def triggerAndAwait(): Result = {
       trigger()
       awaitJobResult(job)
     }
   }
 
-  implicit class TiggerableMultipleParamJob[ParamValues <: HList, ParamValuesNoRunId <: HList, TupledValues](
-    job: JobRunner[ParamValues, _]
+  implicit class TriggerableMultipleParamJob[ParamValues <: HList,
+                                             ParamValuesNoRunId <: HList,
+                                             TupledValues,
+                                             Result: Decoder](
+    job: JobRunner[ParamValues, Result]
   )(
     implicit runIdInjector: RunIdInjector[ParamValuesNoRunId, ParamValues],
     tupler: Tupler.Aux[ParamValuesNoRunId, TupledValues],
@@ -48,7 +52,7 @@ trait TriggerHelpers {
       job.ApiServer.trigger(runId, runIdInjector(tupleToHList.to(params), runId))
     }
 
-    def triggerAndAwait(params: TupledValues): Unit = {
+    def triggerAndAwait(params: TupledValues): Result = {
       trigger(params)
       awaitJobResult(job)
     }
@@ -60,19 +64,19 @@ trait TriggerHelpers {
     RunInfo(jobRunner.job.id,
             OrchestraConfig.runInfo.fold(throw new IllegalStateException("ORCHESTRA_RUN_INFO should be set"))(_.runId))
 
-  private def awaitJobResult(job: JobRunner[_ <: HList, _]): Unit = {
+  private def awaitJobResult[Result: Decoder](job: JobRunner[_ <: HList, Result]): Result = {
     val runInfo = jobRunInfo(job)
     def isInProgress() = ARunStatus.current(runInfo) match {
-      case _: Triggered | _: Running => true
-      case _                         => false
+      case _: Triggered[Result] | _: Running[Result] => true
+      case _                                         => false
     }
 
     while (isInProgress()) Thread.sleep(500)
 
-    ARunStatus.current(runInfo) match {
-      case Success(_)    =>
-      case Failure(_, e) => throw new IllegalStateException(s"Run of job ${runInfo.jobId.name} failed", e)
-      case s             => throw new IllegalStateException(s"Run of job ${runInfo.jobId.name} failed with status $s")
+    ARunStatus.current[Result](runInfo) match {
+      case Success(_, result) => result
+      case Failure(_, e)      => throw new IllegalStateException(s"Run of job ${runInfo.jobId.name} failed", e)
+      case s                  => throw new IllegalStateException(s"Run of job ${runInfo.jobId.name} failed with status $s")
     }
   }
 }

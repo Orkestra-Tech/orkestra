@@ -22,7 +22,7 @@ import io.chumps.orchestra.model.RunInfo
 object RunningJobs {
 
   val component = ScalaComponent
-    .builder[Seq[Job[_, _ <: HList]]](getClass.getSimpleName)
+    .builder[Seq[Job[_, _ <: HList, _]]](getClass.getSimpleName)
     .initialState[(Option[Seq[RunInfo]], SetIntervalHandle)]((None, null))
     .renderP { ($, jobs) =>
       val runs = $.state._1 match {
@@ -61,7 +61,7 @@ object RunningJobs {
     .build
 
   private def pullRunningJobs(
-    $ : ComponentDidMount[Seq[Job[_, _ <: HList]], (Option[Seq[RunInfo]], SetIntervalHandle), Unit]
+    $ : ComponentDidMount[Seq[Job[_, _ <: HList, _]], (Option[Seq[RunInfo]], SetIntervalHandle), Unit]
   ) =
     Callback.future {
       CommonApi.client.runningJobs().call().map { runningJobs =>

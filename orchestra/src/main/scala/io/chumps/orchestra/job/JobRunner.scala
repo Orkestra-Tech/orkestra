@@ -26,7 +26,7 @@ import io.chumps.orchestra.utils.Utils
 import io.chumps.orchestra.{ARunStatus, AStageStatus, AutowireServer, OrchestraConfig}
 
 case class JobRunner[ParamValues <: HList: Encoder: Decoder, Result: Encoder: Decoder](
-  job: Job[_, ParamValues],
+  job: Job[_, ParamValues, Result],
   podSpec: PodSpec,
   func: ParamValues => Result
 ) {
@@ -37,20 +37,20 @@ case class JobRunner[ParamValues <: HList: Encoder: Decoder, Result: Encoder: De
 
     Utils.withOutErr(logsOut) {
       try {
-        persist(runInfo, Running(Instant.now()))
+        persist(runInfo, Running[Result](Instant.now()))
 
         val paramFile = OrchestraConfig.paramsFile(runInfo).toFile
-        func(
+        val result = func(
           if (paramFile.exists()) decode[ParamValues](Source.fromFile(paramFile).mkString).fold(throw _, identity)
           else HNil.asInstanceOf[ParamValues]
         )
         println("Job completed")
 
-        persist(runInfo, Success(Instant.now()))
+        persist(runInfo, Success(Instant.now(), result))
       } catch {
         case e: Throwable =>
           e.printStackTrace()
-          persist(runInfo, Failure(Instant.now(), e))
+          persist(runInfo, Failure[Result](Instant.now(), e))
       } finally {
         logsOut.close()
         JobUtils.selfDelete()
@@ -59,25 +59,23 @@ case class JobRunner[ParamValues <: HList: Encoder: Decoder, Result: Encoder: De
   }
 
   private[orchestra] object ApiServer extends job.Api {
-    override def trigger(runId: RunId, params: ParamValues, tags: Seq[String] = Seq.empty): ARunStatus = {
+    override def trigger(runId: RunId, params: ParamValues, tags: Seq[String] = Seq.empty): Unit = {
       val runInfo = RunInfo(job.id, runId)
-      if (OrchestraConfig.statusFile(runInfo).toFile.exists()) ARunStatus.current(runInfo)
+      if (OrchestraConfig.statusFile(runInfo).toFile.exists()) ARunStatus.current[Result](runInfo)
       else {
         Utils.runInit(runInfo, tags)
         val logsOut = new LogsPrintStream(new FileOutputStream(OrchestraConfig.logsFile(runInfo.runId).toFile, true))
 
         Utils.withOutErr(logsOut) {
           try {
-            val triggered = persist(runInfo, Triggered(Instant.now()))
+            persist(runInfo, Triggered[Result](Instant.now()))
             Files.write(OrchestraConfig.paramsFile(runInfo), AutowireServer.write(params).getBytes)
 
             Await.result(JobUtils.create(runInfo, podSpec), Duration.Inf)
-
-            triggered
           } catch {
             case e: Throwable =>
               e.printStackTrace()
-              persist(runInfo, Failure(Instant.now(), e))
+              persist(runInfo, Failure[Result](Instant.now(), e))
               throw e
           } finally logsOut.close()
         }
@@ -90,7 +88,7 @@ case class JobRunner[ParamValues <: HList: Encoder: Decoder, Result: Encoder: De
 
     override def history(
       page: Page[Instant]
-    ): Seq[(RunId, Instant, ParamValues, Seq[String], ARunStatus, Seq[AStageStatus])] = {
+    ): Seq[(RunId, Instant, ParamValues, Seq[String], ARunStatus[Result], Seq[AStageStatus])] = {
       val from = page.from.fold(LocalDateTime.MAX)(LocalDateTime.ofInstant(_, ZoneOffset.UTC))
 
       val runs = for {
@@ -111,11 +109,11 @@ case class JobRunner[ParamValues <: HList: Encoder: Decoder, Result: Encoder: De
 
         runInfo = RunInfo(job.id, RunId(runId))
         if OrchestraConfig.statusFile(runInfo).toFile.exists()
-        startAt <- ARunStatus.history(runInfo).headOption.map {
-          case status: Triggered => status.at
-          case status: Running   => status.at
+        startAt <- ARunStatus.history[Result](runInfo).headOption.map {
+          case status: Triggered[Result] => status.at
+          case status: Running[Result]   => status.at
           case status =>
-            throw new IllegalStateException(s"$status is not of status type ${classOf[Triggered].getName}")
+            throw new IllegalStateException(s"$status is not of status type ${classOf[Triggered[Result]].getName}")
         }
 
         paramFile = OrchestraConfig.paramsFile(runInfo).toFile
@@ -131,7 +129,12 @@ case class JobRunner[ParamValues <: HList: Encoder: Decoder, Result: Encoder: De
           if runId == runInfo.runId.value.toString
         } yield tagDir.getName
       } yield
-        (runInfo.runId, startAt, paramValues, tags, ARunStatus.current(runInfo), AStageStatus.history(runInfo.runId))
+        (runInfo.runId,
+         startAt,
+         paramValues,
+         tags,
+         ARunStatus.current[Result](runInfo),
+         AStageStatus.history(runInfo.runId))
 
       runs.take(page.size)
     }

@@ -33,8 +33,8 @@ import io.chumps.orchestra.utils.Utils
 
 object JobPage {
 
-  case class Props[Params <: HList, ParamValues <: HList: Encoder: Decoder](
-    job: Job[_, ParamValues],
+  case class Props[Params <: HList, ParamValues <: HList: Encoder: Decoder, Result: Decoder](
+    job: Job[_, ParamValues, Result],
     params: Params,
     runId: Option[RunId],
     ctl: RouterCtl[PageRoute]
@@ -43,7 +43,7 @@ object JobPage {
   ) {
 
     def runJob(
-      $ : RenderScope[Props[_, _ <: HList], (RunId, Map[Symbol, Any], TagMod, SetIntervalHandle), Unit]
+      $ : RenderScope[Props[_, _ <: HList, _], (RunId, Map[Symbol, Any], TagMod, SetIntervalHandle), Unit]
     )(event: ReactEventFromInput) =
       Callback.future {
         event.preventDefault()
@@ -54,7 +54,7 @@ object JobPage {
       }
 
     def pullHistory(
-      $ : ComponentDidMount[Props[_, _ <: HList], (RunId, Map[Symbol, Any], TagMod, SetIntervalHandle), Unit]
+      $ : ComponentDidMount[Props[_, _ <: HList, _], (RunId, Map[Symbol, Any], TagMod, SetIntervalHandle), Unit]
     ) = Callback.future {
       job.Api.client
         .history(Page(None, 50)) // TODO load more as we scroll
@@ -100,7 +100,7 @@ object JobPage {
                   <.tr(runIdDisplay("≻", runId, Global.Style.brandColor.value, "Running"),
                        datesDisplay(createdAt, Option(Instant.now())),
                        stopButton)
-                case Success(at) =>
+                case Success(at, _) =>
                   <.tr(runIdDisplay("✓", runId, "green", "Success"), datesDisplay(createdAt, Option(at)), rerunButton)
                 case Failure(at, t) =>
                   <.tr(runIdDisplay("✗", runId, "firebrick", s"Failed: ${t.getMessage}"),
@@ -146,7 +146,7 @@ object JobPage {
     }
 
     def displays(
-      $ : RenderScope[Props[_, _ <: HList], (RunId, Map[Symbol, Any], TagMod, SetIntervalHandle), Unit]
+      $ : RenderScope[Props[_, _ <: HList, _], (RunId, Map[Symbol, Any], TagMod, SetIntervalHandle), Unit]
     ) = {
       val displayState = State(kv => $.modState(s => s.copy(_2 = s._2 + kv)), key => $.state._2.get(key))
       paramOperations.displays(params, displayState).zipWithIndex.toTagMod {
@@ -157,7 +157,7 @@ object JobPage {
 
   val component =
     ScalaComponent
-      .builder[Props[_, _ <: HList]](getClass.getSimpleName)
+      .builder[Props[_, _ <: HList, _]](getClass.getSimpleName)
       .initialStateFromProps[(RunId, Map[Symbol, Any], TagMod, SetIntervalHandle)] { props =>
         val runId = props.runId.getOrElse(RunId.random())
         (runId, Map.empty, "Loading runs", null)
