@@ -12,13 +12,16 @@ import io.chumps.orchestra.model.RunId
 import io.chumps.orchestra.page.JobPage
 import io.chumps.orchestra.parameter.ParameterOperations
 import io.chumps.orchestra.route.WebRouter.{BoardPageRoute, PageRoute}
+import io.chumps.orchestra.utils.RunIdOperation
 
-case class SimpleJob[Func, ParamValues <: HList: Encoder: Decoder, Params <: HList, Result: Decoder](
-  id: Symbol,
-  name: String,
-  params: Params
-)(implicit paramOperations: ParameterOperations[Params, ParamValues])
-    extends Job[Func, ParamValues, Result] {
+case class SimpleJob[Func,
+                     ParamValuesNoRunId <: HList,
+                     ParamValues <: HList: Encoder: Decoder,
+                     Params <: HList,
+                     Result: Decoder](id: Symbol, name: String, params: Params)(
+  implicit paramOperations: ParameterOperations[Params, ParamValuesNoRunId],
+  runIdOperation: RunIdOperation[ParamValuesNoRunId, ParamValues]
+) extends Job[Func, ParamValues, Result] {
 
   def route(parentBreadcrumb: Seq[String]) = RouterConfigDsl[PageRoute].buildRule { dsl =>
     import dsl._

@@ -7,7 +7,7 @@ import scala.language.{higherKinds, implicitConversions}
 
 import io.circe.parser._
 import io.circe.syntax._
-import io.circe.{Decoder, Encoder, HCursor, Json}
+import io.circe.{Decoder, Encoder}
 import io.circe.generic.auto._
 import io.circe.java8.time._
 
@@ -20,6 +20,7 @@ import shapeless.{::, _}
 import io.chumps.orchestra.job.{JobRunner, SimpleJob}
 import io.chumps.orchestra.model._
 import io.chumps.orchestra.parameter.{Parameter, ParameterOperations}
+import io.chumps.orchestra.utils.RunIdOperation
 import io.chumps.orchestra.{ARunStatus, AStageStatus, AutowireServer, Jobs}
 
 trait Job[Func, ParamValues <: HList, Result] extends Board {
@@ -83,34 +84,39 @@ object Job {
 
   class JobBuilder[Func](id: Symbol, name: String) {
     // No Params
-    def apply[ParamValues <: HList, Result]()(
+    def apply[ParamValuesNoRunId <: HList, ParamValues <: HList, Result]()(
       implicit fnToProd: FnToProduct.Aux[Func, ParamValues => Result],
-      paramOperations: ParameterOperations[HNil, ParamValues],
+      paramOperations: ParameterOperations[HNil, ParamValuesNoRunId],
+      runIdOperation: RunIdOperation[ParamValuesNoRunId, ParamValues],
       encoderP: Encoder[ParamValues],
       decoderP: Decoder[ParamValues],
       encoderR: Encoder[Result],
       decoderR: Decoder[Result]
-    ) = SimpleJob[Func, ParamValues, HNil, Result](id, name, HNil)
+    ) = SimpleJob[Func, ParamValuesNoRunId, ParamValues, HNil, Result](id, name, HNil)
 
     // One param
-    def apply[ParamValues <: HList, Param <: Parameter[_], Result](param: Param)(
+    def apply[ParamValuesNoRunId <: HList, ParamValues <: HList, Param <: Parameter[_], Result](param: Param)(
       implicit fnToProd: FnToProduct.Aux[Func, ParamValues => Result],
-      paramOperations: ParameterOperations[Param :: HNil, ParamValues],
+      runIdOperation: RunIdOperation[ParamValuesNoRunId, ParamValues],
+      paramOperations: ParameterOperations[Param :: HNil, ParamValuesNoRunId],
       encoderP: Encoder[ParamValues],
       decoderP: Decoder[ParamValues],
       encoderR: Encoder[Result],
       decoderR: Decoder[Result]
-    ) = SimpleJob[Func, ParamValues, Param :: HNil, Result](id, name, param :: HNil)
+    ) = SimpleJob[Func, ParamValuesNoRunId, ParamValues, Param :: HNil, Result](id, name, param :: HNil)
 
     // Multi params
-    def apply[ParamValues <: HList, TupledParams, Params <: HList, Result](params: TupledParams)(
+    def apply[ParamValuesNoRunId <: HList, ParamValues <: HList, TupledParams, Params <: HList, Result](
+      params: TupledParams
+    )(
       implicit fnToProd: FnToProduct.Aux[Func, ParamValues => Result],
       tupleToHList: Generic.Aux[TupledParams, Params],
-      paramOperations: ParameterOperations[Params, ParamValues],
+      runIdOperation: RunIdOperation[ParamValuesNoRunId, ParamValues],
+      paramOperations: ParameterOperations[Params, ParamValuesNoRunId],
       encoderP: Encoder[ParamValues],
       decoderP: Decoder[ParamValues],
       encoderR: Encoder[Result],
       decoderR: Decoder[Result]
-    ) = SimpleJob[Func, ParamValues, Params, Result](id, name, tupleToHList.to(params))
+    ) = SimpleJob[Func, ParamValuesNoRunId, ParamValues, Params, Result](id, name, tupleToHList.to(params))
   }
 }

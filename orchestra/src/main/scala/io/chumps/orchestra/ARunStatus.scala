@@ -18,18 +18,17 @@ import io.chumps.orchestra.model.RunInfo
 // Should be in the model package
 sealed trait ARunStatus[+Result]
 object ARunStatus {
-  case class Triggered[Result](at: Instant) extends ARunStatus[Result]
-  case class Running[Result](at: Instant) extends ARunStatus[Result]
+  case class Triggered(at: Instant) extends ARunStatus[Nothing]
+  case class Running(at: Instant) extends ARunStatus[Nothing]
   case class Success[Result](at: Instant, result: Result) extends ARunStatus[Result]
-  case class Failure[Result](at: Instant, throwable: Throwable) extends ARunStatus[Result]
-  case object Stopped extends ARunStatus[Nothing]
+  case class Failure(at: Instant, throwable: Throwable) extends ARunStatus[Nothing]
+  case class Stopped(at: Instant) extends ARunStatus[Nothing]
 
-  def current[Result: Decoder](runInfo: RunInfo): ARunStatus[Result] =
+  def current[Result: Decoder](runInfo: RunInfo, checkRunning: Boolean = true): ARunStatus[Result] =
     history[Result](runInfo).lastOption match {
-      case Some(running @ Running(_)) if CommonApiServer.runningJobs().contains(runInfo) => running
-      case Some(Running(_))                                                              => ARunStatus.Stopped
-      case Some(status)                                                                  => status
-      case None                                                                          => throw new IllegalStateException(s"No status found for job ${runInfo.jobId} ${runInfo.runId}")
+      case Some(Running(_)) if checkRunning && !CommonApiServer.runningJobs().contains(runInfo) => Stopped(Instant.MAX)
+      case Some(status)                                                                         => status
+      case None                                                                                 => throw new IllegalStateException(s"No status found for job ${runInfo.jobId} ${runInfo.runId}")
     }
 
   def history[Result: Decoder](runInfo: RunInfo): Seq[ARunStatus[Result]] =

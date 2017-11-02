@@ -11,12 +11,12 @@ import io.chumps.orchestra.job.JobRunner
 
 trait Jobs extends JVMApp with BackendRoutes {
 
-  def jobs: Seq[JobRunner[_, _]]
+  def jobRunners: Set[JobRunner[_, _]]
 
   override lazy val routes = super.routes ~
     pathPrefix(Jobs.apiSegment) {
       pathPrefix(Jobs.jobSegment) {
-        jobs.map(_.apiRoute).reduce(_ ~ _)
+        jobRunners.map(_.apiRoute).reduce(_ ~ _)
       } ~
         path(Jobs.commonSegment / Segments) { segments =>
           entity(as[String]) { entity =>
@@ -30,10 +30,10 @@ trait Jobs extends JVMApp with BackendRoutes {
   override def main(args: Array[String]): Unit = {
     super.main(args)
 
-    OrchestraConfig.runInfo.fold[Unit] {
+    OrchestraConfig.runInfoMaybe.fold[Unit] {
       Http().bindAndHandle(routes, "0.0.0.0", OrchestraConfig.port)
     } { runInfo =>
-      jobs
+      jobRunners
         .find(_.job.id == runInfo.jobId)
         .getOrElse(throw new IllegalArgumentException(s"No job found for id ${runInfo.jobId}"))
         .run(runInfo)

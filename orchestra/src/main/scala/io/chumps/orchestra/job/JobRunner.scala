@@ -21,6 +21,7 @@ import io.chumps.orchestra.ARunStatus._
 import io.chumps.orchestra.board.Job
 import io.chumps.orchestra.kubernetes.JobUtils
 import io.chumps.orchestra.model._
+import io.chumps.orchestra.utils.BaseEncoders._
 import io.chumps.orchestra.utils.StagesHelpers.LogsPrintStream
 import io.chumps.orchestra.utils.Utils
 import io.chumps.orchestra.{ARunStatus, AStageStatus, AutowireServer, OrchestraConfig}
@@ -37,20 +38,21 @@ case class JobRunner[ParamValues <: HList: Encoder: Decoder, Result: Encoder: De
 
     Utils.withOutErr(logsOut) {
       try {
-        persist(runInfo, Running[Result](Instant.now()))
+        persist[Nothing](runInfo, Running(Instant.now()))
+        println(s"Running job ${job.name}")
 
         val paramFile = OrchestraConfig.paramsFile(runInfo).toFile
         val result = func(
           if (paramFile.exists()) decode[ParamValues](Source.fromFile(paramFile).mkString).fold(throw _, identity)
           else HNil.asInstanceOf[ParamValues]
         )
-        println("Job completed")
 
+        println(s"Job ${job.name} completed")
         persist(runInfo, Success(Instant.now(), result))
       } catch {
         case e: Throwable =>
           e.printStackTrace()
-          persist(runInfo, Failure[Result](Instant.now(), e))
+          persist[Nothing](runInfo, Failure(Instant.now(), e))
       } finally {
         logsOut.close()
         JobUtils.selfDelete()
@@ -68,21 +70,25 @@ case class JobRunner[ParamValues <: HList: Encoder: Decoder, Result: Encoder: De
 
         Utils.withOutErr(logsOut) {
           try {
-            persist(runInfo, Triggered[Result](Instant.now()))
+            persist[Nothing](runInfo, Triggered(Instant.now()))
             Files.write(OrchestraConfig.paramsFile(runInfo), AutowireServer.write(params).getBytes)
 
             Await.result(JobUtils.create(runInfo, podSpec), Duration.Inf)
           } catch {
             case e: Throwable =>
               e.printStackTrace()
-              persist(runInfo, Failure[Result](Instant.now(), e))
+              persist[Nothing](runInfo, Failure(Instant.now(), e))
               throw e
           } finally logsOut.close()
         }
       }
     }
 
-    override def stop(runId: RunId): Unit = JobUtils.delete(RunInfo(job.id, runId))
+    override def stop(runId: RunId): Unit = {
+      val runInfo = RunInfo(job.id, runId)
+      persist[Nothing](runInfo, Stopped(Instant.now()))
+      JobUtils.delete(runInfo)
+    }
 
     override def tags(): Seq[String] = Seq(OrchestraConfig.tagsDir(job.id).toFile).filter(_.exists()).flatMap(_.list())
 
@@ -110,10 +116,10 @@ case class JobRunner[ParamValues <: HList: Encoder: Decoder, Result: Encoder: De
         runInfo = RunInfo(job.id, RunId(runId))
         if OrchestraConfig.statusFile(runInfo).toFile.exists()
         startAt <- ARunStatus.history[Result](runInfo).headOption.map {
-          case status: Triggered[Result] => status.at
-          case status: Running[Result]   => status.at
+          case status: Triggered => status.at
+          case status: Running   => status.at
           case status =>
-            throw new IllegalStateException(s"$status is not of status type ${classOf[Triggered[Result]].getName}")
+            throw new IllegalStateException(s"$status is not of status type ${classOf[Triggered].getName}")
         }
 
         paramFile = OrchestraConfig.paramsFile(runInfo).toFile

@@ -27,7 +27,7 @@ import io.chumps.orchestra.filesystem.{Directory, LocalFile}
 
 trait Github extends JVMApp {
 
-  def githubTriggers: Seq[GithubTrigger]
+  def githubTriggers: Set[GithubTrigger]
 
   override def main(args: Array[String]): Unit = {
     super.main(args)
@@ -46,7 +46,7 @@ trait Github extends JVMApp {
           }
         }
 
-    if (OrchestraConfig.runInfo.isEmpty) Http().bindAndHandle(routes, "0.0.0.0", OrchestraConfig.githubPort)
+    if (OrchestraConfig.runInfoMaybe.isEmpty) Http().bindAndHandle(routes, "0.0.0.0", OrchestraConfig.githubPort)
   }
 }
 
@@ -88,8 +88,7 @@ object Github extends LazyLogging {
           HttpEntity(
             CheckStatus(
               state,
-              s"${OrchestraConfig.url}/#/logs/${OrchestraConfig.runInfo
-                .fold(throw new IllegalStateException("ORCHESTRA_RUN_INFO should be set"))(_.runId.value)}",
+              s"${OrchestraConfig.url}/#/logs/${OrchestraConfig.runInfo.runId.value}",
               state.description,
               s"${BuildInfo.name.toLowerCase}/pull-request"
             ).asJson.noSpaces

@@ -23,7 +23,9 @@ object OrchestraConfig {
     .getOrElse(throw new IllegalStateException("ORCHESTRA_GITHUB_PORT should be set"))
   lazy val githubToken =
     OrchestraConfig("GITHUB_TOKEN").getOrElse(throw new IllegalStateException("ORCHESTRA_GITHUB_TOKEN should be set"))
-  val runInfo = OrchestraConfig("RUN_INFO").map(runInfoJson => RunInfo.decodeWithFallbackRunId(runInfoJson, jobUid))
+  val runInfoMaybe =
+    OrchestraConfig("RUN_INFO").map(runInfoJson => RunInfo.decodeWithFallbackRunId(runInfoJson, jobUid))
+  lazy val runInfo = runInfoMaybe.getOrElse(throw new IllegalStateException("ORCHESTRA_RUN_INFO should be set"))
   val kubeUri =
     OrchestraConfig("KUBE_URI").getOrElse(throw new IllegalStateException("ORCHESTRA_KUBE_URI should be set"))
   val podName =

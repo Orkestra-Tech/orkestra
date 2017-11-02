@@ -11,9 +11,7 @@ import io.chumps.orchestra.{AStageStatus, OrchestraConfig}
 trait StagesHelpers {
 
   def stage[T](name: String)(f: => T) = {
-    val runInfo =
-      OrchestraConfig.runInfo.getOrElse(throw new IllegalStateException("ORCHESTRA_RUN_INFO should be set"))
-
+    val runInfo = OrchestraConfig.runInfo
     AStageStatus.persist(runInfo.runId, StageStart(name, Instant.now()))
     try StagesHelpers.stageVar.withValue(Option(Symbol(name)))(f)
     finally AStageStatus.persist(runInfo.runId, StageEnd(name, Instant.now()))

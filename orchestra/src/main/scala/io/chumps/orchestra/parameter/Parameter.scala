@@ -1,6 +1,5 @@
 package io.chumps.orchestra.parameter
 
-import io.chumps.orchestra.parameter.Parameter.State
 import enumeratum._
 import japgolly.scalajs.react.vdom.TagMod
 import japgolly.scalajs.react.vdom.html_<^._
@@ -20,24 +19,22 @@ trait Parameter[T] {
       .getOrElse(throw new IllegalArgumentException(s"Can't get param ${id.name}"))
 }
 
-object Parameter {
-  case class State(updated: ((Symbol, Any)) => Callback, get: Symbol => Option[Any]) {
-    def +(kv: (Symbol, Any)) = updated(kv)
-  }
+case class State(updated: ((Symbol, Any)) => Callback, get: Symbol => Option[Any]) {
+  def +(kv: (Symbol, Any)) = updated(kv)
 }
 
-case class Input[T: Converter](name: String, defaultValue: Option[T] = None) extends Parameter[T] {
+case class Input[T: Encoder: Decoder](name: String, defaultValue: Option[T] = None) extends Parameter[T] {
   override def display(state: State) = {
     def modValue(event: ReactEventFromInput) = {
       event.persist()
-      state + (id -> implicitly[Converter[T]].apply(event.target.value))
+      state + (id -> implicitly[Encoder[T]].apply(event.target.value))
     }
 
     <.label(^.display.block)(
       <.span(name),
       <.input.text(
         ^.key := id.name,
-        ^.value := state.get(id).map(_.asInstanceOf[T]).orElse(defaultValue).fold("")(_.toString),
+        ^.value := state.get(id).map(_.asInstanceOf[T]).orElse(defaultValue).fold("")(implicitly[Decoder[T]].apply(_)),
         ^.onChange ==> modValue
       )
     )

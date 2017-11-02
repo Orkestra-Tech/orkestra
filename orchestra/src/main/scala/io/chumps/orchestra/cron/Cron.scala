@@ -17,17 +17,17 @@ trait Cron extends JVMApp {
 
   private lazy val logger = Logger(getClass)
 
-  def cronTriggers: Seq[CronTrigger]
+  def cronTriggers: Set[CronTrigger]
 
   override def main(args: Array[String]): Unit = {
     super.main(args)
 
-    if (OrchestraConfig.runInfo.isEmpty)
+    if (OrchestraConfig.runInfoMaybe.isEmpty)
       Await.result(
         for {
           masterPod <- MasterPod.get()
           currentCronJobs <- Kubernetes.client.cronJobs.namespace(OrchestraConfig.namespace).list()
-          currentCronJobNames = currentCronJobs.items.flatMap(_.metadata).flatMap(_.name)
+          currentCronJobNames = currentCronJobs.items.flatMap(_.metadata).flatMap(_.name).toSet
         } yield {
           deleteStaleCronJobs(currentCronJobNames)
           applyCronJobs(masterPod, currentCronJobNames)
@@ -36,7 +36,7 @@ trait Cron extends JVMApp {
       )
   }
 
-  private def deleteStaleCronJobs(currentCronJobNames: Seq[String]) = {
+  private def deleteStaleCronJobs(currentCronJobNames: Set[String]) = {
     val cronJobNames = cronTriggers.map(cronTrigger => cronJobName(cronTrigger.jobRunner.job.id))
     val jobsToRemove = currentCronJobNames.diff(cronJobNames)
     jobsToRemove.foreach { cronJobName =>
@@ -45,7 +45,7 @@ trait Cron extends JVMApp {
     }
   }
 
-  private def applyCronJobs(masterPod: Pod, currentCronJobNames: Seq[String]) =
+  private def applyCronJobs(masterPod: Pod, currentCronJobNames: Set[String]) =
     cronTriggers.foreach { cronTrigger =>
       val newCronJobName = cronJobName(cronTrigger.jobRunner.job.id)
       val cronJob = CronJob(
