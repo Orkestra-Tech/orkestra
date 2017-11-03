@@ -16,6 +16,7 @@ import io.circe.parser._
 import io.circe.{Decoder, Encoder}
 import io.k8s.api.core.v1.PodSpec
 import shapeless._
+import shapeless.ops.function.FnToProduct
 
 import io.chumps.orchestra.ARunStatus._
 import io.chumps.orchestra.board.Job
@@ -27,8 +28,8 @@ import io.chumps.orchestra.utils.Utils
 import io.chumps.orchestra.{ARunStatus, AStageStatus, AutowireServer, OrchestraConfig}
 
 case class JobRunner[ParamValues <: HList: Encoder: Decoder, Result: Encoder: Decoder](
-  job: Job[_, ParamValues, Result],
-  podSpec: PodSpec,
+  job: Job[ParamValues, Result, _, _],
+  podSpec: ParamValues => PodSpec,
   func: ParamValues => Result
 ) {
 
@@ -38,7 +39,7 @@ case class JobRunner[ParamValues <: HList: Encoder: Decoder, Result: Encoder: De
 
     Utils.withOutErr(logsOut) {
       try {
-        persist[Nothing](runInfo, Running(Instant.now()))
+        persist[Result](runInfo, Running(Instant.now()))
         println(s"Running job ${job.name}")
 
         val paramFile = OrchestraConfig.paramsFile(runInfo).toFile
@@ -50,9 +51,8 @@ case class JobRunner[ParamValues <: HList: Encoder: Decoder, Result: Encoder: De
         println(s"Job ${job.name} completed")
         persist(runInfo, Success(Instant.now(), result))
       } catch {
-        case e: Throwable =>
-          e.printStackTrace()
-          persist[Nothing](runInfo, Failure(Instant.now(), e))
+        case e: Exception => failJob(runInfo, e)
+        case e: Error     => failJob(runInfo, e)
       } finally {
         logsOut.close()
         JobUtils.selfDelete()
@@ -61,7 +61,7 @@ case class JobRunner[ParamValues <: HList: Encoder: Decoder, Result: Encoder: De
   }
 
   private[orchestra] object ApiServer extends job.Api {
-    override def trigger(runId: RunId, params: ParamValues, tags: Seq[String] = Seq.empty): Unit = {
+    override def trigger(runId: RunId, values: ParamValues, tags: Seq[String] = Seq.empty): Unit = {
       val runInfo = RunInfo(job.id, runId)
       if (OrchestraConfig.statusFile(runInfo).toFile.exists()) ARunStatus.current[Result](runInfo)
       else {
@@ -70,14 +70,16 @@ case class JobRunner[ParamValues <: HList: Encoder: Decoder, Result: Encoder: De
 
         Utils.withOutErr(logsOut) {
           try {
-            persist[Nothing](runInfo, Triggered(Instant.now()))
-            Files.write(OrchestraConfig.paramsFile(runInfo), AutowireServer.write(params).getBytes)
+            persist[Result](runInfo, Triggered(Instant.now()))
+            Files.write(OrchestraConfig.paramsFile(runInfo), AutowireServer.write(values).getBytes)
 
-            Await.result(JobUtils.create(runInfo, podSpec), Duration.Inf)
+            Await.result(JobUtils.create(runInfo, podSpec(values)), Duration.Inf)
           } catch {
-            case e: Throwable =>
-              e.printStackTrace()
-              persist[Nothing](runInfo, Failure(Instant.now(), e))
+            case e: Exception =>
+              failJob(runInfo, e)
+              throw e
+            case e: Error =>
+              failJob(runInfo, e)
               throw e
           } finally logsOut.close()
         }
@@ -86,7 +88,7 @@ case class JobRunner[ParamValues <: HList: Encoder: Decoder, Result: Encoder: De
 
     override def stop(runId: RunId): Unit = {
       val runInfo = RunInfo(job.id, runId)
-      persist[Nothing](runInfo, Stopped(Instant.now()))
+      persist[Result](runInfo, Stopped(Instant.now()))
       JobUtils.delete(runInfo)
     }
 
@@ -146,6 +148,11 @@ case class JobRunner[ParamValues <: HList: Encoder: Decoder, Result: Encoder: De
     }
   }
 
+  private def failJob(runInfo: RunInfo, t: Throwable) = {
+    t.printStackTrace()
+    persist[Result](runInfo, Failure(Instant.now(), t))
+  }
+
   private[orchestra] def apiRoute(implicit ec: ExecutionContext): Route =
     path(job.id.name / Segments) { segments =>
       entity(as[String]) { entity =>
@@ -154,4 +161,38 @@ case class JobRunner[ParamValues <: HList: Encoder: Decoder, Result: Encoder: De
         onSuccess(request)(complete(_))
       }
     }
+}
+
+object JobRunner {
+
+  def apply[ParamValues <: HList, Result, Func, PodSpecFunc](job: Job[ParamValues, Result, Func, PodSpecFunc]) =
+    new JobRunnerBuilder(job)
+
+  class JobRunnerBuilder[ParamValues <: HList, Result, Func, PodSpecFunc](
+    job: Job[ParamValues, Result, Func, PodSpecFunc]
+  ) {
+    def apply(func: Func)(implicit fnToProdFunc: FnToProduct.Aux[Func, ParamValues => Result],
+                          encoderP: Encoder[ParamValues],
+                          decoderP: Decoder[ParamValues],
+                          encoderR: Encoder[Result],
+                          decoderR: Decoder[Result]) =
+      JobRunner(job, (_: ParamValues) => PodSpec(Seq.empty), fnToProdFunc(func))
+
+    def apply(podSpec: PodSpec)(func: Func)(implicit fnToProdFunc: FnToProduct.Aux[Func, ParamValues => Result],
+                                            encoderP: Encoder[ParamValues],
+                                            decoderP: Decoder[ParamValues],
+                                            encoderR: Encoder[Result],
+                                            decoderR: Decoder[Result]) =
+      JobRunner(job, (_: ParamValues) => podSpec, fnToProdFunc(func))
+
+    def apply(podSpecFunc: PodSpecFunc)(func: Func)(
+      implicit fnToProdFunc: FnToProduct.Aux[Func, ParamValues => Result],
+      fnToProdPodSpec: FnToProduct.Aux[PodSpecFunc, ParamValues => PodSpec],
+      encoderP: Encoder[ParamValues],
+      decoderP: Decoder[ParamValues],
+      encoderR: Encoder[Result],
+      decoderR: Decoder[Result]
+    ) =
+      JobRunner(job, fnToProdPodSpec(podSpecFunc), fnToProdFunc(func))
+  }
 }

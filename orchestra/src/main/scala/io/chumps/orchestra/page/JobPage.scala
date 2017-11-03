@@ -37,7 +37,7 @@ object JobPage {
                    ParamValuesNoRunId <: HList,
                    ParamValues <: HList: Encoder: Decoder,
                    Result: Decoder](
-    job: Job[_, ParamValues, Result],
+    job: Job[ParamValues, Result, _, _],
     params: Params,
     runId: Option[RunId],
     ctl: RouterCtl[PageRoute]
@@ -130,9 +130,12 @@ object JobPage {
                     .sortBy(_._2)
                     .map {
                       case (name, start, end) =>
-                        val time =
-                          if (runStatus.isInstanceOf[Stopped] && end.isEmpty) ""
-                          else s" ${end.getOrElse(Instant.now()).getEpochSecond - start.getEpochSecond}s"
+                        val time = (runStatus, end) match {
+                          case (_, Some(end))   => s" ${end.getEpochSecond - start.getEpochSecond}s"
+                          case (Running(_), _)  => s" ${Instant.now().getEpochSecond - start.getEpochSecond}s"
+                          case (Stopped(at), _) => s" ${at.getEpochSecond - start.getEpochSecond}s"
+                          case _                => ""
+                        }
 
                         <.div(^.padding := "4px",
                               ^.display.`inline-block`,

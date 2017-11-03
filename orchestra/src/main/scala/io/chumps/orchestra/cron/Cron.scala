@@ -12,6 +12,7 @@ import com.typesafe.scalalogging.Logger
 import io.k8s.api.batch.v1beta1.{CronJob, CronJobSpec, JobTemplateSpec}
 import io.k8s.api.core.v1.Pod
 import io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta
+import shapeless.HNil
 
 trait Cron extends JVMApp {
 
@@ -55,7 +56,9 @@ trait Cron extends JVMApp {
             schedule = cronTrigger.schedule,
             jobTemplate = JobTemplateSpec(
               spec = Option(
-                JobSpecUtils.createJobSpec(masterPod, cronTrigger.jobRunner.job.id, cronTrigger.jobRunner.podSpec)
+                JobSpecUtils.createJobSpec(masterPod,
+                                           cronTrigger.jobRunner.job.id,
+                                           cronTrigger.jobRunner.podSpec(HNil))
               )
             )
           )

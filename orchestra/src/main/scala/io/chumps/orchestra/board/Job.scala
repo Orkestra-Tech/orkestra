@@ -10,37 +10,23 @@ import io.circe.syntax._
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.auto._
 import io.circe.java8.time._
+import io.k8s.api.core.v1.PodSpec
 
 import io.chumps.orchestra.utils.BaseEncoders._
-import io.k8s.api.core.v1.PodSpec
 import org.scalajs.dom.ext.Ajax
 import shapeless.ops.function.FnToProduct
 import shapeless.{::, _}
 
-import io.chumps.orchestra.job.{JobRunner, SimpleJob}
+import io.chumps.orchestra.job.SimpleJob
 import io.chumps.orchestra.model._
 import io.chumps.orchestra.parameter.{Parameter, ParameterOperations}
 import io.chumps.orchestra.utils.RunIdOperation
 import io.chumps.orchestra.{ARunStatus, AStageStatus, AutowireServer, Jobs}
 
-trait Job[Func, ParamValues <: HList, Result] extends Board {
+trait Job[ParamValues <: HList, Result, Func, PodSpecFunc] extends Board {
 
   val id: Symbol
   val name: String
-
-  def apply(job: Func)(implicit fnToProd: FnToProduct.Aux[Func, ParamValues => Result],
-                       encoderP: Encoder[ParamValues],
-                       decoderP: Decoder[ParamValues],
-                       encoderR: Encoder[Result],
-                       decoderR: Decoder[Result]) =
-    JobRunner(this, PodSpec(Seq.empty), fnToProd(job))
-
-  def apply(podConfig: PodSpec)(job: Func)(implicit fnToProd: FnToProduct.Aux[Func, ParamValues => Result],
-                                           encoderP: Encoder[ParamValues],
-                                           decoderP: Decoder[ParamValues],
-                                           encoderR: Encoder[Result],
-                                           decoderR: Decoder[Result]) =
-    JobRunner[ParamValues, Result](this, podConfig, fnToProd(job))
 
   private[orchestra] trait Api {
     def trigger(runId: RunId, params: ParamValues, tags: Seq[String] = Seq.empty): Unit
@@ -84,32 +70,37 @@ object Job {
 
   class JobBuilder[Func](id: Symbol, name: String) {
     // No Params
-    def apply[ParamValuesNoRunId <: HList, ParamValues <: HList, Result]()(
-      implicit fnToProd: FnToProduct.Aux[Func, ParamValues => Result],
+    def apply[ParamValuesNoRunId <: HList, ParamValues <: HList, Result, PodSpecFunc]()(
+      implicit fnToProdFunc: FnToProduct.Aux[Func, ParamValues => Result],
+      fnToProdPodSpec: FnToProduct.Aux[PodSpecFunc, ParamValues => PodSpec],
       paramOperations: ParameterOperations[HNil, ParamValuesNoRunId],
       runIdOperation: RunIdOperation[ParamValuesNoRunId, ParamValues],
       encoderP: Encoder[ParamValues],
       decoderP: Decoder[ParamValues],
       encoderR: Encoder[Result],
       decoderR: Decoder[Result]
-    ) = SimpleJob[Func, ParamValuesNoRunId, ParamValues, HNil, Result](id, name, HNil)
+    ) = SimpleJob[ParamValuesNoRunId, ParamValues, HNil, Result, Func, PodSpecFunc](id, name, HNil)
 
     // One param
-    def apply[ParamValuesNoRunId <: HList, ParamValues <: HList, Param <: Parameter[_], Result](param: Param)(
-      implicit fnToProd: FnToProduct.Aux[Func, ParamValues => Result],
+    def apply[ParamValuesNoRunId <: HList, ParamValues <: HList, Param <: Parameter[_], Result, PodSpecFunc](
+      param: Param
+    )(
+      implicit fnToProdFunc: FnToProduct.Aux[Func, ParamValues => Result],
+      fnToProdPodSpec: FnToProduct.Aux[PodSpecFunc, ParamValues => PodSpec],
       runIdOperation: RunIdOperation[ParamValuesNoRunId, ParamValues],
       paramOperations: ParameterOperations[Param :: HNil, ParamValuesNoRunId],
       encoderP: Encoder[ParamValues],
       decoderP: Decoder[ParamValues],
       encoderR: Encoder[Result],
       decoderR: Decoder[Result]
-    ) = SimpleJob[Func, ParamValuesNoRunId, ParamValues, Param :: HNil, Result](id, name, param :: HNil)
+    ) = SimpleJob[ParamValuesNoRunId, ParamValues, Param :: HNil, Result, Func, PodSpecFunc](id, name, param :: HNil)
 
     // Multi params
-    def apply[ParamValuesNoRunId <: HList, ParamValues <: HList, TupledParams, Params <: HList, Result](
+    def apply[ParamValuesNoRunId <: HList, ParamValues <: HList, TupledParams, Params <: HList, Result, PodSpecFunc](
       params: TupledParams
     )(
-      implicit fnToProd: FnToProduct.Aux[Func, ParamValues => Result],
+      implicit fnToProdFunc: FnToProduct.Aux[Func, ParamValues => Result],
+      fnToProdPodSpec: FnToProduct.Aux[PodSpecFunc, ParamValues => PodSpec],
       tupleToHList: Generic.Aux[TupledParams, Params],
       runIdOperation: RunIdOperation[ParamValuesNoRunId, ParamValues],
       paramOperations: ParameterOperations[Params, ParamValuesNoRunId],
@@ -117,6 +108,7 @@ object Job {
       decoderP: Decoder[ParamValues],
       encoderR: Encoder[Result],
       decoderR: Decoder[Result]
-    ) = SimpleJob[Func, ParamValuesNoRunId, ParamValues, Params, Result](id, name, tupleToHList.to(params))
+    ) =
+      SimpleJob[ParamValuesNoRunId, ParamValues, Params, Result, Func, PodSpecFunc](id, name, tupleToHList.to(params))
   }
 }

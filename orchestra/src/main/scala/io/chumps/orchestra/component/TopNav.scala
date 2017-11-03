@@ -40,7 +40,7 @@ object TopNav {
   case class Props(rootPage: BoardPageRoute,
                    selectedPage: PageRoute,
                    ctl: RouterCtl[PageRoute],
-                   jobs: Seq[Job[_, _ <: HList, _]])
+                   jobs: Seq[Job[_ <: HList, _, _, _]])
 
   implicit val currentPageReuse: Reusability[PageRoute] = Reusability.by_==[PageRoute]
   implicit val propsReuse: Reusability[Props] = Reusability.by((_: Props).selectedPage)

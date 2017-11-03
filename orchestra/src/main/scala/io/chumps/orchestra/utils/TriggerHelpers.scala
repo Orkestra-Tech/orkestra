@@ -60,20 +60,20 @@ trait TriggerHelpers {
 
   private def awaitJobResult[Result: Decoder](jobRunner: JobRunner[_ <: HList, Result]): Result = {
     val runInfo = jobRunInfo(jobRunner)
-    def isChildJobInProgress() = ARunStatus.current(runInfo, checkRunning = false) match {
+    def isChildJobInProgress() = ARunStatus.current[Result](runInfo, checkRunning = false) match {
       case _: Triggered | _: Running => true
       case _                         => false
     }
 
     while (isChildJobInProgress()) {
-      ARunStatus.current(OrchestraConfig.runInfo) match {
+      ARunStatus.current[Result](OrchestraConfig.runInfo) match {
         case _: Stopped => jobRunner.ApiServer.stop(runInfo.runId)
         case _          =>
       }
       Thread.sleep(0.5.second.toMillis)
     }
 
-    ARunStatus.current(runInfo) match {
+    ARunStatus.current[Result](runInfo) match {
       case Success(_, result) => result
       case Failure(_, e)      => throw new IllegalStateException(s"Run of job ${jobRunner.job.name} failed", e)
       case s                  => throw new IllegalStateException(s"Run of job ${jobRunner.job.name} failed with status $s")
