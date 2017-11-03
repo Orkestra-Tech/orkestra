@@ -28,7 +28,7 @@ case class BranchTrigger[ParamValuesNoRunIdBranch <: HList, ParamValuesNoBranch 
         val repoName = json.hcursor.downField("repository").downField("full_name").as[String].fold(throw _, identity)
         val branch = json.hcursor.downField("ref").as[String].fold(throw _, identity).replace("refs/heads/", "")
 
-        if (repoName == repoName && branchRegex.r.findFirstIn(branch).isDefined) {
+        if (repoName == repoName && s"^$branchRegex$$".r.findFirstIn(branch).isDefined) {
           val runId = RunId.random()
           job.ApiServer
             .trigger(runId, branchInjector(runIdOperation.inject(values, runId), Branch(branch)))
