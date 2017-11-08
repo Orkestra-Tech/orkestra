@@ -51,8 +51,7 @@ case class JobRunner[ParamValues <: HList: Encoder: Decoder, Result: Encoder: De
         println(s"Job ${job.name} completed")
         persist(runInfo, Success(Instant.now(), result))
       } catch {
-        case e: Exception      => failJob(runInfo, e)
-        case e: AssertionError => failJob(runInfo, e)
+        case t: Throwable => failJob(runInfo, t)
       } finally {
         logsOut.close()
         JobUtils.selfDelete()
@@ -75,12 +74,9 @@ case class JobRunner[ParamValues <: HList: Encoder: Decoder, Result: Encoder: De
 
             Await.result(JobUtils.create(runInfo, podSpec(values)), Duration.Inf)
           } catch {
-            case e: Exception =>
-              failJob(runInfo, e)
-              throw e
-            case e: AssertionError =>
-              failJob(runInfo, e)
-              throw e
+            case t: Throwable =>
+              failJob(runInfo, t)
+              throw t
           } finally logsOut.close()
         }
       }
