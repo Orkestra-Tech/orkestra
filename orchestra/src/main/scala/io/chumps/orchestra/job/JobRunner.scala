@@ -121,9 +121,8 @@ case class JobRunner[ParamValues <: HList: Encoder: Decoder, Result: Encoder: De
         }
 
         paramFile = OrchestraConfig.paramsFile(runInfo).toFile
-        paramValues = if (paramFile.exists())
-          decode[ParamValues](Source.fromFile(paramFile).mkString).fold(throw _, identity)
-        else HNil.asInstanceOf[ParamValues]
+        paramValues <- if (paramFile.exists()) decode[ParamValues](Source.fromFile(paramFile).mkString).toOption
+        else Option(HNil.asInstanceOf[ParamValues])
 
         tags = for {
           tagsDir <- Seq(OrchestraConfig.tagsDir(job.id).toFile)
