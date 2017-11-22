@@ -1,3 +1,5 @@
+import scala.sys.process._
+
 lazy val root = project
   .in(file("."))
   .aggregate(orchestraJVM, orchestraJS)
@@ -20,6 +22,17 @@ lazy val orchestra = crossProject
       if (!ver.contains("+")) ver
       else ver + "-SNAPSHOT"
     },
+    publish := {
+      def upload(file: File, repo: String) = {
+        val artifactName = file.getName.split("-").head
+        val dest = s"$repo/${organization.value.replace(".", "/")}/$artifactName/${version.value}/${file.getName}"
+        s"aws s3 cp ${file.getAbsolutePath} $dest".!
+      }
+
+      val repo = "s3://drivetribe-repositories/maven"
+      upload((packageBin in Compile).value, repo)
+      upload(makePom.value, repo)
+    },
     scalacOptions += "-deprecation",
     buildInfoPackage := s"${organization.value}.orchestra",
     resolvers += Opts.resolver.sonatypeSnapshots,
@@ -33,7 +46,7 @@ lazy val orchestra = crossProject
     ) ++ scalaJsReact.value ++ akkaHttp.value ++ scalaCss.value ++ logging.value ++ circe.value,
     jsDependencies ++= Seq(
       "org.webjars.npm" % "ansi_up" % "2.0.2" / "ansi_up.js" commonJSName "ansi_up"
-    ) ++ react.value,
+    ) ++ react.value
   )
 lazy val orchestraJVM = orchestra.jvm
 lazy val orchestraJS = orchestra.js
