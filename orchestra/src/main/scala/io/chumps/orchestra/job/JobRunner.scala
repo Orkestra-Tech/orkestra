@@ -20,6 +20,7 @@ import shapeless.ops.function.FnToProduct
 
 import io.chumps.orchestra.ARunStatus._
 import io.chumps.orchestra.board.Job
+import io.chumps.orchestra.filesystem.Directory
 import io.chumps.orchestra.kubernetes.JobUtils
 import io.chumps.orchestra.model._
 import io.chumps.orchestra.utils.BaseEncoders._
@@ -166,21 +167,23 @@ object JobRunner {
   class JobRunnerBuilder[ParamValues <: HList, Result, Func, PodSpecFunc](
     job: Job[ParamValues, Result, Func, PodSpecFunc]
   ) {
-    def apply(func: Func)(implicit fnToProdFunc: FnToProduct.Aux[Func, ParamValues => Result],
-                          encoderP: Encoder[ParamValues],
-                          decoderP: Decoder[ParamValues],
-                          encoderR: Encoder[Result],
-                          decoderR: Decoder[Result]) =
-      JobRunner(job, (_: ParamValues) => PodSpec(Seq.empty), fnToProdFunc(func))
+    def apply(func: Directory => Func)(implicit fnToProdFunc: FnToProduct.Aux[Func, ParamValues => Result],
+                                       encoderP: Encoder[ParamValues],
+                                       decoderP: Decoder[ParamValues],
+                                       encoderR: Encoder[Result],
+                                       decoderR: Decoder[Result]) =
+      JobRunner(job, (_: ParamValues) => PodSpec(Seq.empty), fnToProdFunc(func(Directory("."))))
 
-    def apply(podSpec: PodSpec)(func: Func)(implicit fnToProdFunc: FnToProduct.Aux[Func, ParamValues => Result],
-                                            encoderP: Encoder[ParamValues],
-                                            decoderP: Decoder[ParamValues],
-                                            encoderR: Encoder[Result],
-                                            decoderR: Decoder[Result]) =
-      JobRunner(job, (_: ParamValues) => podSpec, fnToProdFunc(func))
+    def apply(podSpec: PodSpec)(func: Directory => Func)(
+      implicit fnToProdFunc: FnToProduct.Aux[Func, ParamValues => Result],
+      encoderP: Encoder[ParamValues],
+      decoderP: Decoder[ParamValues],
+      encoderR: Encoder[Result],
+      decoderR: Decoder[Result]
+    ) =
+      JobRunner(job, (_: ParamValues) => podSpec, fnToProdFunc(func(Directory("."))))
 
-    def apply(podSpecFunc: PodSpecFunc)(func: Func)(
+    def apply(podSpecFunc: PodSpecFunc)(func: Directory => Func)(
       implicit fnToProdFunc: FnToProduct.Aux[Func, ParamValues => Result],
       fnToProdPodSpec: FnToProduct.Aux[PodSpecFunc, ParamValues => PodSpec],
       encoderP: Encoder[ParamValues],
@@ -188,6 +191,6 @@ object JobRunner {
       encoderR: Encoder[Result],
       decoderR: Decoder[Result]
     ) =
-      JobRunner(job, fnToProdPodSpec(podSpecFunc), fnToProdFunc(func))
+      JobRunner(job, fnToProdPodSpec(podSpecFunc), fnToProdFunc(func(Directory("."))))
   }
 }

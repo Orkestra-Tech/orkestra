@@ -8,6 +8,7 @@ import scala.sys.process
 
 import akka.http.scaladsl.model.ws.Message
 import akka.stream.scaladsl.{Flow, Keep, Sink, Source}
+import com.goyeau.kubernetesclient.KubernetesException
 import io.k8s.api.core.v1.Container
 import io.k8s.apimachinery.pkg.apis.meta.v1.Status
 
@@ -62,7 +63,7 @@ trait ShellHelpers {
           tty = true
         )
         .recoverWith {
-          case _: IOException if timeout > 0.milli =>
+          case _: KubernetesException if timeout > 0.milli =>
             Thread.sleep(interval.toMillis)
             exec(timeout - interval, interval)
         }
