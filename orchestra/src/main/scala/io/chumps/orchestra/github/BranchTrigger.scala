@@ -7,7 +7,7 @@ import io.chumps.orchestra.job.JobRunner
 import io.chumps.orchestra.model.RunId
 import io.chumps.orchestra.utils.RunIdOperation
 
-case class Branch(name: String)
+case class Branch(name: String) extends AnyVal
 
 sealed trait GithubTrigger {
   private[github] def trigger(eventType: String, json: Json): Unit
