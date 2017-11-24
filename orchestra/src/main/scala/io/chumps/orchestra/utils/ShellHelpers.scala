@@ -39,9 +39,9 @@ trait ShellHelpers {
             println()
             acc
           case Left(Status(_, _, _, _, Some(message), _, Some(reason), _)) =>
-            throw new RuntimeException(s"$reason: $message; Container: ${container.name}; Script: $script")
+            throw new IOException(s"$reason: $message; Container: ${container.name}; Script: $script")
           case Left(status) =>
-            throw new RuntimeException(
+            throw new IOException(
               s"Non success container termination: $status; Container: ${container.name}; Script: $script"
             )
           case Right(log) =>
