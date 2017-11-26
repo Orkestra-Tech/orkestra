@@ -14,7 +14,7 @@ object WebRouter {
 
   sealed trait PageRoute
   case class BoardPageRoute(breadcrumb: Seq[String], runId: Option[RunId] = None) extends PageRoute
-  case class LogsPageRoute(runId: RunId) extends PageRoute
+  case class LogsPageRoute(breadcrumb: Seq[String], runId: RunId) extends PageRoute
   case object StatusPageRoute extends PageRoute
 
   def router(board: Board) = Router(BaseUrl.fromWindowOrigin, config(board))()
@@ -23,16 +23,12 @@ object WebRouter {
     import dsl._
 
     val rootPage = BoardPageRoute(Seq(board.id.name.toLowerCase))
-    val logsRoute =
-      dynamicRouteCT(uuid.xmap(uuid => LogsPageRoute(RunId(uuid)))(_.runId.value)) ~> dynRender(
-        page => LogsPage.component(LogsPage.Props(page))
-      )
     val statusRoute = staticRoute(root, StatusPageRoute) ~> render(StatusPage())
 
     (trimSlashes |
       (
         board.route(Seq.empty).prefixPath_/("boards") |
-          logsRoute.prefixPath_/("logs") |
+          LogsRoute(Seq.empty).prefixPath_/("logs") |
           statusRoute.prefixPath_/("status")
       ).prefixPath_/("#"))
       .notFound(redirectToPage(rootPage)(Redirect.Replace))

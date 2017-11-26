@@ -13,7 +13,7 @@ import io.chumps.orchestra._
 import io.chumps.orchestra.utils.BaseEncoders._
 import io.chumps.orchestra.parameter.State
 import io.chumps.orchestra.parameter.ParameterOperations
-import io.chumps.orchestra.route.WebRouter.{LogsPageRoute, PageRoute}
+import io.chumps.orchestra.route.WebRouter.{BoardPageRoute, LogsPageRoute, PageRoute}
 import io.circe._
 import io.circe.generic.auto._
 import io.circe.java8.time._
@@ -39,7 +39,7 @@ object JobPage {
                    Result: Decoder](
     job: Job[ParamValues, Result, _, _],
     params: Params,
-    runId: Option[RunId],
+    page: BoardPageRoute,
     ctl: RouterCtl[PageRoute]
   )(
     implicit paramOperations: ParameterOperations[Params, ParamValuesNoRunId],
@@ -119,7 +119,7 @@ object JobPage {
               <.div(Global.Style.listItem(index % 2 == 0),
                     ^.cursor.pointer,
                     ^.title := paramsDescription,
-                    ^.onClick --> $.props.ctl.set(LogsPageRoute(runId)))(
+                    ^.onClick --> $.props.ctl.set(LogsPageRoute(page.breadcrumb, runId)))(
                 <.table(^.width := "100%", ^.cellPadding := 0, ^.cellSpacing := 0)(<.tbody(statusDisplay)),
                 <.div(
                   stageStatuses
@@ -168,7 +168,7 @@ object JobPage {
     ScalaComponent
       .builder[Props[_, _, _ <: HList, _]](getClass.getSimpleName)
       .initialStateFromProps[(RunId, Map[Symbol, Any], TagMod, SetIntervalHandle)] { props =>
-        val runId = props.runId.getOrElse(RunId.random())
+        val runId = props.page.runId.getOrElse(RunId.random())
         (runId, Map.empty, "Loading runs", null)
       }
       .renderP { ($, props) =>
