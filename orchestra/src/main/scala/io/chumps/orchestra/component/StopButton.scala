@@ -32,7 +32,7 @@ object StopButton {
   val component = ScalaComponent
     .builder[Props](getClass.getSimpleName)
     .render_P { props =>
-      <.div(Style.redButton, ^.width := "28px", ^.height := "28px", ^.onClick ==> stop(props.job, props.runId))("x")
+      <.div(Style.redButton, ^.width := "30px", ^.height := "30px", ^.onClick ==> stop(props.job, props.runId))("x")
     }
     .build
 

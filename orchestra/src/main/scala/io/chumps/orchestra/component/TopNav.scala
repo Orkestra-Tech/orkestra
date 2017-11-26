@@ -22,15 +22,21 @@ object TopNav {
 
     val navMenu = style(backgroundColor(Global.Style.brandColor), margin.`0`, padding.`0`, listStyle := "none")
 
+    val clickableItem = styleF.bool { selected =>
+      styleS(
+        cursor.pointer,
+        mixinIfElse(selected)(boxShadow := "inset 0 0 10000px rgba(0, 0, 0, 0.06)")(
+          &.hover(boxShadow := "inset 0 0 10000px rgba(255, 255, 255, 0.06)")
+        )
+      )
+    }
+
     val menuItem = styleF.bool { selected =>
       styleS(
         padding(20.px),
         fontSize(1.5.em),
         display.inlineBlock,
-        cursor.pointer,
-        mixinIfElse(selected)(boxShadow := "inset 0 0 10000px rgba(0, 0, 0, 0.06)")(
-          &.hover(boxShadow := "inset 0 0 10000px rgba(255, 255, 255, 0.06)")
-        )
+        clickableItem(selected)
       )
     }
   }
@@ -69,7 +75,8 @@ object TopNav {
                  ^.outline := "none",
                  ^.onBlur --> $.setState(false))(
               <.div(TopNav.Style.menuItem($.state), ^.onClick --> $.modState(!_))("Running Jobs"),
-              if ($.state) RunningJobs.component(props.jobs) else TagMod()
+              if ($.state) RunningJobs.component(RunningJobs.Props(props.ctl, props.jobs, $.setState(false)))
+              else TagMod()
             )
           )
         )

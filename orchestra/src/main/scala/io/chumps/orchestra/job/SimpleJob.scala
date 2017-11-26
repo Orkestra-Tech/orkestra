@@ -27,14 +27,13 @@ case class SimpleJob[ParamValuesNoRunId <: HList,
 
   def route(parentBreadcrumb: Seq[String]) = RouterConfigDsl[PageRoute].buildRule { dsl =>
     import dsl._
-    val breadcrumb = parentBreadcrumb :+ id.name.toLowerCase
-
     val job = dynamicRoute(
-      ("?runId=" ~ uuid).option.xmap(uuid => BoardPageRoute(breadcrumb, uuid.map(RunId(_))))(_.runId.map(_.value))
+      ("?runId=" ~ uuid).option
+        .xmap(uuid => BoardPageRoute(parentBreadcrumb, this, uuid.map(RunId(_))))(_.runId.map(_.value))
     ) {
-      case p @ BoardPageRoute(bc, _) if bc == breadcrumb => p
+      case p @ BoardPageRoute(pbc, b, _) if pbc == parentBreadcrumb && b == this => p
     } ~> dynRenderR((page, ctrl) => JobPage.component(JobPage.Props(this, params, page, ctrl)))
 
-    (job | LogsRoute(breadcrumb)).prefixPath_/(id.name.toLowerCase)
+    (job | LogsRoute(parentBreadcrumb :+ name)).prefixPath_/(id.name.toLowerCase)
   }
 }

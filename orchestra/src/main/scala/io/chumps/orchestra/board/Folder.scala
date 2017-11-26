@@ -12,10 +12,9 @@ case class Folder(name: String, childBoards: Seq[Board]) extends Board {
 
   def route(parentBreadcrumb: Seq[String]) = RouterConfigDsl[PageRoute].buildRule { dsl =>
     import dsl._
-    val breadcrumb = parentBreadcrumb :+ id.name
-    staticRoute(id.name, BoardPageRoute(breadcrumb)) ~>
-      renderR(ctrl => FolderPage.component(FolderPage.Props(name, breadcrumb, childBoards, ctrl))) |
-      childBoards.map(_.route(breadcrumb)).reduce(_ | _).prefixPath_/(id.name)
+    staticRoute(id.name, BoardPageRoute(parentBreadcrumb, this)) ~>
+      renderR(ctrl => FolderPage.component(FolderPage.Props(name, parentBreadcrumb, childBoards, ctrl))) |
+      childBoards.map(_.route(parentBreadcrumb :+ name)).reduce(_ | _).prefixPath_/(id.name)
   }
 }
 

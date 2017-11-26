@@ -71,56 +71,56 @@ object JobPage {
                   .paramsState(params, runIdOperation.remove(paramValues))
                   .map(param => s"${param._1}: ${param._2}")
                   .mkString("\n")
-              val rerunButton =
-                <.td(^.padding := "0", ^.width := "1px")(
-                  <.div(Global.Style.brandColorButton,
-                        ^.width := "28px",
-                        ^.height := "28px",
-                        ^.onClick ==> reRun(paramValues, tags))("↻")
-                )
-              val stopButton =
-                <.td(^.padding := "0", ^.width := "1px")(StopButton.component(StopButton.Props(job, runId)))
+              val rerunButton = <.div(Global.Style.brandColorButton,
+                                      ^.width := "30px",
+                                      ^.height := "30px",
+                                      ^.onClick ==> reRun(paramValues, tags))("↻")
+              val stopButton = StopButton.component(StopButton.Props(job, runId))
               def runIdDisplay(icon: String, runId: RunId, color: String, title: String) =
                 TagMod(
-                  <.td(Global.Style.tableCell,
-                       ^.width := "20px",
-                       ^.textAlign.center,
-                       ^.backgroundColor := color,
-                       ^.title := title)(icon),
-                  <.td(Global.Style.tableCell, Global.Style.runId, ^.backgroundColor := color, ^.title := title)(
+                  <.div(Global.Style.cell,
+                        ^.width := "20px",
+                        ^.justifyContent.center,
+                        ^.backgroundColor := color,
+                        ^.title := title)(icon),
+                  <.div(Global.Style.cell, Global.Style.runId, ^.backgroundColor := color, ^.title := title)(
                     runId.value.toString
                   )
                 )
               def datesDisplay(from: Instant, to: Option[Instant]) =
-                <.td(Global.Style.tableCell, ^.width.auto, ^.textAlign.center)(
+                <.div(Global.Style.cell, ^.flexGrow := "1", ^.justifyContent.center)(
                   s"$createdAt ⟼ ${to.fold("-")(_.toString)}"
                 )
 
               val statusDisplay = runStatus match {
                 case Triggered(_) =>
-                  <.tr(runIdDisplay("○", runId, Global.Style.brandColor.value, "Triggered"),
-                       datesDisplay(createdAt, Option(Instant.now())))
+                  TagMod(runIdDisplay("○", runId, Global.Style.brandColor.value, "Triggered"),
+                         datesDisplay(createdAt, Option(Instant.now())))
                 case Running(_) =>
-                  <.tr(runIdDisplay("≻", runId, Global.Style.brandColor.value, "Running"),
-                       datesDisplay(createdAt, Option(Instant.now())),
-                       stopButton)
+                  TagMod(runIdDisplay("≻", runId, Global.Style.brandColor.value, "Running"),
+                         datesDisplay(createdAt, Option(Instant.now())),
+                         stopButton)
                 case Success(at, _) =>
-                  <.tr(runIdDisplay("✓", runId, "green", "Success"), datesDisplay(createdAt, Option(at)), rerunButton)
+                  TagMod(runIdDisplay("✓", runId, "green", "Success"),
+                         datesDisplay(createdAt, Option(at)),
+                         rerunButton)
                 case Failure(at, t) =>
-                  <.tr(runIdDisplay("✗", runId, "firebrick", s"Failed: ${t.getMessage}"),
-                       datesDisplay(createdAt, Option(at)),
-                       rerunButton)
+                  TagMod(runIdDisplay("✗", runId, "firebrick", s"Failed: ${t.getMessage}"),
+                         datesDisplay(createdAt, Option(at)),
+                         rerunButton)
                 case Stopped(at) =>
-                  <.tr(runIdDisplay("✗", runId, "firebrick", "Stopped"),
-                       datesDisplay(createdAt, Option(at).filter(_ != Instant.MAX)),
-                       rerunButton)
+                  TagMod(runIdDisplay("✗", runId, "firebrick", "Stopped"),
+                         datesDisplay(createdAt, Option(at).filter(_ != Instant.MAX)),
+                         rerunButton)
               }
 
-              <.div(Global.Style.listItem(index % 2 == 0),
-                    ^.cursor.pointer,
-                    ^.title := paramsDescription,
-                    ^.onClick --> $.props.ctl.set(LogsPageRoute(page.breadcrumb, runId)))(
-                <.table(^.width := "100%", ^.cellPadding := 0, ^.cellSpacing := 0)(<.tbody(statusDisplay)),
+              <.div(
+                Global.Style.listItem(index % 2 == 0),
+                ^.cursor.pointer,
+                ^.title := paramsDescription,
+                ^.onClick --> $.props.ctl.set(LogsPageRoute(page.breadcrumb :+ job.name, runId))
+              )(
+                <.div(^.display.flex)(statusDisplay),
                 <.div(
                   stageStatuses
                     .groupBy(_.name)
