@@ -22,6 +22,7 @@ case class BranchTrigger[ParamValuesNoRunIdBranch <: HList, ParamValuesNoBranch 
   implicit runIdOperation: RunIdOperation[ParamValuesNoRunIdBranch, ParamValuesNoBranch],
   branchInjector: BranchInjector[ParamValuesNoBranch, ParamValues]
 ) extends GithubTrigger {
+
   private[github] def trigger(eventType: String, json: Json): Unit =
     eventType match {
       case "create" | "push" =>
@@ -45,6 +46,7 @@ object BranchTrigger {
   class BranchTriggerBuilder[ParamValues <: HList](repoName: String,
                                                    branchRegex: String,
                                                    job: JobRunner[ParamValues, _]) {
+
     // No Params
     def apply[ParamValuesNoBranch <: HList]()(
       implicit branchInjector: BranchInjector[ParamValuesNoBranch, ParamValues],
@@ -72,7 +74,15 @@ object BranchTrigger {
   }
 }
 
-case class PullRequestTrigger(repoName: String, job: JobRunner[String :: HNil, _]) extends GithubTrigger {
+case class PullRequestTrigger[ParamValuesNoRunIdBranch <: HList, ParamValuesNoBranch <: HList, ParamValues <: HList] private (
+  repoName: String,
+  job: JobRunner[ParamValues, _],
+  values: ParamValuesNoRunIdBranch
+)(
+  implicit runIdOperation: RunIdOperation[ParamValuesNoRunIdBranch, ParamValuesNoBranch],
+  branchInjector: BranchInjector[ParamValuesNoBranch, ParamValues]
+) extends GithubTrigger {
+
   private[github] def trigger(eventType: String, json: Json): Unit =
     eventType match {
       case "pull_request" =>
@@ -81,7 +91,46 @@ case class PullRequestTrigger(repoName: String, job: JobRunner[String :: HNil, _
         val branch =
           json.hcursor.downField("pull_request").downField("head").downField("sha").as[String].fold(throw _, identity)
 
-        if (eventRepoName == repoName) job.ApiServer.trigger(RunId.random(), branch :: HNil, Seq(branch))
+        if (eventRepoName == repoName) {
+          val runId = RunId.random()
+          job.ApiServer.trigger(runId,
+                                branchInjector(runIdOperation.inject(values, runId), Branch(branch)),
+                                Seq(branch))
+        }
       case _ =>
     }
+}
+
+object PullRequestTrigger {
+
+  def apply[ParamValues <: HList](repoName: String, job: JobRunner[ParamValues, _]) =
+    new PullRequestTriggerBuilder[ParamValues](repoName, job)
+
+  class PullRequestTriggerBuilder[ParamValues <: HList](repoName: String, job: JobRunner[ParamValues, _]) {
+
+    // No Params
+    def apply[ParamValuesNoBranch <: HList]()(
+      implicit branchInjector: BranchInjector[ParamValuesNoBranch, ParamValues],
+      runIdOperation: RunIdOperation[HNil, ParamValuesNoBranch]
+    ): PullRequestTrigger[HNil, ParamValuesNoBranch, ParamValues] =
+      PullRequestTrigger(repoName, job, HNil)
+
+    // One param
+    def apply[ParamValuesNoBranch <: HList, ParamValueNoRunIdBranch](value: ParamValueNoRunIdBranch)(
+      implicit branchInjector: BranchInjector[ParamValuesNoBranch, ParamValues],
+      runIdOperation: RunIdOperation[ParamValueNoRunIdBranch :: HNil, ParamValuesNoBranch]
+    ): PullRequestTrigger[ParamValueNoRunIdBranch :: HNil, ParamValuesNoBranch, ParamValues] =
+      PullRequestTrigger(repoName, job, value :: HNil)
+
+    // Multi param
+    def apply[TupledValues <: Product, ParamValuesNoRunIdBranch <: HList, ParamValuesNoBranch <: HList](
+      paramValues: TupledValues
+    )(
+      implicit tupleToHList: Generic.Aux[TupledValues, ParamValuesNoRunIdBranch],
+      branchInjector: BranchInjector[ParamValuesNoBranch, ParamValues],
+      runIdOperation: RunIdOperation[ParamValuesNoRunIdBranch, ParamValuesNoBranch]
+    ): PullRequestTrigger[ParamValuesNoRunIdBranch, ParamValuesNoBranch, ParamValues] =
+      PullRequestTrigger(repoName, job, tupleToHList.to(paramValues))
+
+  }
 }

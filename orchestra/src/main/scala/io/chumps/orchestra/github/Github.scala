@@ -52,7 +52,7 @@ trait Github extends JVMApp {
 
 object Github extends LazyLogging {
 
-  def pullRequest[T](repo: String, ref: String)(body: Directory => T)(implicit workDir: Directory): T =
+  def pullRequest[T](repo: String, ref: Branch)(body: Directory => T)(implicit workDir: Directory): T =
     try {
       notify(repo, ref, State.Pending)
       clone(repo, ref)
@@ -65,7 +65,7 @@ object Github extends LazyLogging {
         throw t
     }
 
-  private def clone(repo: String, ref: String)(implicit workDir: Directory): Unit = {
+  private def clone(repo: String, ref: Branch)(implicit workDir: Directory): Unit = {
     val git = Git
       .cloneRepository()
       .setURI(s"https://github.com/$repo.git")
@@ -75,15 +75,15 @@ object Github extends LazyLogging {
       .setDirectory(LocalFile(repo))
       .setNoCheckout(true)
       .call()
-    git.checkout().setName(ref).call()
+    git.checkout().setName(ref.name).call()
   }
 
-  private def notify(repo: String, ref: String, state: State) = Await.result(
+  private def notify(repo: String, ref: Branch, state: State) = Await.result(
     for {
       response <- Http().singleRequest(
         HttpRequest(
           HttpMethods.POST,
-          s"https://api.github.com/repos/$repo/statuses/$ref",
+          s"https://api.github.com/repos/$repo/statuses/${ref.name}",
           List(Authorization(OAuth2BearerToken(OrchestraConfig.githubToken))),
           HttpEntity(
             CheckStatus(
