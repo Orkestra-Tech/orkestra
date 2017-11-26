@@ -31,7 +31,7 @@ case class SimpleJob[ParamValuesNoRunId <: HList,
       ("?runId=" ~ uuid).option
         .xmap(uuid => BoardPageRoute(parentBreadcrumb, this, uuid.map(RunId(_))))(_.runId.map(_.value))
     ) {
-      case p @ BoardPageRoute(pbc, b, _) if pbc == parentBreadcrumb && b == this => p
+      case p @ BoardPageRoute(`parentBreadcrumb`, b, _) if b == this => p
     } ~> dynRenderR((page, ctrl) => JobPage.component(JobPage.Props(this, params, page, ctrl)))
 
     (job | LogsRoute(parentBreadcrumb :+ name)).prefixPath_/(id.name.toLowerCase)

@@ -9,9 +9,11 @@ import io.chumps.orchestra.route.WebRouter.{LogsPageRoute, PageRoute}
 
 object LogsRoute {
 
-  def apply(breadcrumb: Seq[String]) = RouterConfigDsl[PageRoute].buildRule { dsl =>
+  def apply(parentBreadcrumb: Seq[String]) = RouterConfigDsl[PageRoute].buildRule { dsl =>
     import dsl._
-    dynamicRouteCT(uuid.xmap(uuid => LogsPageRoute(breadcrumb, RunId(uuid)))(_.runId.value)) ~>
+    dynamicRoute(uuid.xmap(uuid => LogsPageRoute(parentBreadcrumb, RunId(uuid)))(_.runId.value)) {
+      case p @ LogsPageRoute(`parentBreadcrumb`, _) => p
+    } ~>
       dynRender(page => LogsPage.component(LogsPage.Props(page)))
   }
 }

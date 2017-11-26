@@ -28,9 +28,9 @@ object WebRouter {
 
     (trimSlashes |
       (
-        board.route(Seq.empty).prefixPath_/("boards") |
-          jobs.prefixPath_/("jobs") |
+        jobs.prefixPath_/("jobs") |
           LogsRoute(Seq.empty).prefixPath_/("logs") |
+          board.route(Seq.empty).prefixPath_/("boards") |
           statusRoute.prefixPath_/("status")
       ).prefixPath_/("#"))
       .notFound(redirectToPage(rootPage)(Redirect.Replace))
