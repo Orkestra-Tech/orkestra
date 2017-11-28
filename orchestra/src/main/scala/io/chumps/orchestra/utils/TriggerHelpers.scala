@@ -17,7 +17,7 @@ trait TriggerHelpers {
       jobRunner.ApiServer.trigger(jobRunInfo(jobRunner).runId, HNil)
 
     def run(): Result = {
-      trigger()
+      jobRunner.ApiServer.trigger(jobRunInfo(jobRunner).runId, HNil, by = Option(OrchestraConfig.runInfo))
       awaitJobResult(jobRunner)
     }
   }
@@ -29,7 +29,8 @@ trait TriggerHelpers {
     }
 
     def run(): Result = {
-      trigger()
+      val runId = jobRunInfo(jobRunner).runId
+      jobRunner.ApiServer.trigger(runId, runId :: HNil, by = Option(OrchestraConfig.runInfo))
       awaitJobResult(jobRunner)
     }
   }
@@ -49,8 +50,11 @@ trait TriggerHelpers {
       jobRunner.ApiServer.trigger(runId, runIdOperation.inject(tupleToHList.to(values), runId))
     }
 
-    def run(params: TupledValues): Result = {
-      trigger(params)
+    def run(values: TupledValues): Result = {
+      val runId = jobRunInfo(jobRunner).runId
+      jobRunner.ApiServer.trigger(runId,
+                                  runIdOperation.inject(tupleToHList.to(values), runId),
+                                  by = Option(OrchestraConfig.runInfo))
       awaitJobResult(jobRunner)
     }
   }
@@ -61,22 +65,17 @@ trait TriggerHelpers {
   private def awaitJobResult[Result: Decoder](jobRunner: JobRunner[_ <: HList, Result]): Result = {
     val runInfo = jobRunInfo(jobRunner)
     def isChildJobInProgress() = ARunStatus.current[Result](runInfo, checkRunning = false) match {
-      case _: Triggered | _: Running => true
-      case _                         => false
+      case Some(Triggered(_, _) | Running(_)) => true
+      case _                                  => false
     }
 
-    while (isChildJobInProgress()) {
-      ARunStatus.current[Result](OrchestraConfig.runInfo) match {
-        case _: Stopped => jobRunner.ApiServer.stop(runInfo.runId)
-        case _          =>
-      }
-      Thread.sleep(0.5.second.toMillis)
-    }
+    while (isChildJobInProgress()) Thread.sleep(0.5.second.toMillis)
 
     ARunStatus.current[Result](runInfo) match {
-      case Success(_, result) => result
-      case Failure(_, e)      => throw new IllegalStateException(s"Run of job ${jobRunner.job.name} failed", e)
-      case s                  => throw new IllegalStateException(s"Run of job ${jobRunner.job.name} failed with status $s")
+      case None                     => throw new IllegalStateException(s"No status found for job ${runInfo.jobId} ${runInfo.runId}")
+      case Some(Success(_, result)) => result
+      case Some(Failure(_, e))      => throw new IllegalStateException(s"Run of job ${jobRunner.job.name} failed", e)
+      case s                        => throw new IllegalStateException(s"Run of job ${jobRunner.job.name} failed with status $s")
     }
   }
 }

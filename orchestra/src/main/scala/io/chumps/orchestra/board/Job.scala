@@ -29,7 +29,7 @@ trait Job[ParamValues <: HList, Result, Func, PodSpecFunc] extends Board {
   val name: String
 
   private[orchestra] trait Api {
-    def trigger(runId: RunId, params: ParamValues, tags: Seq[String] = Seq.empty): Unit
+    def trigger(runId: RunId, params: ParamValues, tags: Seq[String] = Seq.empty, by: Option[RunInfo] = None): Unit
     def stop(runId: RunId): Unit
     def tags(): Seq[String]
     def history(

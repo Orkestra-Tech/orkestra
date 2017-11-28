@@ -93,7 +93,7 @@ object JobPage {
                 )
 
               val statusDisplay = runStatus match {
-                case Triggered(_) =>
+                case Triggered(_, _) =>
                   TagMod(runIdDisplay("○", runId, Global.Style.brandColor.value, "Triggered"),
                          datesDisplay(createdAt, Option(Instant.now())))
                 case Running(_) =>

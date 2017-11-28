@@ -4,11 +4,12 @@ import java.io.FileOutputStream
 import java.nio.file.Files
 import java.time.{Instant, LocalDateTime, ZoneOffset}
 
-import scala.concurrent.duration.Duration
+import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext}
 import scala.io.Source
 import scala.language.{higherKinds, implicitConversions}
 
+import akka.actor.ActorSystem
 import akka.http.scaladsl.server.Directives.{entity, _}
 import akka.http.scaladsl.server.Route
 import autowire.Core
@@ -34,12 +35,19 @@ case class JobRunner[ParamValues <: HList: Encoder: Decoder, Result: Encoder: De
   func: ParamValues => Result
 ) {
 
-  private[orchestra] def run(runInfo: RunInfo): Unit = {
+  private[orchestra] def run(runInfo: RunInfo)(implicit sys: ActorSystem, ec: ExecutionContext): Unit = {
     Utils.runInit(runInfo, Seq.empty)
     val logsOut = new LogsPrintStream(new FileOutputStream(OrchestraConfig.logsFile(runInfo.runId).toFile, true))
 
     Utils.withOutErr(logsOut) {
       try {
+        ARunStatus.current[Result](runInfo).collect {
+          case Triggered(_, Some(by)) =>
+            sys.scheduler.schedule(1.second, 1.second) {
+              ARunStatus.current[Result](by).collect { case Stopped(_) => JobUtils.selfDelete() }
+            }
+        }
+
         persist[Result](runInfo, Running(Instant.now()))
         println(s"Running job ${job.name}")
 
@@ -61,16 +69,18 @@ case class JobRunner[ParamValues <: HList: Encoder: Decoder, Result: Encoder: De
   }
 
   private[orchestra] object ApiServer extends job.Api {
-    override def trigger(runId: RunId, values: ParamValues, tags: Seq[String] = Seq.empty): Unit = {
+    override def trigger(runId: RunId,
+                         values: ParamValues,
+                         tags: Seq[String] = Seq.empty,
+                         by: Option[RunInfo] = None): Unit = {
       val runInfo = RunInfo(job.id, runId)
-      if (OrchestraConfig.statusFile(runInfo).toFile.exists()) ARunStatus.current[Result](runInfo)
-      else {
+      if (ARunStatus.current[Result](runInfo).isEmpty) {
         Utils.runInit(runInfo, tags)
         val logsOut = new LogsPrintStream(new FileOutputStream(OrchestraConfig.logsFile(runInfo.runId).toFile, true))
 
         Utils.withOutErr(logsOut) {
           try {
-            persist[Result](runInfo, Triggered(Instant.now()))
+            persist[Result](runInfo, Triggered(Instant.now(), by))
             Files.write(OrchestraConfig.paramsFile(runInfo), AutowireServer.write(values).getBytes)
 
             Await.result(JobUtils.create(runInfo, podSpec(values)), Duration.Inf)
@@ -132,13 +142,9 @@ case class JobRunner[ParamValues <: HList: Encoder: Decoder, Result: Encoder: De
           runId <- tagDir.list()
           if runId == runInfo.runId.value.toString
         } yield tagDir.getName
-      } yield
-        (runInfo.runId,
-         startAt,
-         paramValues,
-         tags,
-         ARunStatus.current[Result](runInfo),
-         AStageStatus.history(runInfo.runId))
+
+        currentStatus <- ARunStatus.current[Result](runInfo)
+      } yield (runInfo.runId, startAt, paramValues, tags, currentStatus, AStageStatus.history(runInfo.runId))
 
       runs.take(page.size)
     }
