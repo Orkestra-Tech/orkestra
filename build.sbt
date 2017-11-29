@@ -22,18 +22,7 @@ lazy val orchestra = crossProject
       if (!ver.contains("+")) ver
       else ver + "-SNAPSHOT"
     },
-    // TODO: Remove this hack when fm-sbt-s3-resolver is fixed for SBT 1.0
-    publish := {
-      def upload(file: File, repo: String) = {
-        val artifactName = file.getName.split("-").head
-        val dest = s"$repo/${organization.value.replace(".", "/")}/$artifactName/${version.value}/${file.getName}"
-        s"aws s3 cp ${file.getAbsolutePath} $dest".!
-      }
-
-      val repo = "s3://drivetribe-repositories/maven"
-      upload((packageBin in Compile).value, repo)
-      upload(makePom.value, repo)
-    },
+    publishTo := Option("DriveTribe Private" at "s3://drivetribe-repositories.s3-eu-west-1.amazonaws.com/maven"),
     scalacOptions += "-deprecation",
     buildInfoPackage := s"${organization.value}.orchestra",
     resolvers += Opts.resolver.sonatypeSnapshots,

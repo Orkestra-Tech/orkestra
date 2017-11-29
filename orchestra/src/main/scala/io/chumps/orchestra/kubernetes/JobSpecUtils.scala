@@ -32,7 +32,7 @@ object JobSpecUtils {
       workingDir = container.workingDir.orElse(Option(OrchestraConfig.workspace)),
       volumeMounts = Option(
         distinctOnName(
-          (container.volumeMounts ++ masterContainer.volumeMounts).flatten.toSeq :+ homeDirMount
+          homeDirMount +: (container.volumeMounts ++ masterContainer.volumeMounts).flatten.toSeq
         )
       )
     )
@@ -42,10 +42,10 @@ object JobSpecUtils {
     val masterContainer = masterSpec.containers.head
     val runInfoEnvVar = EnvVar("ORCHESTRA_RUN_INFO", value = Option(AutowireServer.write(runInfo)))
     val slaveContainer = masterContainer.copy(
-      env = Option(distinctOnName(masterContainer.env.toSeq.flatten :+ runInfoEnvVar)),
+      env = Option(distinctOnName(runInfoEnvVar +: masterContainer.env.toSeq.flatten)),
       workingDir = Option(OrchestraConfig.workspace),
       volumeMounts =
-        Option(distinctOnName(masterContainer.volumeMounts.toSeq.flatten :+ homeDirMount :+ downwardApiMount))
+        Option(distinctOnName(homeDirMount +: downwardApiMount +: masterContainer.volumeMounts.toSeq.flatten))
     )
 
     JobSpec(
@@ -55,7 +55,7 @@ object JobSpecUtils {
             slaveContainer +: podSpec.containers.map(createContainer(_, masterContainer)),
             volumes = Option(
               distinctOnName(
-                podSpec.volumes.toSeq.flatten ++ masterSpec.volumes.toSeq.flatten :+ homeDirVolume :+ downwardApiVolume
+                homeDirVolume +: downwardApiVolume +: (podSpec.volumes.toSeq.flatten ++ masterSpec.volumes.toSeq.flatten)
               )
             ),
             restartPolicy = Option("Never")

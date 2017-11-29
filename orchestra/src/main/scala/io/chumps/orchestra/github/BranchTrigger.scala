@@ -25,7 +25,7 @@ case class BranchTrigger[ParamValuesNoRunIdBranch <: HList, ParamValuesNoBranch 
 
   private[github] def trigger(eventType: String, json: Json): Unit =
     eventType match {
-      case "create" | "push" =>
+      case "push" =>
         val repoName = json.hcursor.downField("repository").downField("full_name").as[String].fold(throw _, identity)
         val branch = json.hcursor.downField("ref").as[String].fold(throw _, identity).replace("refs/heads/", "")
 

@@ -44,7 +44,7 @@ case class JobRunner[ParamValues <: HList: Encoder: Decoder, Result: Encoder: De
         ARunStatus.current[Result](runInfo).collect {
           case Triggered(_, Some(by)) =>
             sys.scheduler.schedule(1.second, 1.second) {
-              ARunStatus.current[Result](by).collect { case Stopped(_) => JobUtils.selfDelete() }
+              ARunStatus.current[Result](by, checkRunning = false).collect { case Stopped(_) => JobUtils.selfDelete() }
             }
         }
 

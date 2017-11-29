@@ -31,7 +31,7 @@ trait Cron extends JVMApp {
           currentCronJobNames = currentCronJobs.items.flatMap(_.metadata).flatMap(_.name).toSet
         } yield {
           deleteStaleCronJobs(currentCronJobNames)
-          applyCronJobs(masterPod, currentCronJobNames)
+          applyCronJobs(masterPod)
         },
         Duration.Inf
       )
@@ -46,7 +46,7 @@ trait Cron extends JVMApp {
     }
   }
 
-  private def applyCronJobs(masterPod: Pod, currentCronJobNames: Set[String]) =
+  private def applyCronJobs(masterPod: Pod) =
     cronTriggers.foreach { cronTrigger =>
       val cronJob = CronJob(
         metadata = Option(ObjectMeta(name = Option(cronJobName(cronTrigger.jobRunner.job.id)))),
@@ -64,7 +64,7 @@ trait Cron extends JVMApp {
         )
       )
 
-      Kubernetes.client.cronJobs.namespace(OrchestraConfig.namespace).createOrUpdate(cronJob).map { _ =>
+      Kubernetes.client.cronJobs.namespace(OrchestraConfig.namespace).createOrUpdate(cronJob).foreach { _ =>
         logger.debug(s"Applied cronjob ${cronJob.metadata.get.name.get}")
       }
     }

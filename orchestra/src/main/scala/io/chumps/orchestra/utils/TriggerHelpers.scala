@@ -14,23 +14,22 @@ trait TriggerHelpers {
 
   implicit class TriggerableNoParamJob[Result: Decoder](jobRunner: JobRunner[HNil, Result]) {
     def trigger(): Unit =
-      jobRunner.ApiServer.trigger(jobRunInfo(jobRunner).runId, HNil)
+      jobRunner.ApiServer.trigger(OrchestraConfig.runInfo.runId, HNil)
 
     def run(): Result = {
-      jobRunner.ApiServer.trigger(jobRunInfo(jobRunner).runId, HNil, by = Option(OrchestraConfig.runInfo))
+      jobRunner.ApiServer.trigger(OrchestraConfig.runInfo.runId, HNil, by = Option(OrchestraConfig.runInfo))
       awaitJobResult(jobRunner)
     }
   }
 
   implicit class TriggerableRunIdJob[Result: Decoder](jobRunner: JobRunner[RunId :: HNil, Result]) {
-    def trigger(): Unit = {
-      val runId = jobRunInfo(jobRunner).runId
-      jobRunner.ApiServer.trigger(runId, runId :: HNil)
-    }
+    def trigger(): Unit =
+      jobRunner.ApiServer.trigger(OrchestraConfig.runInfo.runId, OrchestraConfig.runInfo.runId :: HNil)
 
     def run(): Result = {
-      val runId = jobRunInfo(jobRunner).runId
-      jobRunner.ApiServer.trigger(runId, runId :: HNil, by = Option(OrchestraConfig.runInfo))
+      jobRunner.ApiServer.trigger(OrchestraConfig.runInfo.runId,
+                                  OrchestraConfig.runInfo.runId :: HNil,
+                                  by = Option(OrchestraConfig.runInfo))
       awaitJobResult(jobRunner)
     }
   }
@@ -45,25 +44,20 @@ trait TriggerHelpers {
     tupler: Tupler.Aux[ParamValuesNoRunId, TupledValues],
     tupleToHList: Generic.Aux[TupledValues, ParamValuesNoRunId]
   ) {
-    def trigger(values: TupledValues): Unit = {
-      val runId = jobRunInfo(jobRunner).runId
-      jobRunner.ApiServer.trigger(runId, runIdOperation.inject(tupleToHList.to(values), runId))
-    }
+    def trigger(values: TupledValues): Unit =
+      jobRunner.ApiServer.trigger(OrchestraConfig.runInfo.runId,
+                                  runIdOperation.inject(tupleToHList.to(values), OrchestraConfig.runInfo.runId))
 
     def run(values: TupledValues): Result = {
-      val runId = jobRunInfo(jobRunner).runId
-      jobRunner.ApiServer.trigger(runId,
-                                  runIdOperation.inject(tupleToHList.to(values), runId),
+      jobRunner.ApiServer.trigger(OrchestraConfig.runInfo.runId,
+                                  runIdOperation.inject(tupleToHList.to(values), OrchestraConfig.runInfo.runId),
                                   by = Option(OrchestraConfig.runInfo))
       awaitJobResult(jobRunner)
     }
   }
 
-  private def jobRunInfo(jobRunner: JobRunner[_ <: HList, _]) =
-    RunInfo(jobRunner.job.id, OrchestraConfig.runInfo.runId)
-
   private def awaitJobResult[Result: Decoder](jobRunner: JobRunner[_ <: HList, Result]): Result = {
-    val runInfo = jobRunInfo(jobRunner)
+    val runInfo = RunInfo(jobRunner.job.id, OrchestraConfig.runInfo.runId)
     def isChildJobInProgress() = ARunStatus.current[Result](runInfo, checkRunning = false) match {
       case Some(Triggered(_, _) | Running(_)) => true
       case _                                  => false
