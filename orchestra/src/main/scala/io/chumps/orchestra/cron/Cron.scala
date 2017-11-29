@@ -48,9 +48,8 @@ trait Cron extends JVMApp {
 
   private def applyCronJobs(masterPod: Pod, currentCronJobNames: Set[String]) =
     cronTriggers.foreach { cronTrigger =>
-      val newCronJobName = cronJobName(cronTrigger.jobRunner.job.id)
       val cronJob = CronJob(
-        metadata = Option(ObjectMeta(name = Option(newCronJobName))),
+        metadata = Option(ObjectMeta(name = Option(cronJobName(cronTrigger.jobRunner.job.id)))),
         spec = Option(
           CronJobSpec(
             schedule = cronTrigger.schedule,
@@ -64,13 +63,9 @@ trait Cron extends JVMApp {
           )
         )
       )
-      val cronJobs = Kubernetes.client.cronJobs.namespace(OrchestraConfig.namespace)
-      if (currentCronJobNames contains newCronJobName) {
-        cronJobs(newCronJobName).replace(cronJob)
-        logger.debug(s"Updated cronjob $newCronJobName")
-      } else {
-        cronJobs.create(cronJob)
-        logger.debug(s"Created cronjob $newCronJobName")
+
+      Kubernetes.client.cronJobs.namespace(OrchestraConfig.namespace).createOrUpdate(cronJob).map { _ =>
+        logger.debug(s"Applied cronjob ${cronJob.metadata.get.name.get}")
       }
     }
 

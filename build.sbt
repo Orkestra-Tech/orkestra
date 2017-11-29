@@ -42,7 +42,7 @@ lazy val orchestra = crossProject
       "com.vmunier" %% "scalajs-scripts" % "1.1.1",
       "com.beachape" %%% "enumeratum" % "1.5.12" % Provided,
       "com.lihaoyi" %%% "autowire" % "0.2.6",
-      "com.goyeau" %% "kubernetes-client" % "0.0.1+19-2a1c80a9-SNAPSHOT",
+      "com.goyeau" %% "kubernetes-client" % "0.0.1+21-57ca9929-SNAPSHOT",
       "org.eclipse.jgit" % "org.eclipse.jgit" % "4.9.0.201710071750-r"
     ) ++ scalaJsReact.value ++ akkaHttp.value ++ scalaCss.value ++ logging.value ++ circe.value,
     jsDependencies ++= Seq(

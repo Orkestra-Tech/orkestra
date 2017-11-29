@@ -28,6 +28,7 @@ object JobSpecUtils {
     container.copy(
       stdin = Option(true),
       env = Option((container.env ++ masterContainer.env).flatten.toSeq),
+      envFrom = Option((container.envFrom ++ masterContainer.envFrom).flatten.toSeq),
       workingDir = container.workingDir.orElse(Option(OrchestraConfig.workspace)),
       volumeMounts = Option(
         distinctOnName(
@@ -41,7 +42,7 @@ object JobSpecUtils {
     val masterContainer = masterSpec.containers.head
     val runInfoEnvVar = EnvVar("ORCHESTRA_RUN_INFO", value = Option(AutowireServer.write(runInfo)))
     val slaveContainer = masterContainer.copy(
-      env = Option(distinctOnName(runInfoEnvVar +: masterContainer.env.toSeq.flatten)),
+      env = Option(distinctOnName(masterContainer.env.toSeq.flatten :+ runInfoEnvVar)),
       workingDir = Option(OrchestraConfig.workspace),
       volumeMounts =
         Option(distinctOnName(masterContainer.volumeMounts.toSeq.flatten :+ homeDirMount :+ downwardApiMount))
