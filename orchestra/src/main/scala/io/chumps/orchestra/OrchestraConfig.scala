@@ -6,8 +6,10 @@ import java.nio.file.Paths
 import scala.io.Source
 
 import akka.http.scaladsl.model.Uri
+import io.circe.syntax._
+import io.circe.parser._
 
-import io.chumps.orchestra.model.{RunId, RunInfo}
+import io.chumps.orchestra.model.{EnvRunInfo, RunId, RunInfo}
 
 object OrchestraConfig {
   def apply(envVar: String) = Option(System.getenv(s"ORCHESTRA_$envVar")).filter(_.nonEmpty)
@@ -24,7 +26,11 @@ object OrchestraConfig {
   lazy val githubToken =
     OrchestraConfig("GITHUB_TOKEN").getOrElse(throw new IllegalStateException("ORCHESTRA_GITHUB_TOKEN should be set"))
   val runInfoMaybe =
-    OrchestraConfig("RUN_INFO").map(runInfoJson => RunInfo.decodeWithFallbackRunId(runInfoJson, jobUid))
+    OrchestraConfig("RUN_INFO").map(
+      runInfoJson =>
+        decode[EnvRunInfo](runInfoJson)
+          .fold(throw _, runInfo => RunInfo(runInfo.jobId, runInfo.runId.getOrElse(jobUid)))
+    )
   lazy val runInfo = runInfoMaybe.getOrElse(throw new IllegalStateException("ORCHESTRA_RUN_INFO should be set"))
   val kubeUri =
     OrchestraConfig("KUBE_URI").getOrElse(throw new IllegalStateException("ORCHESTRA_KUBE_URI should be set"))

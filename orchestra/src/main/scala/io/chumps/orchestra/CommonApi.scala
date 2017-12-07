@@ -1,6 +1,6 @@
 package io.chumps.orchestra
 
-import scala.concurrent.duration.Duration
+import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import scala.io.Source
 
@@ -10,7 +10,7 @@ import io.circe.syntax._
 import org.scalajs.dom.ext.Ajax
 
 import io.chumps.orchestra.kubernetes.Kubernetes
-import io.chumps.orchestra.model.{Page, RunId, RunInfo}
+import io.chumps.orchestra.model.{EnvRunInfo, Page, RunId, RunInfo}
 import io.chumps.orchestra.utils.StagesHelpers
 
 trait CommonApi {
@@ -60,16 +60,9 @@ object CommonApiServer extends CommonApi {
       )
   }
 
-  override def runningJobs(): Seq[RunInfo] = {
-    val jobList = Await.result(Kubernetes.client.jobs.namespace(OrchestraConfig.namespace).list(), Duration.Inf)
-    for {
-      job <- jobList.items
-      jobSpec <- job.spec
-      podSpec <- jobSpec.template.spec
-      container <- podSpec.containers.headOption
-      envs <- container.env
-      env <- envs.find(_.name == "ORCHESTRA_RUN_INFO")
-      runInfoJson <- env.value
-    } yield RunInfo.decodeWithFallbackRunId(runInfoJson, RunId(job.metadata.get.uid.get))
-  }
+  override def runningJobs(): Seq[RunInfo] =
+    Await.result(
+      Kubernetes.client.jobs.namespace(OrchestraConfig.namespace).list().map(_.items.map(RunInfo.fromKubeJob)),
+      1.minute
+    )
 }

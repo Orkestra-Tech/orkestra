@@ -1,7 +1,7 @@
 package io.chumps.orchestra.cron
 
 import scala.concurrent.Await
-import scala.concurrent.duration.Duration
+import scala.concurrent.duration._
 
 import io.circe.generic.auto._
 
@@ -13,6 +13,8 @@ import io.k8s.api.batch.v1beta1.{CronJob, CronJobSpec, JobTemplateSpec}
 import io.k8s.api.core.v1.Pod
 import io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta
 import shapeless.HNil
+
+import io.chumps.orchestra.model.EnvRunInfo
 
 trait Cron extends JVMApp {
 
@@ -33,7 +35,7 @@ trait Cron extends JVMApp {
           deleteStaleCronJobs(currentCronJobNames)
           applyCronJobs(masterPod)
         },
-        Duration.Inf
+        1.minute
       )
   }
 
@@ -56,7 +58,7 @@ trait Cron extends JVMApp {
             jobTemplate = JobTemplateSpec(
               spec = Option(
                 JobSpecUtils.createJobSpec(masterPod,
-                                           cronTrigger.jobRunner.job.id,
+                                           EnvRunInfo(cronTrigger.jobRunner.job.id, None),
                                            cronTrigger.jobRunner.podSpec(HNil))
               )
             )

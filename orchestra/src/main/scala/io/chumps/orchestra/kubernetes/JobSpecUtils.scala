@@ -8,6 +8,8 @@ import io.circe.generic.auto._
 import io.k8s.api.batch.v1.JobSpec
 import io.k8s.api.core.v1._
 
+import io.chumps.orchestra.model.{EnvRunInfo, RunInfo}
+
 object JobSpecUtils {
   private val home = "home"
   private val homeDirMount = VolumeMount(home, mountPath = OrchestraConfig.workspace)
@@ -37,7 +39,7 @@ object JobSpecUtils {
       )
     )
 
-  def createJobSpec[RunInfo: Encoder](masterPod: Pod, runInfo: RunInfo, podSpec: PodSpec) = {
+  def createJobSpec(masterPod: Pod, runInfo: EnvRunInfo, podSpec: PodSpec) = {
     val masterSpec = masterPod.spec.get
     val masterContainer = masterSpec.containers.head
     val runInfoEnvVar = EnvVar("ORCHESTRA_RUN_INFO", value = Option(AutowireServer.write(runInfo)))

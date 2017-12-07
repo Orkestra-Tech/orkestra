@@ -6,7 +6,7 @@ import io.k8s.api.batch.v1.{Job => KubeJob}
 import io.k8s.api.core.v1.PodSpec
 import io.k8s.apimachinery.pkg.apis.meta.v1.{DeleteOptions, ObjectMeta}
 
-import io.chumps.orchestra.model.RunInfo
+import io.chumps.orchestra.model.{EnvRunInfo, RunInfo}
 
 object JobUtils {
 
@@ -18,18 +18,21 @@ object JobUtils {
       masterPod <- MasterPod.get()
       job = KubeJob(
         metadata = Option(ObjectMeta(name = Option(jobName(runInfo)))),
-        spec = Option(JobSpecUtils.createJobSpec(masterPod, runInfo, podSpec)),
+        spec = Option(JobSpecUtils.createJobSpec(masterPod, EnvRunInfo(runInfo.jobId, Option(runInfo.runId)), podSpec)),
       )
       _ <- Kubernetes.client.jobs.namespace(OrchestraConfig.namespace).create(job)
     } yield ()
 
-  def delete(runInfo: RunInfo) =
-    Kubernetes.client.jobs
-      .namespace(OrchestraConfig.namespace)(jobName(runInfo))
-      .delete(Option(DeleteOptions(propagationPolicy = Option("Foreground"))))
+  def delete(runInfo: RunInfo) = {
+    val jobs = Kubernetes.client.jobs.namespace(OrchestraConfig.namespace)
 
-  def selfDelete() =
-    Kubernetes.client.jobs
-      .namespace(OrchestraConfig.namespace)(OrchestraConfig.podName.take(OrchestraConfig.podName.lastIndexOf("-")))
-      .delete(Option(DeleteOptions(propagationPolicy = Option("Foreground"))))
+    jobs.list().map { jobList =>
+      jobList.items
+        .find(RunInfo.fromKubeJob(_) == runInfo)
+        .foreach { job =>
+          jobs(job.metadata.get.name.get)
+            .delete(Option(DeleteOptions(propagationPolicy = Option("Foreground"), gracePeriodSeconds = Option(0))))
+        }
+    }
+  }
 }
