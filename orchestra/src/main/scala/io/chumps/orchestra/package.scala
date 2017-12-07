@@ -1,5 +1,7 @@
 package io.chumps
 
+import scala.language.implicitConversions
+
 import io.chumps.orchestra.filesystem.DirectoryHelpers
 import io.circe.shapes.HListInstances
 import io.circe.generic.AutoDerivation

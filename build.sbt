@@ -1,5 +1,3 @@
-import scala.sys.process._
-
 lazy val root = project
   .in(file("."))
   .aggregate(orchestraJVM, orchestraJS)
@@ -11,8 +9,12 @@ lazy val root = project
 
 lazy val orchestra = crossProject
   .crossType(CrossType.Pure)
-  .enablePlugins(ScalaJSPlugin, BuildInfoPlugin)
-  .jvmSettings(crossVersion := Binary())
+  .enablePlugins(BuildInfoPlugin)
+  .jsSettings(
+    jsDependencies ++= Seq(
+      "org.webjars.npm" % "ansi_up" % "2.0.2" / "ansi_up.js" commonJSName "ansi_up"
+    ) ++ react.value
+  )
   .settings(
     name := "Orchestra",
     organization := "io.chumps",
@@ -23,7 +25,7 @@ lazy val orchestra = crossProject
       else ver + "-SNAPSHOT"
     },
     publishTo := Option("DriveTribe Private" at "s3://drivetribe-repositories.s3-eu-west-1.amazonaws.com/maven"),
-    scalacOptions += "-deprecation",
+    scalacOptions ++= Seq("-deprecation", "-feature"),
     buildInfoPackage := s"${organization.value}.orchestra",
     resolvers += Opts.resolver.sonatypeSnapshots,
     libraryDependencies ++= Seq(
@@ -31,12 +33,9 @@ lazy val orchestra = crossProject
       "com.vmunier" %% "scalajs-scripts" % "1.1.1",
       "com.beachape" %%% "enumeratum" % "1.5.12" % Provided,
       "com.lihaoyi" %%% "autowire" % "0.2.6",
-      "com.goyeau" %% "kubernetes-client" % "0.0.1+22-bd3899b5-SNAPSHOT",
+      "com.goyeau" %% "kubernetes-client" % "0.0.1+22-bd3899b5+20171205-2158-SNAPSHOT",
       "org.eclipse.jgit" % "org.eclipse.jgit" % "4.9.0.201710071750-r"
-    ) ++ scalaJsReact.value ++ akkaHttp.value ++ scalaCss.value ++ logging.value ++ circe.value,
-    jsDependencies ++= Seq(
-      "org.webjars.npm" % "ansi_up" % "2.0.2" / "ansi_up.js" commonJSName "ansi_up"
-    ) ++ react.value
+    ) ++ scalaJsReact.value ++ akkaHttp.value ++ scalaCss.value ++ logging.value ++ circe.value
   )
 lazy val orchestraJVM = orchestra.jvm
 lazy val orchestraJS = orchestra.js
@@ -59,16 +58,16 @@ lazy val logging = Def.setting {
 lazy val scalaCss = Def.setting {
   val scalaCssVersion = "0.5.3"
   Seq(
-    "com.github.japgolly.scalacss" %%% "core" % scalaCssVersion,
-    "com.github.japgolly.scalacss" %%% "ext-react" % scalaCssVersion
+    "com.github.japgolly.scalacss" %%%! "core" % scalaCssVersion,
+    "com.github.japgolly.scalacss" %%%! "ext-react" % scalaCssVersion
   )
 }
 
 lazy val scalaJsReact = Def.setting {
   val scalaJsReactVersion = "1.1.0"
   Seq(
-    "com.github.japgolly.scalajs-react" %%% "core" % scalaJsReactVersion,
-    "com.github.japgolly.scalajs-react" %%% "extra" % scalaJsReactVersion
+    "com.github.japgolly.scalajs-react" %%%! "core" % scalaJsReactVersion,
+    "com.github.japgolly.scalajs-react" %%%! "extra" % scalaJsReactVersion
   )
 }
 
