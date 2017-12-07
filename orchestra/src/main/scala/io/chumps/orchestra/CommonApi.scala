@@ -10,7 +10,7 @@ import io.circe.syntax._
 import org.scalajs.dom.ext.Ajax
 
 import io.chumps.orchestra.kubernetes.Kubernetes
-import io.chumps.orchestra.model.{EnvRunInfo, Page, RunId, RunInfo}
+import io.chumps.orchestra.model.{Page, RunId, RunInfo}
 import io.chumps.orchestra.utils.StagesHelpers
 
 trait CommonApi {

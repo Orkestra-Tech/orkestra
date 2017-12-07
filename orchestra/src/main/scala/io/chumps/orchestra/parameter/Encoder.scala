@@ -1,23 +1,17 @@
 package io.chumps.orchestra.parameter
 
-import io.chumps.orchestra.github.Branch
+import shapeless._
 
 trait Encoder[T] {
-  def apply(raw: String): T
-}
-
-object Encoder {
-  implicit val stringEncoder: Encoder[String] = raw => raw
-  implicit val intEncoder: Encoder[Int] = raw => raw.toInt
-  implicit val branchEncoder: Encoder[Branch] = raw => Branch(raw)
-}
-
-trait Decoder[T] {
   def apply(o: T): String
 }
 
-object Decoder {
-  implicit val stringDecoder: Decoder[String] = string => string
-  implicit val intDecoder: Decoder[Int] = int => int.toString
-  implicit val branchDecoder: Decoder[Branch] = branch => branch.name
+object Encoder {
+  implicit val stringDecoder: Encoder[String] = string => string
+  implicit val intDecoder: Encoder[Int] = _.toString
+  implicit def hlist1Encoder[T](implicit encoder: Encoder[T]): Encoder[T :: HNil] =
+    hlist => encoder(hlist.head)
+  implicit def product1Encoder[Product, L <: HList](implicit generic: Generic.Aux[Product, L],
+                                                    encoder: Encoder[L]): Encoder[Product] =
+    product => encoder(generic.to(product))
 }

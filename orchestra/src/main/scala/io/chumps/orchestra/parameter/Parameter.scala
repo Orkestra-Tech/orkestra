@@ -27,14 +27,14 @@ case class Input[T: Encoder: Decoder](name: String, defaultValue: Option[T] = No
   override def display(state: State) = {
     def modValue(event: ReactEventFromInput) = {
       event.persist()
-      state + (id -> implicitly[Encoder[T]].apply(event.target.value))
+      state + (id -> implicitly[Decoder[T]].apply(event.target.value))
     }
 
     <.label(^.display.block)(
       <.span(name),
       <.input.text(
         ^.key := id.name,
-        ^.value := state.get(id).map(_.asInstanceOf[T]).orElse(defaultValue).fold("")(implicitly[Decoder[T]].apply(_)),
+        ^.value := state.get(id).map(_.asInstanceOf[T]).orElse(defaultValue).fold("")(implicitly[Encoder[T]].apply(_)),
         ^.onChange ==> modValue
       )
     )
