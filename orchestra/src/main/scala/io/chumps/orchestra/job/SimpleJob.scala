@@ -1,7 +1,5 @@
 package io.chumps.orchestra.job
 
-import scala.language.{higherKinds, implicitConversions}
-
 import io.circe.{Decoder, Encoder}
 import japgolly.scalajs.react.extra.router.RouterConfigDsl
 import japgolly.scalajs.react.vdom.html_<^._

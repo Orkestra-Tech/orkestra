@@ -5,8 +5,6 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import autowire._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
-import scalacss.DevDefaults._
-import scalacss.ProdDefaults._
 import scalacss.ScalaCssReact._
 
 import shapeless.HList

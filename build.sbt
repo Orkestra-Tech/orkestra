@@ -25,7 +25,7 @@ lazy val orchestra = crossProject
       else ver + "-SNAPSHOT"
     },
     publishTo := Option("DriveTribe Private" at "s3://drivetribe-repositories.s3-eu-west-1.amazonaws.com/maven"),
-    scalacOptions ++= Seq("-deprecation", "-feature"),
+    scalacOptions ++= Seq("-deprecation", "-feature", "-Ywarn-unused:imports"),
     buildInfoPackage := s"${organization.value}.orchestra",
     resolvers += Opts.resolver.sonatypeSnapshots,
     libraryDependencies ++= Seq(

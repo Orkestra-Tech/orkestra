@@ -5,7 +5,6 @@ import japgolly.scalajs.react.vdom.html_<^._
 import shapeless.HList
 
 import io.chumps.orchestra.component.{Footer, TopNav}
-import io.chumps.orchestra._
 import io.chumps.orchestra.board.{Board, Folder, Job}
 import io.chumps.orchestra.model.RunId
 import io.chumps.orchestra.page.StatusPage

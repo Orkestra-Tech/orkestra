@@ -3,8 +3,6 @@ package io.chumps.orchestra.cron
 import scala.concurrent.Await
 import scala.concurrent.duration._
 
-import io.circe.generic.auto._
-
 import io.chumps.orchestra.{JVMApp, OrchestraConfig}
 import io.chumps.orchestra.utils.AkkaImplicits._
 import io.chumps.orchestra.kubernetes.{JobSpecUtils, Kubernetes, MasterPod}

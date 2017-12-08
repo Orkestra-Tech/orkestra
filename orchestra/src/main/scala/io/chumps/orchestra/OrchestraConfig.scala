@@ -6,7 +6,6 @@ import java.nio.file.Paths
 import scala.io.Source
 
 import akka.http.scaladsl.model.Uri
-import io.circe.syntax._
 import io.circe.parser._
 
 import io.chumps.orchestra.model.{EnvRunInfo, RunId, RunInfo}

@@ -7,7 +7,6 @@ import java.time.{Instant, LocalDateTime, ZoneOffset}
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext}
 import scala.io.Source
-import scala.language.{higherKinds, implicitConversions}
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.server.Directives.{entity, _}
@@ -24,7 +23,6 @@ import io.chumps.orchestra.board.Job
 import io.chumps.orchestra.filesystem.Directory
 import io.chumps.orchestra.kubernetes.JobUtils
 import io.chumps.orchestra.model._
-import io.chumps.orchestra.utils.BaseEncoders._
 import io.chumps.orchestra.utils.StagesHelpers.LogsPrintStream
 import io.chumps.orchestra.utils.Utils
 import io.chumps.orchestra.{ARunStatus, AStageStatus, AutowireServer, OrchestraConfig}

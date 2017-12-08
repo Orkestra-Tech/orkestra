@@ -6,13 +6,12 @@ import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 
 import akka.http.scaladsl.Http
-import akka.http.scaladsl.model.{HttpEntity, HttpMethods, HttpRequest, Uri}
+import akka.http.scaladsl.model.{HttpEntity, HttpMethods, HttpRequest}
 import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.model.headers.{Authorization, OAuth2BearerToken}
 import akka.http.scaladsl.server.Directives.{entity, _}
 import akka.util.ByteString
 import com.typesafe.scalalogging.LazyLogging
-import io.circe.{Encoder, Json}
 
 import io.chumps.orchestra.{BuildInfo, JVMApp, OrchestraConfig}
 import io.chumps.orchestra.utils.AkkaImplicits._

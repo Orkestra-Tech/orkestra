@@ -3,7 +3,6 @@ package io.chumps.orchestra.board
 import java.time.Instant
 
 import scala.concurrent.{ExecutionContext, Future}
-import scala.language.{higherKinds, implicitConversions}
 
 import io.circe.parser._
 import io.circe.syntax._

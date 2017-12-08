@@ -1,8 +1,5 @@
 package io.chumps.orchestra.css
 
-import scalacss.DevDefaults._
-import scalacss.ProdDefaults._
-
 object Global {
   val CssSettings = scalacss.devOrProdDefaults; import CssSettings._
 

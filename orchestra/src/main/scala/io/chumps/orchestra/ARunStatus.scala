@@ -8,7 +8,6 @@ import scala.io.Source
 import io.circe.{Decoder, Encoder}
 import io.circe.syntax._
 import io.circe.parser._
-import io.circe.generic.auto._
 import io.circe.java8.time._
 
 import io.chumps.orchestra.utils.BaseEncoders._

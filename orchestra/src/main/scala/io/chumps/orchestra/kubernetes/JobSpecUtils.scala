@@ -3,12 +3,11 @@ package io.chumps.orchestra.kubernetes
 import io.chumps.orchestra.{AutowireServer, OrchestraConfig}
 import scala.language.reflectiveCalls
 
-import io.circe.Encoder
 import io.circe.generic.auto._
 import io.k8s.api.batch.v1.JobSpec
 import io.k8s.api.core.v1._
 
-import io.chumps.orchestra.model.{EnvRunInfo, RunInfo}
+import io.chumps.orchestra.model.EnvRunInfo
 
 object JobSpecUtils {
   private val home = "home"
