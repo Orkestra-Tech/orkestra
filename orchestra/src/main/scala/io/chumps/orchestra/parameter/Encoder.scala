@@ -1,4 +1,3 @@
-
 package io.chumps.orchestra.parameter
 
 import shapeless._
