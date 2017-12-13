@@ -51,38 +51,38 @@ trait Github extends JVMApp {
 
 object Github extends LazyLogging {
 
-  def pullRequest[T](repo: String, ref: Branch)(body: Directory => T)(implicit workDir: Directory): T =
+  def pullRequest[T](repository: Repository, ref: Branch)(body: Directory => T)(implicit workDir: Directory): T =
     try {
-      notify(repo, ref, State.Pending)
-      clone(repo, ref)
-      val result = body(Directory(LocalFile(repo)))
-      notify(repo, ref, State.Success)
+      notify(repository, ref, State.Pending)
+      clone(repository, ref)
+      val result = body(Directory(LocalFile(repository.name)))
+      notify(repository, ref, State.Success)
       result
     } catch {
       case t: Throwable =>
-        notify(repo, ref, State.Failure)
+        notify(repository, ref, State.Failure)
         throw t
     }
 
-  private def clone(repo: String, ref: Branch)(implicit workDir: Directory): Unit = {
+  private def clone(repository: Repository, ref: Branch)(implicit workDir: Directory): Unit = {
     val git = Git
       .cloneRepository()
-      .setURI(s"https://github.com/$repo.git")
+      .setURI(s"https://github.com/${repository.name}.git")
       .setCredentialsProvider(
         new UsernamePasswordCredentialsProvider(BuildInfo.name.toLowerCase, OrchestraConfig.githubToken)
       )
-      .setDirectory(LocalFile(repo))
+      .setDirectory(LocalFile(repository.name))
       .setNoCheckout(true)
       .call()
     git.checkout().setName(ref.name).call()
   }
 
-  private def notify(repo: String, ref: Branch, state: State) = Await.result(
+  private def notify(repository: Repository, ref: Branch, state: State) = Await.result(
     for {
       response <- Http().singleRequest(
         HttpRequest(
           HttpMethods.POST,
-          s"https://api.github.com/repos/$repo/statuses/${ref.name}",
+          s"https://api.github.com/repos/${repository.name}/statuses/${ref.name}",
           List(Authorization(OAuth2BearerToken(OrchestraConfig.githubToken))),
           HttpEntity(
             CheckStatus(
