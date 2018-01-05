@@ -1,14 +1,30 @@
-lazy val root = project
+import org.scalajs.sbtplugin.cross.CrossProject
+
+lazy val orchestra = project
   .in(file("."))
-  .aggregate(orchestraJVM, orchestraJS)
+  .aggregate(coreJVM, coreJS, lock)
   .settings(
+    organization in ThisBuild := "io.chumps",
+    scalaVersion in ThisBuild := "2.12.4",
+    version in ThisBuild := {
+      val ver = (version in ThisBuild).value
+      if (ver.contains("+")) ver + "-SNAPSHOT"
+      else ver
+    },
+    scalacOptions in ThisBuild ++= Seq("-deprecation",
+                                       "-feature",
+                                       "-Ywarn-unused:imports",
+                                       "-Ypartial-unification",
+                                       "-Ywarn-dead-code"),
+    publishTo in ThisBuild := Option(
+      "DriveTribe Private" at "s3://drivetribe-repositories.s3-eu-west-1.amazonaws.com/maven"
+    ),
     publishArtifact := false,
-    publishLocal := {},
-    publishTo := Option(Resolver.defaultLocal)
+    publishLocal := {}
   )
 
-lazy val orchestra = crossProject
-  .crossType(CrossType.Pure)
+/***************** Projects *****************/
+lazy val core = CrossProject("orchestra-core", file("orchestra-core"), CrossType.Pure)
   .enablePlugins(BuildInfoPlugin)
   .jsSettings(
     jsDependencies ++= Seq(
@@ -16,32 +32,26 @@ lazy val orchestra = crossProject
     ) ++ react.value
   )
   .settings(
-    name := "Orchestra",
-    organization := "io.chumps",
-    scalaVersion := "2.12.4",
-    version := {
-      val ver = version.value
-      if (ver.contains("+")) ver + "-SNAPSHOT"
-      else ver
-    },
-    publishTo := Option("DriveTribe Private" at "s3://drivetribe-repositories.s3-eu-west-1.amazonaws.com/maven"),
-    scalacOptions ++= Seq("-deprecation", "-feature", "-Ywarn-unused:imports"),
     buildInfoPackage := s"${organization.value}.orchestra",
     resolvers += Opts.resolver.sonatypeSnapshots,
     libraryDependencies ++= Seq(
-      "com.chuusai" %%% "shapeless" % "2.3.2",
+      "com.chuusai" %%% "shapeless" % "2.3.3",
       "com.vmunier" %% "scalajs-scripts" % "1.1.1",
       "com.beachape" %%% "enumeratum" % "1.5.12" % Provided,
       "com.lihaoyi" %%% "autowire" % "0.2.6",
-      "com.goyeau" %% "kubernetes-client" % "0.0.1+26-ead488c2-SNAPSHOT",
+      "com.goyeau" %% "kubernetes-client" % "0.0.1+27-d722bdf1-SNAPSHOT",
       "org.eclipse.jgit" % "org.eclipse.jgit" % "4.9.0.201710071750-r"
-    ) ++ scalaJsReact.value ++ akkaHttp.value ++ scalaCss.value ++ logging.value ++ circe.value
+    ) ++ scalaJsReact.value ++ akkaHttp.value ++ scalaCss.value ++ logging.value ++ circe.value ++ elastic4s.value
   )
-lazy val orchestraJVM = orchestra.jvm
-lazy val orchestraJS = orchestra.js
+lazy val coreJVM = core.jvm
+lazy val coreJS = core.js
 
+lazy val lock = Project("orchestra-lock", file("orchestra-lock"))
+  .dependsOn(coreJVM % Provided)
+
+/*************** Dependencies ***************/
 lazy val akkaHttp = Def.setting {
-  val akkaHttpVersion = "10.0.10"
+  val akkaHttpVersion = "10.0.11"
   Seq(
     "com.typesafe.akka" %% "akka-http" % akkaHttpVersion,
     "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpVersion % Test
@@ -64,7 +74,7 @@ lazy val scalaCss = Def.setting {
 }
 
 lazy val scalaJsReact = Def.setting {
-  val scalaJsReactVersion = "1.1.0"
+  val scalaJsReactVersion = "1.1.1"
   Seq(
     "com.github.japgolly.scalajs-react" %%%! "core" % scalaJsReactVersion,
     "com.github.japgolly.scalajs-react" %%%! "extra" % scalaJsReactVersion
@@ -80,12 +90,20 @@ lazy val react = Def.setting {
 }
 
 lazy val circe = Def.setting {
-  val version = "0.8.0"
+  val version = "0.9.0"
   Seq(
     "io.circe" %%% "circe-core" % version,
     "io.circe" %%% "circe-generic" % version,
     "io.circe" %%% "circe-parser" % version,
     "io.circe" %%% "circe-shapes" % version,
     "io.circe" %%% "circe-java8" % version
+  )
+}
+
+lazy val elastic4s = Def.setting {
+  val elastic4sVersion = "6.1.1"
+  Seq(
+    "com.sksamuel.elastic4s" %% "elastic4s-http" % elastic4sVersion,
+    "com.sksamuel.elastic4s" %% "elastic4s-circe" % elastic4sVersion
   )
 }
