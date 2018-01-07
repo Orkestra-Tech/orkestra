@@ -11,6 +11,7 @@ import io.circe.parser._
 import io.chumps.orchestra.model.{EnvRunInfo, RunId, RunInfo}
 
 object OrchestraConfig {
+  val appName = "Orchestra"
   def apply(envVar: String) = Option(System.getenv(s"ORCHESTRA_$envVar")).filter(_.nonEmpty)
 
   val elasticsearchUri = OrchestraConfig("ELASTICSEARCH_URI").getOrElse(

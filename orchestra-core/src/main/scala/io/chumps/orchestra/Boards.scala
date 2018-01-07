@@ -16,7 +16,7 @@ trait Boards extends BackendRoutes with JSApp {
 
   def board: Board
 
-  lazy val topElementId = BuildInfo.name.toLowerCase
+  lazy val topElementId = OrchestraConfig.appName.toLowerCase
 
   override lazy val routes = super.routes ~
     pathPrefix("assets" / Remaining) { file =>
@@ -31,7 +31,7 @@ trait Boards extends BackendRoutes with JSApp {
           s"""<!DOCTYPE html>
              |<html>
              |<head>
-             |    <title>${BuildInfo.name}</title>
+             |    <title>${OrchestraConfig.appName}</title>
              |</head>
              |<body>
              |<div id="$topElementId"></div>
