@@ -69,7 +69,7 @@ object Github extends LazyLogging {
       .cloneRepository()
       .setURI(s"https://github.com/${repository.name}.git")
       .setCredentialsProvider(
-        new UsernamePasswordCredentialsProvider(OrchestraConfig.appName.toLowerCase, OrchestraConfig.githubToken)
+        new UsernamePasswordCredentialsProvider(BuildInfo.projectName.toLowerCase, OrchestraConfig.githubToken)
       )
       .setDirectory(LocalFile(repository.name))
       .setNoCheckout(true)
@@ -89,7 +89,7 @@ object Github extends LazyLogging {
               state,
               s"${OrchestraConfig.url}/#/logs/${OrchestraConfig.runInfo.runId.value}",
               state.description,
-              s"${OrchestraConfig.appName.toLowerCase}/pull-request"
+              s"${BuildInfo.projectName.toLowerCase}/pull-request"
             ).asJson.noSpaces
           )
         )

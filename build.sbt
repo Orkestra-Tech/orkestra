@@ -4,6 +4,7 @@ lazy val orchestra = project
   .in(file("."))
   .aggregate(coreJVM, coreJS, lock)
   .settings(
+    name := "Orchestra",
     organization in ThisBuild := "io.chumps",
     scalaVersion in ThisBuild := "2.12.4",
     version in ThisBuild := {
@@ -32,6 +33,8 @@ lazy val core = CrossProject("orchestra-core", file("orchestra-core"), CrossType
     ) ++ react.value
   )
   .settings(
+    name := "Orchestra Core",
+    buildInfoKeys ++= Seq("projectName" -> "Orchestra"),
     buildInfoPackage := s"${organization.value}.orchestra",
     resolvers += Opts.resolver.sonatypeSnapshots,
     libraryDependencies ++= Seq(
@@ -48,6 +51,7 @@ lazy val coreJS = core.js
 
 lazy val lock = Project("orchestra-lock", file("orchestra-lock"))
   .dependsOn(coreJVM % Provided)
+  .settings(name := "Orchestra Lock")
 
 /*************** Dependencies ***************/
 lazy val akkaHttp = Def.setting {
