@@ -6,6 +6,7 @@ import java.nio.file.Paths
 import scala.io.Source
 
 import akka.http.scaladsl.model.Uri
+import com.sksamuel.elastic4s.ElasticsearchClientUri
 import io.circe.parser._
 
 import io.chumps.orchestra.model.{EnvRunInfo, RunId, RunInfo}
@@ -13,8 +14,10 @@ import io.chumps.orchestra.model.{EnvRunInfo, RunId, RunInfo}
 object OrchestraConfig {
   def apply(envVar: String) = Option(System.getenv(s"ORCHESTRA_$envVar")).filter(_.nonEmpty)
 
-  val elasticsearchUri = OrchestraConfig("ELASTICSEARCH_URI").getOrElse(
-    throw new IllegalStateException("ORCHESTRA_ELASTICSEARCH_URI should be set")
+  val elasticsearchUri = ElasticsearchClientUri(
+    OrchestraConfig("ELASTICSEARCH_URI").getOrElse(
+      throw new IllegalStateException("ORCHESTRA_ELASTICSEARCH_URI should be set")
+    )
   )
   val workspace = OrchestraConfig("WORKSPACE").getOrElse("/opt/docker/workspace")
   val home = OrchestraConfig("DATA").getOrElse(System.getProperty("user.home"))

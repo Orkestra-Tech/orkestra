@@ -5,10 +5,11 @@ import java.time.Instant
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
-import com.sksamuel.elastic4s.{ElasticDate, ElasticsearchClientUri, Index, Minutes}
 import com.sksamuel.elastic4s.circe._
 import com.sksamuel.elastic4s.http.ElasticDsl._
-import com.sksamuel.elastic4s.http.{HttpClient, RequestFailure}
+import com.sksamuel.elastic4s.http.index.IndexResponse
+import com.sksamuel.elastic4s.http.{HttpClient, RequestFailure, RequestSuccess}
+import com.sksamuel.elastic4s.{ElasticDate, Index, Minutes}
 import io.circe.generic.auto._
 import io.circe.java8.time._
 
@@ -18,38 +19,43 @@ import io.chumps.orchestra.utils.AkkaImplicits._
 case class Lock(id: String) {
 
   def orElse[Result](f: => Result)(orElse: => Result): Future[Result] =
-    Lock.trylock(id)(f).map(_.getOrElse(orElse))
+    Lock.trylock(id).flatMap(_.fold(_ => Future(orElse), _ => Lock.runLocked(id)(f)))
 
   def orWait[Result](f: => Result): Future[Result] =
     Lock
-      .trylock(id)(f)
+      .trylock(id)
       .flatMap(_.fold({ _ =>
         println(s"Waiting for lock $id to be released")
         Thread.sleep(5.seconds.toMillis)
         orWait(f)
-      }, Future(_)))
+      }, _ => Lock.runLocked(id)(f)))
 }
 
 object Lock {
-  private case class Lock(createdOn: Instant)
+  private case class Lock(updatedOn: Instant)
 
-  private val client = HttpClient(ElasticsearchClientUri(OrchestraConfig.elasticsearchUri))
   private val index = Index("locks")
 
-  private def indexLockDoc(id: String) = indexInto(Index("locks"), "lock").id(id).source(Lock(Instant.now()))
+  private def indexLockDoc(id: String) = indexInto(index, "lock").id(id).source(Lock(Instant.now()))
 
-  private def trylock[Result](id: String)(f: => Result): Future[Either[RequestFailure, Result]] =
-    (
-      for {
-        _ <- client.execute(
-          deleteByQuery(index, "lock", rangeQuery("createdOn").lt(ElasticDate.now.minus(1, Minutes)))
-        )
-        createLock <- client.execute(indexLockDoc(id).createOnly(true).refreshImmediately)
-        keepLock = system.scheduler.schedule(30.seconds, 30.seconds)(client.execute(indexLockDoc(id)))
-      } yield
-        try createLock.map(_ => f)
-        finally keepLock.cancel()
-    ).andThen {
-      case _ => client.execute(deleteById(index, "lock", id).refreshImmediately)
+  private def trylock(id: String): Future[Either[RequestFailure, RequestSuccess[IndexResponse]]] = {
+    val elasticsearch = HttpClient(OrchestraConfig.elasticsearchUri)
+    for {
+      _ <- elasticsearch.execute(
+        deleteByQuery(index, "lock", rangeQuery("updatedOn").lt(ElasticDate.now.minus(1, Minutes)))
+      )
+      createLock <- elasticsearch.execute(indexLockDoc(id).createOnly(true).refreshImmediately)
+    } yield createLock
+  }
+
+  private def runLocked[Result](id: String)(f: => Result): Future[Result] = {
+    val elasticsearch = HttpClient(OrchestraConfig.elasticsearchUri)
+    val keepLock = system.scheduler.schedule(30.seconds, 30.seconds)(elasticsearch.execute(indexLockDoc(id)))
+    val result = Future(f)
+    result.onComplete { _ =>
+      keepLock.cancel()
+      elasticsearch.execute(deleteById(index, "lock", id).refreshImmediately)
     }
+    result
+  }
 }
