@@ -5,19 +5,19 @@ lazy val orchestra = project
   .aggregate(coreJVM, coreJS, lock)
   .settings(
     name := "Orchestra",
-    organization in ThisBuild := "io.chumps",
-    scalaVersion in ThisBuild := "2.12.4",
-    version in ThisBuild := {
-      val ver = (version in ThisBuild).value
+    ThisBuild / organization := "io.chumps",
+    ThisBuild / scalaVersion := "2.12.4",
+    ThisBuild / version := {
+      val ver = (ThisBuild / version).value
       if (ver.contains("+")) ver + "-SNAPSHOT"
       else ver
     },
-    scalacOptions in ThisBuild ++= Seq("-deprecation",
-                                       "-feature",
-                                       "-Ywarn-unused:imports",
-                                       "-Ypartial-unification",
-                                       "-Ywarn-dead-code"),
-    publishTo in ThisBuild := Option(
+    ThisBuild / scalacOptions ++= Seq("-deprecation",
+                                      "-feature",
+                                      "-Ywarn-unused:imports",
+                                      "-Ypartial-unification",
+                                      "-Ywarn-dead-code"),
+    ThisBuild / publishTo := Option(
       "DriveTribe Private" at "s3://drivetribe-repositories.s3-eu-west-1.amazonaws.com/maven"
     ),
     publishArtifact := false,
