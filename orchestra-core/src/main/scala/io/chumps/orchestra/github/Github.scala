@@ -3,7 +3,7 @@ package io.chumps.orchestra.github
 import java.io.{IOException, PrintWriter, StringWriter}
 
 import scala.concurrent.Await
-import scala.concurrent.duration.Duration
+import scala.concurrent.duration._
 
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.{HttpEntity, HttpMethods, HttpRequest}
@@ -103,6 +103,6 @@ object Github extends LazyLogging {
         throw exception
       }
     } yield response,
-    Duration.Inf
+    1.minute
   )
 }

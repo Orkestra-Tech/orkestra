@@ -4,21 +4,25 @@ import java.io.PrintStream
 import java.nio.file.{Files, Paths}
 import java.time.{LocalDateTime, ZoneOffset}
 
-import io.chumps.orchestra.OrchestraConfig
-import io.chumps.orchestra.model.RunInfo
+import scala.concurrent.Await
+import scala.concurrent.duration._
+
+import io.chumps.orchestra.{Elasticsearch, OrchestraConfig}
+import io.chumps.orchestra.model.{RunId, RunInfo}
+import io.chumps.orchestra.model.Indexed.LogsIndex
 
 object Utils {
 
   /** Sets the standard out and err across all thread.
     * This is not Thread safe!
     */
-  def withOutErr[T](stream: PrintStream)(func: => T): T = {
+  def withOutErr[Result](stream: PrintStream)(f: => Result): Result = {
     val stdOut = System.out
     val stdErr = System.err
     try {
       System.setOut(stream)
       System.setErr(stream)
-      Console.withOut(stream)(Console.withErr(stream)(func))
+      Console.withOut(stream)(Console.withErr(stream)(f))
     } finally {
       stream.flush()
       stream.close()
@@ -26,6 +30,13 @@ object Utils {
       System.setErr(stdErr)
     }
   }
+
+  def elasticsearchOutErr[Result](runId: RunId)(f: => Result): Result =
+    withOutErr(
+      new PrintStream(
+        new ElasticsearchOutputStream(Await.result(Elasticsearch.client, 1.minute), LogsIndex.index, runId)
+      )
+    )(f)
 
   def runInit(runInfo: RunInfo, tags: Seq[String]): Unit = {
     val runDir = OrchestraConfig.jobRunDir(runInfo)

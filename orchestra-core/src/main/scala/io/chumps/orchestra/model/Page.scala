@@ -1,3 +1,3 @@
 package io.chumps.orchestra.model
 
-case class Page[From](from: Option[From], size: Int)
+case class Page[T](after: Option[T], size: Int)

@@ -1,20 +1,28 @@
 package io.chumps.orchestra
 
+import java.io.IOException
+import java.time.Instant
+
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-import scala.io.Source
 
 import io.circe._
 import io.circe.parser._
 import io.circe.syntax._
+import io.circe.java8.time._
 import org.scalajs.dom.ext.Ajax
+import com.sksamuel.elastic4s.http.ElasticDsl._
+import com.sksamuel.elastic4s.circe._
+import com.sksamuel.elastic4s.http.HttpClient
+import com.sksamuel.elastic4s.searches.sort.SortOrder
 
+import io.chumps.orchestra.model.Indexed.LogLine
 import io.chumps.orchestra.kubernetes.Kubernetes
 import io.chumps.orchestra.model.{Page, RunId, RunInfo}
-import io.chumps.orchestra.utils.StagesHelpers
+import io.chumps.orchestra.model.Indexed.LogsIndex
 
 trait CommonApi {
-  def logs(runId: RunId, page: Page[Int]): Seq[(Option[Symbol], String)]
+  def logs(runId: RunId, page: Page[Instant]): Seq[LogLine]
   def runningJobs(): Seq[RunInfo]
 }
 
@@ -42,22 +50,28 @@ object CommonApi {
 object CommonApiServer extends CommonApi {
   import io.chumps.orchestra.utils.AkkaImplicits._
 
-  override def logs(runId: RunId, page: Page[Int]): Seq[(Option[Symbol], String)] = {
-    val stageRegex = s"(.*)${StagesHelpers.delimiter}(.+)".r
-    Seq(OrchestraConfig.logsFile(runId).toFile)
-      .filter(_.exists())
-      .flatMap(
-        Source
-          .fromFile(_)
-          .getLines()
-          .slice(page.from.getOrElse(0), Int.MaxValue)
-          .filter(_.nonEmpty)
-          .map {
-            case stageRegex(line, stage) => (Option(Symbol(stage)), line)
-            case line                    => (None, line)
-          }
-          .toSeq
+  override def logs(runId: RunId, page: Page[Instant]): Seq[LogLine] = {
+    val t = search(LogsIndex.index)
+      .query(termQuery("runId", runId.value.toString))
+      .sortBy(fieldSort("loggedOn").order(if (page.size < 0) SortOrder.Desc else SortOrder.Asc),
+              fieldSort("_id").order(SortOrder.Desc))
+      .searchAfter(
+        Seq(
+          page.after.getOrElse(if (page.size < 0) Instant.now() else Instant.EPOCH).toEpochMilli: java.lang.Long,
+          ""
+        )
       )
+      .size(math.abs(page.size))
+    println("t.show: " + t.show)
+
+    Await
+      .result(
+        HttpClient(OrchestraConfig.elasticsearchUri).execute(t),
+        1.minute
+      )
+      .fold(failure => throw new IOException(failure.error.reason), identity)
+      .result
+      .to[LogLine]
   }
 
   override def runningJobs(): Seq[RunInfo] =

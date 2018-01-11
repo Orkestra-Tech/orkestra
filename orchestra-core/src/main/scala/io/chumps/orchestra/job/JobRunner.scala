@@ -1,6 +1,5 @@
 package io.chumps.orchestra.job
 
-import java.io.FileOutputStream
 import java.nio.file.Files
 import java.time.{Instant, LocalDateTime, ZoneOffset}
 
@@ -23,7 +22,6 @@ import io.chumps.orchestra.board.Job
 import io.chumps.orchestra.filesystem.Directory
 import io.chumps.orchestra.kubernetes.JobUtils
 import io.chumps.orchestra.model._
-import io.chumps.orchestra.utils.StagesHelpers.LogsPrintStream
 import io.chumps.orchestra.utils.Utils
 import io.chumps.orchestra.{ARunStatus, AStageStatus, AutowireServer, OrchestraConfig}
 
@@ -35,9 +33,8 @@ case class JobRunner[ParamValues <: HList: Encoder: Decoder, Result: Encoder: De
 
   private[orchestra] def run(runInfo: RunInfo)(implicit sys: ActorSystem, ec: ExecutionContext): Unit = {
     Utils.runInit(runInfo, Seq.empty)
-    val logsOut = new LogsPrintStream(new FileOutputStream(OrchestraConfig.logsFile(runInfo.runId).toFile, true))
 
-    Utils.withOutErr(logsOut) {
+    Utils.elasticsearchOutErr(runInfo.runId) {
       try {
         ARunStatus.current[Result](runInfo).collect {
           case Triggered(_, Some(by)) =>
@@ -62,10 +59,7 @@ case class JobRunner[ParamValues <: HList: Encoder: Decoder, Result: Encoder: De
       } catch {
         case t: Throwable =>
           failJob(runInfo, t)
-      } finally {
-        logsOut.close()
-        JobUtils.delete(runInfo)
-      }
+      } finally JobUtils.delete(runInfo)
     }
   }
 
@@ -77,19 +71,18 @@ case class JobRunner[ParamValues <: HList: Encoder: Decoder, Result: Encoder: De
       val runInfo = RunInfo(job.id, runId)
       if (ARunStatus.current[Result](runInfo).isEmpty) {
         Utils.runInit(runInfo, tags)
-        val logsOut = new LogsPrintStream(new FileOutputStream(OrchestraConfig.logsFile(runInfo.runId).toFile, true))
 
-        Utils.withOutErr(logsOut) {
+        Utils.elasticsearchOutErr(runInfo.runId) {
           try {
             persist[Result](runInfo, Triggered(Instant.now(), by))
             Files.write(OrchestraConfig.paramsFile(runInfo), AutowireServer.write(values).getBytes)
 
-            Await.result(JobUtils.create(runInfo, podSpec(values)), Duration.Inf)
+            Await.result(JobUtils.create(runInfo, podSpec(values)), 1.minute)
           } catch {
             case t: Throwable =>
               failJob(runInfo, t)
               throw t
-          } finally logsOut.close()
+          }
         }
       }
     }
@@ -105,7 +98,7 @@ case class JobRunner[ParamValues <: HList: Encoder: Decoder, Result: Encoder: De
     override def history(
       page: Page[Instant]
     ): Seq[(RunId, Instant, ParamValues, Seq[String], ARunStatus[Result], Seq[AStageStatus])] = {
-      val from = page.from.fold(LocalDateTime.MAX)(LocalDateTime.ofInstant(_, ZoneOffset.UTC))
+      val from = page.after.fold(LocalDateTime.MAX)(LocalDateTime.ofInstant(_, ZoneOffset.UTC))
 
       val runs = for {
         runsByDate <- Stream(OrchestraConfig.runsByDateDir(job.id).toFile)
