@@ -36,7 +36,7 @@ object LogsPage {
           case Some(log) if log.nonEmpty && log.size <= PrettyDisplayMaxLines =>
             log.zipWithIndex.toTagMod {
               case (logLine, lineNumber) =>
-                <.tr(^.backgroundColor :=? logLine.stage.map(s => Utils.generateColour(s.name)))(
+                <.tr(^.backgroundColor :=? logLine.stageName.map(name => Utils.generateColour(name)))(
                   <.td(^.width := "50px", ^.verticalAlign.`text-top`, ^.textAlign.right, ^.paddingRight := "5px")(
                     lineNumber + 1
                   ),

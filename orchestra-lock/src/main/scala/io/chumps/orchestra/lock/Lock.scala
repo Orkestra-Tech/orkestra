@@ -35,26 +35,26 @@ object Lock {
   private case class Lock(updatedOn: Instant)
 
   private val index = Index("locks")
+  private val `type` = "lock"
 
-  private def indexLockDoc(id: String) = indexInto(index, "lock").id(id).source(Lock(Instant.now()))
+  private def indexLockDoc(id: String) = indexInto(index, `type`).id(id).source(Lock(Instant.now()))
 
   private def trylock(id: String): Future[Either[RequestFailure, RequestSuccess[IndexResponse]]] =
     for {
-      client <- Elasticsearch.client
-      _ <- client.execute(
-        deleteByQuery(index, "lock", rangeQuery("updatedOn").lt(ElasticDate.now.minus(1, Minutes)))
+      _ <- Elasticsearch.client.execute(
+        deleteByQuery(index, `type`, rangeQuery("updatedOn").lt(ElasticDate.now.minus(1, Minutes)))
       )
-      createLock <- client.execute(indexLockDoc(id).createOnly(true).refreshImmediately)
+      createLock <- Elasticsearch.client.execute(indexLockDoc(id).createOnly(true).refreshImmediately)
     } yield createLock
 
   private def runLocked[Result](id: String)(f: => Result): Future[Result] = {
     val keepLock =
-      system.scheduler.schedule(30.seconds, 30.seconds)(Elasticsearch.client.map(_.execute(indexLockDoc(id))))
-    val result = Future(f)
-    result.onComplete { _ =>
+      system.scheduler.schedule(30.seconds, 30.seconds)(Elasticsearch.client.execute(indexLockDoc(id)))
+    Future(f).transformWith { triedResult =>
       keepLock.cancel()
-      Elasticsearch.client.map(_.execute(deleteById(index, "lock", id).refreshImmediately))
+      Elasticsearch.client
+        .execute(deleteById(index, `type`, id).refreshImmediately)
+        .flatMap(_ => Future.fromTry(triedResult))
     }
-    result
   }
 }

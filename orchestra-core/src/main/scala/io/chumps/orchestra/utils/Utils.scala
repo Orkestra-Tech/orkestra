@@ -4,12 +4,8 @@ import java.io.PrintStream
 import java.nio.file.{Files, Paths}
 import java.time.{LocalDateTime, ZoneOffset}
 
-import scala.concurrent.Await
-import scala.concurrent.duration._
-
 import io.chumps.orchestra.{Elasticsearch, OrchestraConfig}
 import io.chumps.orchestra.model.{RunId, RunInfo}
-import io.chumps.orchestra.model.Indexed.LogsIndex
 
 object Utils {
 
@@ -32,11 +28,7 @@ object Utils {
   }
 
   def elasticsearchOutErr[Result](runId: RunId)(f: => Result): Result =
-    withOutErr(
-      new PrintStream(
-        new ElasticsearchOutputStream(Await.result(Elasticsearch.client, 1.minute), LogsIndex.index, runId)
-      )
-    )(f)
+    withOutErr(new PrintStream(new ElasticsearchOutputStream(Elasticsearch.client, runId)))(f)
 
   def runInit(runInfo: RunInfo, tags: Seq[String]): Unit = {
     val runDir = OrchestraConfig.jobRunDir(runInfo)

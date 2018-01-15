@@ -7,20 +7,21 @@ import com.sksamuel.elastic4s.analyzers.KeywordAnalyzer
 import com.sksamuel.elastic4s.http.ElasticDsl._
 
 trait LogsIndex extends Indexed {
-  case class LogLine(runId: RunId, loggedOn: Instant, line: String, stage: Option[Symbol])
+  case class LogLine(runId: RunId, loggedOn: Instant, line: String, stageName: Option[String])
 
   override def indices: Set[IndexDefinition] = super.indices + LogsIndex
 
   object LogsIndex extends IndexDefinition {
     val index = Index("logs")
+    val `type` = "line"
 
     val createDefinition =
       createIndex(index.name).mappings(
-        mapping("line").as(
+        mapping(`type`).as(
           textField("runId").analyzer(KeywordAnalyzer),
           dateField("loggedOn"),
           textField("line"),
-          textField("stage").analyzer(KeywordAnalyzer)
+          textField("stageName").analyzer(KeywordAnalyzer)
         )
       )
   }

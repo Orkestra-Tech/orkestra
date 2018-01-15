@@ -21,13 +21,9 @@ object ARunStatus {
   case class Running(at: Instant) extends ARunStatus[Nothing]
   case class Success[Result](at: Instant, result: Result) extends ARunStatus[Result]
   case class Failure(at: Instant, throwable: Throwable) extends ARunStatus[Nothing]
-  case class Stopped(at: Instant) extends ARunStatus[Nothing]
 
-  def current[Result: Decoder](runInfo: RunInfo, checkRunning: Boolean = true): Option[ARunStatus[Result]] =
-    history[Result](runInfo).lastOption.map {
-      case Running(_) if checkRunning && !CommonApiServer.runningJobs().contains(runInfo) => Stopped(Instant.MAX)
-      case status                                                                         => status
-    }
+  def current[Result: Decoder](runInfo: RunInfo): Option[ARunStatus[Result]] =
+    history[Result](runInfo).lastOption
 
   def history[Result: Decoder](runInfo: RunInfo): Seq[ARunStatus[Result]] =
     Seq(OrchestraConfig.statusFile(runInfo).toFile)

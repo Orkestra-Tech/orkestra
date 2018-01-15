@@ -1,5 +1,8 @@
 package io.chumps.orchestra.utils
 
+import java.time.Instant
+import java.time.temporal.ChronoUnit
+
 import io.circe.Decoder
 import shapeless._
 import shapeless.ops.hlist.Tupler
@@ -58,9 +61,10 @@ trait TriggerHelpers {
 
   private def awaitJobResult[Result: Decoder](jobRunner: JobRunner[_ <: HList, Result]): Result = {
     val runInfo = RunInfo(jobRunner.job.id, OrchestraConfig.runInfo.runId)
-    def isChildJobInProgress() = ARunStatus.current[Result](runInfo, checkRunning = false) match {
-      case Some(Triggered(_, _) | Running(_)) => true
-      case _                                  => false
+    def isChildJobInProgress() = ARunStatus.current[Result](runInfo) match {
+      case Some(Triggered(_, _))                                                       => true
+      case Some(Running(at)) if at.isAfter(Instant.now().minus(1, ChronoUnit.MINUTES)) => true
+      case _                                                                           => false
     }
 
     while (isChildJobInProgress()) Thread.sleep(0.5.second.toMillis)

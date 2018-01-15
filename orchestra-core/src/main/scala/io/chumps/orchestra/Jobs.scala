@@ -1,5 +1,8 @@
 package io.chumps.orchestra
 
+import scala.concurrent.Await
+import scala.concurrent.duration._
+
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Directives.{entity, _}
 import autowire.Core
@@ -29,6 +32,8 @@ trait Jobs extends JVMApp with BackendRoutes {
 
   override def main(args: Array[String]): Unit = {
     super.main(args)
+
+    Await.result(Elasticsearch.init(), 1.minute)
 
     OrchestraConfig.runInfoMaybe.fold[Unit] {
       Http().bindAndHandle(routes, "0.0.0.0", OrchestraConfig.port)

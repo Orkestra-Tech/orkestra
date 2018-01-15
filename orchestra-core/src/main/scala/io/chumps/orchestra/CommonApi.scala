@@ -50,29 +50,27 @@ object CommonApi {
 object CommonApiServer extends CommonApi {
   import io.chumps.orchestra.utils.AkkaImplicits._
 
-  override def logs(runId: RunId, page: Page[Instant]): Seq[LogLine] = {
-    val t = search(LogsIndex.index)
-      .query(termQuery("runId", runId.value.toString))
-      .sortBy(fieldSort("loggedOn").order(if (page.size < 0) SortOrder.Desc else SortOrder.Asc),
-              fieldSort("_id").order(SortOrder.Desc))
-      .searchAfter(
-        Seq(
-          page.after.getOrElse(if (page.size < 0) Instant.now() else Instant.EPOCH).toEpochMilli: java.lang.Long,
-          ""
-        )
-      )
-      .size(math.abs(page.size))
-    println("t.show: " + t.show)
-
+  override def logs(runId: RunId, page: Page[Instant]): Seq[LogLine] =
     Await
       .result(
-        HttpClient(OrchestraConfig.elasticsearchUri).execute(t),
+        HttpClient(OrchestraConfig.elasticsearchUri).execute(
+          search(LogsIndex.index)
+            .query(termQuery("runId", runId.value.toString))
+            .sortBy(fieldSort("loggedOn").order(if (page.size < 0) SortOrder.Desc else SortOrder.Asc),
+                    fieldSort("_id").order(SortOrder.Desc))
+            .searchAfter(
+              Seq(
+                page.after.getOrElse(if (page.size < 0) Instant.now() else Instant.EPOCH).toEpochMilli: java.lang.Long,
+                ""
+              )
+            )
+            .size(math.abs(page.size))
+        ),
         1.minute
       )
       .fold(failure => throw new IOException(failure.error.reason), identity)
       .result
       .to[LogLine]
-  }
 
   override def runningJobs(): Seq[RunInfo] =
     Await.result(

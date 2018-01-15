@@ -1,6 +1,7 @@
 package io.chumps.orchestra.page
 
 import java.time.Instant
+import java.time.temporal.ChronoUnit
 
 import scala.concurrent.duration._
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
@@ -65,7 +66,7 @@ object JobPage {
         .call()
         .map { runs =>
           val runDisplays = runs.zipWithIndex.toTagMod {
-            case ((runId, createdAt, paramValues, tags, runStatus, stageStatuses), index) =>
+            case ((runId, createdAt, paramValues, tags, runStatus, stages), index) =>
               val paramsDescription =
                 paramOperations
                   .paramsState(params, runIdOperation.remove(paramValues))
@@ -96,6 +97,10 @@ object JobPage {
                 case Triggered(_, _) =>
                   TagMod(runIdDisplay("○", runId, Global.Style.brandColor.value, "Triggered"),
                          datesDisplay(createdAt, Option(Instant.now())))
+                case Running(at) if at.isBefore(Instant.now().minus(1, ChronoUnit.MINUTES)) =>
+                  TagMod(runIdDisplay("✗", runId, "firebrick", "Stopped"),
+                         datesDisplay(createdAt, Option(at)),
+                         rerunButton)
                 case Running(_) =>
                   TagMod(runIdDisplay("≻", runId, Global.Style.brandColor.value, "Running"),
                          datesDisplay(createdAt, Option(Instant.now())),
@@ -108,10 +113,6 @@ object JobPage {
                   TagMod(runIdDisplay("✗", runId, "firebrick", s"Failed: ${t.getMessage}"),
                          datesDisplay(createdAt, Option(at)),
                          rerunButton)
-                case Stopped(at) =>
-                  TagMod(runIdDisplay("✗", runId, "firebrick", "Stopped"),
-                         datesDisplay(createdAt, Option(at).filter(_ != Instant.MAX)),
-                         rerunButton)
               }
 
               <.div(
@@ -122,25 +123,19 @@ object JobPage {
               )(
                 <.div(^.display.flex)(statusDisplay),
                 <.div(
-                  stageStatuses
-                    .groupBy(_.name)
-                    .values
-                    .map(statuses => (statuses.head.name, statuses.head.at, statuses.tail.headOption.map(_.at)))
-                    .toSeq
-                    .sortBy(_._2)
-                    .map {
-                      case (name, start, end) =>
-                        val time = (runStatus, end) match {
-                          case (_, Some(end))   => s" ${end.getEpochSecond - start.getEpochSecond}s"
-                          case (Running(_), _)  => s" ${Instant.now().getEpochSecond - start.getEpochSecond}s"
-                          case (Stopped(at), _) => s" ${at.getEpochSecond - start.getEpochSecond}s"
-                          case _                => ""
-                        }
+                  stages.map { stage =>
+                    val time = (runStatus, stage.completedOn) match {
+                      case (_, Some(end)) => s" ${end.getEpochSecond - stage.startedOn.getEpochSecond}s"
+                      case (Running(at), _) if at.isBefore(Instant.now().minus(1, ChronoUnit.MINUTES)) =>
+                        s" ${at.getEpochSecond - stage.startedOn.getEpochSecond}s"
+                      case (Running(_), _) => s" ${Instant.now().getEpochSecond - stage.startedOn.getEpochSecond}s"
+                      case _               => ""
+                    }
 
-                        <.div(^.padding := "4px",
-                              ^.display.`inline-block`,
-                              ^.backgroundColor := Utils.generateColour(name))(s"$name$time")
-                    }: _*
+                    <.div(^.padding := "4px",
+                          ^.display.`inline-block`,
+                          ^.backgroundColor := Utils.generateColour(stage.name))(s"${stage.name}$time")
+                  }: _*
                 )
               )
           }

@@ -10,4 +10,4 @@ trait Indexed {
   def indices = Set.empty[IndexDefinition]
 }
 
-object Indexed extends LogsIndex
+object Indexed extends LogsIndex with StagesIndex

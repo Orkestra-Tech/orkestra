@@ -6,7 +6,6 @@ import java.time.Instant
 import scala.concurrent.Await
 import scala.concurrent.duration._
 
-import com.sksamuel.elastic4s.Index
 import com.sksamuel.elastic4s.circe._
 import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.http.HttpClient
@@ -14,10 +13,11 @@ import io.circe.generic.auto._
 import io.circe.java8.time._
 
 import io.chumps.orchestra.model.Indexed.LogLine
+import io.chumps.orchestra.model.Indexed.LogsIndex
 import io.chumps.orchestra.model.RunId
 import io.chumps.orchestra.utils.AkkaImplicits._
 
-class ElasticsearchOutputStream(client: HttpClient, index: Index, runId: RunId) extends OutputStream {
+class ElasticsearchOutputStream(client: HttpClient, runId: RunId) extends OutputStream {
   private val buffer = new StringBuffer()
   private val scheduledFlush = system.scheduler.schedule(1.second, 1.second) {
     val index = buffer.lastIndexOf("\n") + 1
@@ -42,7 +42,8 @@ class ElasticsearchOutputStream(client: HttpClient, index: Index, runId: RunId) 
       client.execute(
         bulk(
           buffer.toString.split("\\r?\\n").map { line =>
-            indexInto(index, "line").source(LogLine(runId, Instant.now(), line, StagesHelpers.stageVar.value))
+            indexInto(LogsIndex.index, LogsIndex.`type`)
+              .source(LogLine(runId, Instant.now(), line, StagesHelpers.stageVar.value))
           }
         )
       ),
