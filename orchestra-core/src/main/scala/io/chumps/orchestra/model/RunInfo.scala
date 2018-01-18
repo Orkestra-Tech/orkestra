@@ -7,7 +7,7 @@ import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 
 import io.k8s.api.batch.v1.{Job => KubeJob}
 
-case class RunInfo(jobId: Symbol, runId: RunId)
+case class RunInfo(jobId: JobId, runId: RunId)
 
 object RunInfo {
 
@@ -30,4 +30,4 @@ object RunInfo {
   implicit val decoder: Decoder[RunInfo] = deriveDecoder
 }
 
-case class EnvRunInfo(jobId: Symbol, runId: Option[RunId])
+case class EnvRunInfo(jobId: JobId, runId: Option[RunId])

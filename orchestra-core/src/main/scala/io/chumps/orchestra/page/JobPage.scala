@@ -10,7 +10,6 @@ import scala.scalajs.js
 
 import autowire._
 
-import io.chumps.orchestra._
 import io.chumps.orchestra.utils.BaseEncoders._
 import io.chumps.orchestra.parameter.State
 import io.chumps.orchestra.parameter.ParameterOperations
@@ -25,8 +24,9 @@ import japgolly.scalajs.react.vdom.html_<^._
 import shapeless.HList
 import scalacss.ScalaCssReact._
 
+import io.circe.parser._
+
 import io.chumps.orchestra.css.Global
-import io.chumps.orchestra.ARunStatus._
 import io.chumps.orchestra.board.Job
 import io.chumps.orchestra.component.StopButton
 import io.chumps.orchestra.model.{Page, RunId}
@@ -62,21 +62,23 @@ object JobPage {
       $ : ComponentDidMount[Props[_, _, _ <: HList, _], (RunId, Map[Symbol, Any], TagMod, SetIntervalHandle), Unit]
     ) = Callback.future {
       job.Api.client
-        .history(Page(None, 50)) // TODO load more as we scroll
+        .history(Page(None, -50)) // TODO load more as we scroll
         .call()
-        .map { runs =>
-          val runDisplays = runs.zipWithIndex.toTagMod {
-            case ((runId, createdAt, paramValues, tags, runStatus, stages), index) =>
+        .map { history =>
+          val runDisplays = history.zipWithIndex.toTagMod {
+            case ((run, stages), index) =>
               val paramsDescription =
                 paramOperations
-                  .paramsState(params, runIdOperation.remove(paramValues))
+                  .paramsState(params,
+                               runIdOperation.remove(decode[ParamValues](run.paramValues).fold(throw _, identity)))
                   .map(param => s"${param._1}: ${param._2}")
                   .mkString("\n")
-              val rerunButton = <.div(Global.Style.brandColorButton,
-                                      ^.width := "30px",
-                                      ^.height := "30px",
-                                      ^.onClick ==> reRun(paramValues, tags))("↻")
-              val stopButton = StopButton.component(StopButton.Props(job, runId))
+              val rerunButton =
+                <.div(Global.Style.brandColorButton,
+                      ^.width := "30px",
+                      ^.height := "30px",
+                      ^.onClick ==> reRun(decode[ParamValues](run.paramValues).fold(throw _, identity), run.tags))("↻")
+              val stopButton = StopButton.component(StopButton.Props(job, run.runInfo.runId))
               def runIdDisplay(icon: String, runId: RunId, color: String, title: String) =
                 TagMod(
                   <.div(Global.Style.cell,
@@ -88,30 +90,26 @@ object JobPage {
                     runId.value.toString
                   )
                 )
-              def datesDisplay(from: Instant, to: Option[Instant]) =
+              val datesDisplay =
                 <.div(Global.Style.cell, ^.flexGrow := "1", ^.justifyContent.center)(
-                  s"$createdAt ⟼ ${to.fold("-")(_.toString)}"
+                  s"${run.triggeredOn} ${run.latestUpdateOn.getEpochSecond - run.triggeredOn.getEpochSecond}s"
                 )
 
-              val statusDisplay = runStatus match {
-                case Triggered(_, _) =>
-                  TagMod(runIdDisplay("○", runId, Global.Style.brandColor.value, "Triggered"),
-                         datesDisplay(createdAt, Option(Instant.now())))
-                case Running(at) if at.isBefore(Instant.now().minus(1, ChronoUnit.MINUTES)) =>
-                  TagMod(runIdDisplay("✗", runId, "firebrick", "Stopped"),
-                         datesDisplay(createdAt, Option(at)),
-                         rerunButton)
-                case Running(_) =>
-                  TagMod(runIdDisplay("≻", runId, Global.Style.brandColor.value, "Running"),
-                         datesDisplay(createdAt, Option(Instant.now())),
+              val statusDisplay = run.result match {
+                case None if run.triggeredOn == run.latestUpdateOn =>
+                  TagMod(runIdDisplay("○", run.runInfo.runId, Global.Style.brandColor.value, "Triggered"),
+                         datesDisplay)
+                case None if run.latestUpdateOn.isBefore(Instant.now().minus(10, ChronoUnit.SECONDS)) =>
+                  TagMod(runIdDisplay("✗", run.runInfo.runId, "dimgrey", "Stopped"), datesDisplay, rerunButton)
+                case None =>
+                  TagMod(runIdDisplay("≻", run.runInfo.runId, Global.Style.brandColor.value, "Running"),
+                         datesDisplay,
                          stopButton)
-                case Success(at, _) =>
-                  TagMod(runIdDisplay("✓", runId, "green", "Success"),
-                         datesDisplay(createdAt, Option(at)),
-                         rerunButton)
-                case Failure(at, t) =>
-                  TagMod(runIdDisplay("✗", runId, "firebrick", s"Failed: ${t.getMessage}"),
-                         datesDisplay(createdAt, Option(at)),
+                case Some(Right(_)) =>
+                  TagMod(runIdDisplay("✓", run.runInfo.runId, "green", "Success"), datesDisplay, rerunButton)
+                case Some(Left(t)) =>
+                  TagMod(runIdDisplay("✗", run.runInfo.runId, "firebrick", s"Failed: ${t.getMessage}"),
+                         datesDisplay,
                          rerunButton)
               }
 
@@ -119,18 +117,13 @@ object JobPage {
                 Global.Style.listItem(index % 2 == 0),
                 ^.cursor.pointer,
                 ^.title := paramsDescription,
-                ^.onClick --> $.props.ctl.set(LogsPageRoute(page.breadcrumb :+ job.name, runId))
+                ^.onClick --> $.props.ctl.set(LogsPageRoute(page.breadcrumb :+ job.name, run.runInfo.runId))
               )(
                 <.div(^.display.flex)(statusDisplay),
                 <.div(
                   stages.map { stage =>
-                    val time = (runStatus, stage.completedOn) match {
-                      case (_, Some(end)) => s" ${end.getEpochSecond - stage.startedOn.getEpochSecond}s"
-                      case (Running(at), _) if at.isBefore(Instant.now().minus(1, ChronoUnit.MINUTES)) =>
-                        s" ${at.getEpochSecond - stage.startedOn.getEpochSecond}s"
-                      case (Running(_), _) => s" ${Instant.now().getEpochSecond - stage.startedOn.getEpochSecond}s"
-                      case _               => ""
-                    }
+                    val time =
+                      s" ${math.max(0, stage.completedOn.getOrElse(run.latestUpdateOn).getEpochSecond - stage.startedOn.getEpochSecond)}s"
 
                     <.div(^.padding := "4px",
                           ^.display.`inline-block`,
@@ -140,7 +133,7 @@ object JobPage {
               )
           }
 
-          $.modState(_.copy(_3 = if (runs.nonEmpty) runDisplays else "No job ran yet"))
+          $.modState(_.copy(_3 = if (history.nonEmpty) runDisplays else "No job ran yet"))
         }
     }
 

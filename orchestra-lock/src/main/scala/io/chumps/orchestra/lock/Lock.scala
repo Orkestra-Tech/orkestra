@@ -21,14 +21,24 @@ case class Lock(id: String) {
   def orElse[Result](f: => Result)(orElse: => Result): Future[Result] =
     Lock.trylock(id).flatMap(_.fold(_ => Future(orElse), _ => Lock.runLocked(id)(f)))
 
-  def orWait[Result](f: => Result): Future[Result] =
-    Lock
-      .trylock(id)
-      .flatMap(_.fold({ _ =>
-        println(s"Waiting for lock $id to be released")
-        Thread.sleep(5.seconds.toMillis)
-        orWait(f)
-      }, _ => Lock.runLocked(id)(f)))
+  def orWait[Result](f: => Result): Future[Result] = {
+    def rec(f: => Result, timeElapsed: FiniteDuration = 0.second): Future[Result] =
+      Lock
+        .trylock(id)
+        .flatMap(
+          _.fold(
+            { _ =>
+              val interval = 1.second
+              if (timeElapsed.toSeconds % 1.minute.toSeconds == 1) println(s"Waiting for lock $id to be released")
+              Thread.sleep(interval.toMillis)
+              rec(f, timeElapsed + interval)
+            },
+            _ => Lock.runLocked(id)(f)
+          )
+        )
+
+    rec(f)
+  }
 }
 
 object Lock {

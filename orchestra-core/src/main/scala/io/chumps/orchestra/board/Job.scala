@@ -18,23 +18,23 @@ import shapeless.{::, _}
 
 import io.chumps.orchestra.job.SimpleJob
 import io.chumps.orchestra.model._
+import io.chumps.orchestra.model.Indexed.Run
 import io.chumps.orchestra.model.Indexed.Stage
 import io.chumps.orchestra.parameter.{Parameter, ParameterOperations}
 import io.chumps.orchestra.utils.RunIdOperation
-import io.chumps.orchestra.{ARunStatus, AutowireServer, Jobs}
+import io.chumps.orchestra.{AutowireServer, Jobs}
 
 trait Job[ParamValues <: HList, Result, Func, PodSpecFunc] extends Board {
 
-  val id: Symbol
+  val id: JobId
+  val segment = id.value
   val name: String
 
   private[orchestra] trait Api {
     def trigger(runId: RunId, params: ParamValues, tags: Seq[String] = Seq.empty, by: Option[RunInfo] = None): Unit
     def stop(runId: RunId): Unit
     def tags(): Seq[String]
-    def history(
-      page: Page[Instant]
-    ): Seq[(RunId, Instant, ParamValues, Seq[String], ARunStatus[Result], Seq[Stage])]
+    def history(page: Page[Instant]): Seq[(Run, Seq[Stage])]
   }
 
   private[orchestra] object Api {
@@ -51,7 +51,7 @@ trait Job[ParamValues <: HList, Result, Func, PodSpecFunc] extends Board {
       override def doCall(req: Request): Future[String] =
         Ajax
           .post(
-            url = (Jobs.apiSegment +: Jobs.jobSegment +: id.name +: req.path).mkString("/"),
+            url = (Jobs.apiSegment +: Jobs.jobSegment +: id.value +: req.path).mkString("/"),
             data = req.args.asJson.noSpaces,
             responseType = "application/json",
             headers = Map("Content-Type" -> "application/json")
@@ -66,9 +66,9 @@ trait Job[ParamValues <: HList, Result, Func, PodSpecFunc] extends Board {
 
 object Job {
 
-  def apply[Func](id: Symbol, name: String) = new JobBuilder[Func](id, name)
+  def apply[Func](id: JobId, name: String) = new JobBuilder[Func](id, name)
 
-  class JobBuilder[Func](id: Symbol, name: String) {
+  class JobBuilder[Func](id: JobId, name: String) {
     // No Params
     def apply[ParamValuesNoRunId <: HList, ParamValues <: HList, Result, PodSpecFunc]()(
       implicit fnToProdFunc: FnToProduct.Aux[Func, ParamValues => Result],

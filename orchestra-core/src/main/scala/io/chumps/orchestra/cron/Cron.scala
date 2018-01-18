@@ -12,7 +12,7 @@ import io.k8s.api.core.v1.Pod
 import io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta
 import shapeless.HNil
 
-import io.chumps.orchestra.model.EnvRunInfo
+import io.chumps.orchestra.model.{EnvRunInfo, JobId}
 
 trait Cron extends JVMApp {
 
@@ -69,5 +69,5 @@ trait Cron extends JVMApp {
       }
     }
 
-  private def cronJobName(jobId: Symbol) = jobId.name.toLowerCase
+  private def cronJobName(jobId: JobId) = jobId.value.toLowerCase
 }

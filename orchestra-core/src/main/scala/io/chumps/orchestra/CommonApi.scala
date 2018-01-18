@@ -13,7 +13,6 @@ import io.circe.java8.time._
 import org.scalajs.dom.ext.Ajax
 import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.circe._
-import com.sksamuel.elastic4s.http.HttpClient
 import com.sksamuel.elastic4s.searches.sort.SortOrder
 
 import io.chumps.orchestra.model.Indexed.LogLine
@@ -53,9 +52,9 @@ object CommonApiServer extends CommonApi {
   override def logs(runId: RunId, page: Page[Instant]): Seq[LogLine] =
     Await
       .result(
-        HttpClient(OrchestraConfig.elasticsearchUri).execute(
+        Elasticsearch.client.execute(
           search(LogsIndex.index)
-            .query(termQuery("runId", runId.value.toString))
+            .query(boolQuery.filter(termQuery("runId", runId.value.toString)))
             .sortBy(fieldSort("loggedOn").order(if (page.size < 0) SortOrder.Desc else SortOrder.Asc),
                     fieldSort("_id").order(SortOrder.Desc))
             .searchAfter(

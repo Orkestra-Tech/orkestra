@@ -8,7 +8,6 @@ import io.circe.syntax._
 case class RunId(value: UUID) extends AnyVal
 
 object RunId {
-
   def apply(raw: String): RunId = RunId(UUID.fromString(raw))
   def random() = RunId(UUID.randomUUID())
 

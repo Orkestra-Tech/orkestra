@@ -2,9 +2,11 @@ package io.chumps.orchestra.utils
 
 import java.io.OutputStream
 import java.time.Instant
+import java.util.concurrent.atomic.AtomicReference
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
+import scala.util.DynamicVariable
 
 import com.sksamuel.elastic4s.circe._
 import com.sksamuel.elastic4s.http.ElasticDsl._
@@ -18,33 +20,37 @@ import io.chumps.orchestra.model.RunId
 import io.chumps.orchestra.utils.AkkaImplicits._
 
 class ElasticsearchOutputStream(client: HttpClient, runId: RunId) extends OutputStream {
-  private val buffer = new StringBuffer()
-  private val scheduledFlush = system.scheduler.schedule(1.second, 1.second) {
-    val index = buffer.lastIndexOf("\n") + 1
+  private val stringBuffer = new DynamicVariable(new StringBuffer())
+  private val lineBuffer = new AtomicReference(Seq.empty[LogLine])
+  private val scheduledFlush = system.scheduler.schedule(1.second, 1.second)(flush())
+
+  private def bufferLine() = {
+    val index = stringBuffer.value.lastIndexOf("\n") + 1
     if (index != 0) {
-      flush(buffer.substring(0, index))
-      buffer.delete(0, index)
+      lineBuffer.updateAndGet(
+        _ ++ stringBuffer.value.substring(0, index).split("\\n").map { line =>
+          LogLine(runId, Instant.now(), line, StagesHelpers.stageVar.value)
+        }
+      )
+      stringBuffer.value.delete(0, index)
     }
   }
 
-  override def write(b: Int): Unit = buffer.appendCodePoint(b)
-
-  override def write(b: Array[Byte], off: Int, len: Int): Unit =
-    buffer.append(b.slice(off, off + len).map(_.toChar))
-
-  override def flush(): Unit = {
-    flush(buffer.toString)
-    buffer.delete(0, buffer.length)
+  override def write(byte: Int): Unit = {
+    stringBuffer.value.appendCodePoint(byte)
+    bufferLine()
   }
 
-  def flush(buffer: String): Unit =
+  override def write(bytes: Array[Byte], offset: Int, length: Int): Unit = {
+    stringBuffer.value.append(new String(bytes, offset, length))
+    bufferLine()
+  }
+
+  override def flush(): Unit =
     Await.result(
       client.execute(
         bulk(
-          buffer.toString.split("\\r?\\n").map { line =>
-            indexInto(LogsIndex.index, LogsIndex.`type`)
-              .source(LogLine(runId, Instant.now(), line, StagesHelpers.stageVar.value))
-          }
+          lineBuffer.getAndSet(Seq.empty).map(logLine => indexInto(LogsIndex.index, LogsIndex.`type`).source(logLine))
         )
       ),
       1.minute

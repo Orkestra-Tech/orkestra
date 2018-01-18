@@ -1,17 +1,24 @@
 package io.chumps.orchestra.utils
 
-import java.time.Instant
-import java.time.temporal.ChronoUnit
+import java.io.IOException
 
+import scala.concurrent.Future
+
+import com.sksamuel.elastic4s.circe._
+import com.sksamuel.elastic4s.http.ElasticDsl._
 import io.circe.Decoder
+import io.circe.generic.auto._
+import io.circe.java8.time._
+import io.circe.parser._
 import shapeless._
 import shapeless.ops.hlist.Tupler
-import scala.concurrent.duration._
 
-import io.chumps.orchestra.ARunStatus._
 import io.chumps.orchestra.job.JobRunner
+import io.chumps.orchestra.model.Indexed.{HistoryIndex, Run}
 import io.chumps.orchestra.model.{RunId, RunInfo}
-import io.chumps.orchestra.{ARunStatus, OrchestraConfig}
+import io.chumps.orchestra.utils.BaseEncoders._
+import io.chumps.orchestra.utils.AkkaImplicits._
+import io.chumps.orchestra.{Elasticsearch, OrchestraConfig}
 
 trait TriggerHelpers {
 
@@ -19,9 +26,9 @@ trait TriggerHelpers {
     def trigger(): Unit =
       jobRunner.ApiServer.trigger(OrchestraConfig.runInfo.runId, HNil)
 
-    def run(): Result = {
-      jobRunner.ApiServer.trigger(OrchestraConfig.runInfo.runId, HNil, by = Option(OrchestraConfig.runInfo))
-      awaitJobResult(jobRunner)
+    def run(): Future[Result] = {
+      jobRunner.ApiServer.trigger(OrchestraConfig.runInfo.runId, HNil, parent = Option(OrchestraConfig.runInfo))
+      jobResult(jobRunner)
     }
   }
 
@@ -29,11 +36,11 @@ trait TriggerHelpers {
     def trigger(): Unit =
       jobRunner.ApiServer.trigger(OrchestraConfig.runInfo.runId, OrchestraConfig.runInfo.runId :: HNil)
 
-    def run(): Result = {
+    def run(): Future[Result] = {
       jobRunner.ApiServer.trigger(OrchestraConfig.runInfo.runId,
                                   OrchestraConfig.runInfo.runId :: HNil,
-                                  by = Option(OrchestraConfig.runInfo))
-      awaitJobResult(jobRunner)
+                                  parent = Option(OrchestraConfig.runInfo))
+      jobResult(jobRunner)
     }
   }
 
@@ -51,29 +58,23 @@ trait TriggerHelpers {
       jobRunner.ApiServer.trigger(OrchestraConfig.runInfo.runId,
                                   runIdOperation.inject(tupleToHList.to(values), OrchestraConfig.runInfo.runId))
 
-    def run(values: TupledValues): Result = {
+    def run(values: TupledValues): Future[Result] = {
       jobRunner.ApiServer.trigger(OrchestraConfig.runInfo.runId,
                                   runIdOperation.inject(tupleToHList.to(values), OrchestraConfig.runInfo.runId),
-                                  by = Option(OrchestraConfig.runInfo))
-      awaitJobResult(jobRunner)
+                                  parent = Option(OrchestraConfig.runInfo))
+      jobResult(jobRunner)
     }
   }
 
-  private def awaitJobResult[Result: Decoder](jobRunner: JobRunner[_ <: HList, Result]): Result = {
-    val runInfo = RunInfo(jobRunner.job.id, OrchestraConfig.runInfo.runId)
-    def isChildJobInProgress() = ARunStatus.current[Result](runInfo) match {
-      case Some(Triggered(_, _))                                                       => true
-      case Some(Running(at)) if at.isAfter(Instant.now().minus(1, ChronoUnit.MINUTES)) => true
-      case _                                                                           => false
-    }
-
-    while (isChildJobInProgress()) Thread.sleep(0.5.second.toMillis)
-
-    ARunStatus.current[Result](runInfo) match {
-      case None                     => throw new IllegalStateException(s"No status found for job ${runInfo.jobId} ${runInfo.runId}")
-      case Some(Success(_, result)) => result
-      case Some(Failure(_, e))      => throw new IllegalStateException(s"Run of job ${jobRunner.job.name} failed", e)
-      case s                        => throw new IllegalStateException(s"Run of job ${jobRunner.job.name} failed with status $s")
-    }
-  }
+  private def jobResult[Result: Decoder](jobRunner: JobRunner[_ <: HList, Result]): Future[Result] =
+    for {
+      runResponse <- Elasticsearch.client.execute(
+        get(HistoryIndex.index,
+            HistoryIndex.`type`,
+            HistoryIndex.formatId(RunInfo(jobRunner.job.id, OrchestraConfig.runInfo.runId)))
+      )
+      run = runResponse.fold(failure => throw new IOException(failure.error.reason), identity).result.to[Run]
+      result <- run.result
+        .fold(jobResult(jobRunner))(_.fold(throw _, result => Future(decode[Result](result).fold(throw _, identity))))
+    } yield result
 }

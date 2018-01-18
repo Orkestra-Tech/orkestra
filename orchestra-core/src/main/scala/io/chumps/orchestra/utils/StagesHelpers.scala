@@ -15,7 +15,6 @@ import io.circe.java8.time._
 import io.chumps.orchestra.{Elasticsearch, OrchestraConfig}
 import io.chumps.orchestra.model.Indexed.StagesIndex
 import io.chumps.orchestra.model.Indexed.Stage
-
 import io.chumps.orchestra.utils.AkkaImplicits._
 
 trait StagesHelpers {
@@ -23,8 +22,8 @@ trait StagesHelpers {
   def stage[Result](name: String)(f: => Result): Result =
     Await.result(
       for {
-        stageStart <- Future(Stage(OrchestraConfig.runInfo.runId, name, Instant.now(), None))
-        indexResponse <- Elasticsearch.client
+        stageStart <- Future.successful(Stage(OrchestraConfig.runInfo.runId, name, Instant.now(), None))
+        stageIndexResponse <- Elasticsearch.client
           .execute(indexInto(StagesIndex.index, StagesIndex.`type`).source(stageStart))
           .map(_.fold(failure => throw new IOException(failure.error.reason), identity))
         result <- Future(StagesHelpers.stageVar.withValue(Option(name)) {
@@ -36,7 +35,7 @@ trait StagesHelpers {
               updateById(
                 StagesIndex.index.name + "/" + StagesIndex.`type`, // TODO: Remove workaround when fixed in elastic4s
                 StagesIndex.`type`,
-                indexResponse.result.id
+                stageIndexResponse.result.id
               ).source(stageStart.copy(completedOn = Option(Instant.now())))
             )
             .flatMap(_ => Future.fromTry(triedResult))

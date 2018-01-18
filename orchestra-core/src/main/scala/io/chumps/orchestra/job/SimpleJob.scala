@@ -6,7 +6,7 @@ import japgolly.scalajs.react.vdom.html_<^._
 import shapeless._
 
 import io.chumps.orchestra.board.Job
-import io.chumps.orchestra.model.RunId
+import io.chumps.orchestra.model.{JobId, RunId}
 import io.chumps.orchestra.page.JobPage
 import io.chumps.orchestra.parameter.ParameterOperations
 import io.chumps.orchestra.route.LogsRoute
@@ -18,7 +18,7 @@ case class SimpleJob[ParamValuesNoRunId <: HList,
                      Params <: HList,
                      Result: Decoder,
                      Func,
-                     PodSpecFunc](id: Symbol, name: String, params: Params)(
+                     PodSpecFunc](id: JobId, name: String, params: Params)(
   implicit paramOperations: ParameterOperations[Params, ParamValuesNoRunId],
   runIdOperation: RunIdOperation[ParamValuesNoRunId, ParamValues]
 ) extends Job[ParamValues, Result, Func, PodSpecFunc] {
@@ -32,6 +32,6 @@ case class SimpleJob[ParamValuesNoRunId <: HList,
       case p @ BoardPageRoute(`parentBreadcrumb`, b, _) if b == this => p
     } ~> dynRenderR((page, ctrl) => JobPage.component(JobPage.Props(this, params, page, ctrl)))
 
-    (job | LogsRoute(parentBreadcrumb :+ name)).prefixPath_/(id.name.toLowerCase)
+    (job | LogsRoute(parentBreadcrumb :+ name)).prefixPath_/(id.value.toLowerCase)
   }
 }

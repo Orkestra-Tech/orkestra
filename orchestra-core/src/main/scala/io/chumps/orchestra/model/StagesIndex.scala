@@ -3,7 +3,6 @@ package io.chumps.orchestra.model
 import java.time.Instant
 
 import com.sksamuel.elastic4s.Index
-import com.sksamuel.elastic4s.analyzers.KeywordAnalyzer
 import com.sksamuel.elastic4s.http.ElasticDsl._
 
 trait StagesIndex extends Indexed {
@@ -17,9 +16,9 @@ trait StagesIndex extends Indexed {
 
     val createDefinition =
       createIndex(index.name).mappings(
-        mapping(`type`).as(
-          textField("runId").analyzer(KeywordAnalyzer),
-          textField("name").analyzer(KeywordAnalyzer),
+        mapping(`type`).fields(
+          keywordField("runId"),
+          textField("name"),
           dateField("startedOn"),
           dateField("completedOn")
         )
