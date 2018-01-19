@@ -45,7 +45,7 @@ trait Github extends JVMApp {
           }
         }
 
-    if (OrchestraConfig.runInfoMaybe.isEmpty) Http().bindAndHandle(routes, "0.0.0.0", OrchestraConfig.githubPort)
+    if (OrchestraConfig.runInfoMaybe.isEmpty) Http().bindAndHandle(routes, "0.0.0.0", GithubConfig.githubPort)
   }
 }
 
@@ -69,7 +69,7 @@ object Github extends LazyLogging {
       .cloneRepository()
       .setURI(s"https://github.com/${repository.name}.git")
       .setCredentialsProvider(
-        new UsernamePasswordCredentialsProvider(BuildInfo.projectName.toLowerCase, OrchestraConfig.githubToken)
+        new UsernamePasswordCredentialsProvider(BuildInfo.projectName.toLowerCase, GithubConfig.githubToken)
       )
       .setDirectory(LocalFile(repository.name))
       .setNoCheckout(true)
@@ -83,7 +83,7 @@ object Github extends LazyLogging {
         HttpRequest(
           HttpMethods.POST,
           s"https://api.github.com/repos/${repository.name}/statuses/${ref.name}",
-          List(Authorization(OAuth2BearerToken(OrchestraConfig.githubToken))),
+          List(Authorization(OAuth2BearerToken(GithubConfig.githubToken))),
           HttpEntity(
             CheckStatus(
               state,

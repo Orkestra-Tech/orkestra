@@ -9,7 +9,7 @@ import akka.http.scaladsl.model.Uri
 import com.sksamuel.elastic4s.ElasticsearchClientUri
 import io.circe.parser._
 
-import io.chumps.orchestra.model.{EnvRunInfo, JobId, RunId, RunInfo}
+import io.chumps.orchestra.model.{EnvRunInfo, RunId, RunInfo}
 
 object OrchestraConfig {
   def apply(envVar: String) = Option(System.getenv(s"ORCHESTRA_$envVar")).filter(_.nonEmpty)
@@ -25,11 +25,6 @@ object OrchestraConfig {
     OrchestraConfig("PORT").map(_.toInt).getOrElse(throw new IllegalStateException("ORCHESTRA_PORT should be set"))
   lazy val url =
     OrchestraConfig("URL").fold(throw new IllegalStateException("ORCHESTRA_URL should be set"))(Uri(_))
-  lazy val githubPort = OrchestraConfig("GITHUB_PORT")
-    .map(_.toInt)
-    .getOrElse(throw new IllegalStateException("ORCHESTRA_GITHUB_PORT should be set"))
-  lazy val githubToken =
-    OrchestraConfig("GITHUB_TOKEN").getOrElse(throw new IllegalStateException("ORCHESTRA_GITHUB_TOKEN should be set"))
   val runInfoMaybe =
     OrchestraConfig("RUN_INFO").map(
       runInfoJson =>
@@ -55,18 +50,5 @@ object OrchestraConfig {
       .getOrElse(throw new IOException("Cannot find label controller-uid"))
   }
 
-  lazy val downwardApi = Paths.get("/var/run/downward-api")
-  val jobsDirName = "jobs"
-  val runsDirName = "runs"
-  def runDir(runId: RunId) = Paths.get(home, runsDirName, runId.value.toString)
-  def logsFile(runId: RunId) = Paths.get(runDir(runId).toString, "logs")
-  def stagesFile(runId: RunId) = Paths.get(runDir(runId).toString, "stages")
-  def jobDir(jobId: JobId) = Paths.get(home, jobsDirName, jobId.value)
-  def jobRunsDir(jobId: JobId) = Paths.get(jobDir(jobId).toString, runsDirName)
-  def jobRunDir(runInfo: RunInfo) = Paths.get(jobRunsDir(runInfo.jobId).toString, runInfo.runId.value.toString)
-  def runsByDateDir(jobId: JobId) = Paths.get(jobDir(jobId).toString, "runsByDate")
-  def tagsDir(jobId: JobId) = Paths.get(jobDir(jobId).toString, "tags")
-  def tagDir(jobId: JobId, tag: String) = Paths.get(tagsDir(jobId).toString, tag)
-  def statusFile(runInfo: RunInfo) = Paths.get(jobRunDir(runInfo).toString, "status")
-  def paramsFile(runInfo: RunInfo) = Paths.get(jobRunDir(runInfo).toString, "params")
+  val downwardApi = Paths.get("/var/run/downward-api")
 }

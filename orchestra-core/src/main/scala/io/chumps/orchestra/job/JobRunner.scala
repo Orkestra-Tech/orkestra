@@ -30,7 +30,7 @@ import io.chumps.orchestra.model._
 import io.chumps.orchestra.utils.Utils
 import io.chumps.orchestra.utils.BaseEncoders._
 import io.chumps.orchestra.utils.AkkaImplicits._
-import io.chumps.orchestra.{AutowireServer, CommonApiServer, Elasticsearch, OrchestraConfig}
+import io.chumps.orchestra.{AutowireServer, CommonApiServer, Elasticsearch}
 
 case class JobRunner[ParamValues <: HList: Encoder: Decoder, Result: Encoder: Decoder](
   job: Job[ParamValues, Result, _, _],
@@ -111,41 +111,50 @@ case class JobRunner[ParamValues <: HList: Encoder: Decoder, Result: Encoder: De
 
     override def stop(runId: RunId): Unit = JobUtils.delete(RunInfo(job.id, runId))
 
-    override def tags(): Seq[String] = Seq(OrchestraConfig.tagsDir(job.id).toFile).filter(_.exists()).flatMap(_.list())
+    override def tags(): Seq[String] = Await.result(
+      for {
+        runs <- Elasticsearch.client
+          .execute(
+            search(HistoryIndex.index)
+              .query(boolQuery.filter(termQuery("runInfo.jobId", job.id.value)))
+              .size(1000)
+          )
+          .map(_.fold(failure => throw new IOException(failure.error.reason), identity).result.to[Run])
+      } yield runs.flatMap(_.tags),
+      1.minute
+    )
 
-    override def history(page: Page[Instant]): Seq[(Run, Seq[Stage])] =
-      Await.result(
-        for {
-          runs <- Elasticsearch.client
-            .execute(
-              search(HistoryIndex.index)
-                .query(boolQuery.filter(termQuery("runInfo.jobId", job.id.value)))
-                .sortBy(fieldSort("triggeredOn").desc(), fieldSort("_id").desc())
-                .searchAfter(
-                  Seq(
-                    page.after
-                      .getOrElse(if (page.size < 0) Instant.now() else Instant.EPOCH)
-                      .toEpochMilli: java.lang.Long,
-                    ""
-                  )
+    override def history(page: Page[Instant]): Seq[(Run, Seq[Stage])] = Await.result(
+      for {
+        runs <- Elasticsearch.client
+          .execute(
+            search(HistoryIndex.index)
+              .query(boolQuery.filter(termQuery("runInfo.jobId", job.id.value)))
+              .sortBy(fieldSort("triggeredOn").desc(), fieldSort("_id").desc())
+              .searchAfter(
+                Seq(
+                  page.after
+                    .getOrElse(if (page.size < 0) Instant.now() else Instant.EPOCH)
+                    .toEpochMilli: java.lang.Long,
+                  ""
                 )
-                .size(math.abs(page.size))
-            )
-            .map(_.fold(failure => throw new IOException(failure.error.reason), identity).result.to[Run])
-
-          stages <- if (runs.nonEmpty)
-            Elasticsearch.client
-              .execute(
-                search(StagesIndex.index)
-                  .query(boolQuery.filter(termsQuery("runId", runs.map(_.runInfo.runId.value))))
-                  .size(1000)
               )
-              .map(_.fold(failure => throw new IOException(failure.error.reason), identity).result.to[Stage])
-          else Future.successful(Seq.empty)
-          _ = println(stages)
-        } yield runs.map(run => (run, stages.filter(_.runId == run.runInfo.runId).sortBy(_.startedOn))),
-        1.minute
-      )
+              .size(math.abs(page.size))
+          )
+          .map(_.fold(failure => throw new IOException(failure.error.reason), identity).result.to[Run])
+
+        stages <- if (runs.nonEmpty)
+          Elasticsearch.client
+            .execute(
+              search(StagesIndex.index)
+                .query(boolQuery.filter(termsQuery("runId", runs.map(_.runInfo.runId.value))))
+                .size(1000)
+            )
+            .map(_.fold(failure => throw new IOException(failure.error.reason), identity).result.to[Stage])
+        else Future.successful(Seq.empty)
+      } yield runs.map(run => (run, stages.filter(_.runId == run.runInfo.runId).sortBy(_.startedOn))),
+      1.minute
+    )
   }
 
   private def failJob(runInfo: RunInfo, t: Throwable) = {
