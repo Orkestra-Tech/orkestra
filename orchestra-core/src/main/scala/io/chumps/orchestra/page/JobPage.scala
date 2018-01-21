@@ -97,8 +97,7 @@ object JobPage {
 
               val statusDisplay = run.result match {
                 case None if run.triggeredOn == run.latestUpdateOn =>
-                  TagMod(runIdDisplay("○", run.runInfo.runId, Global.Style.brandColor.value, "Triggered"),
-                         datesDisplay)
+                  TagMod(runIdDisplay("○", run.runInfo.runId, Global.Style.brandColor.value, "Triggered"), datesDisplay)
                 case None if run.latestUpdateOn.isBefore(Instant.now().minus(10, ChronoUnit.SECONDS)) =>
                   TagMod(runIdDisplay("✗", run.runInfo.runId, "dimgrey", "Stopped"), datesDisplay, rerunButton)
                 case None =>
