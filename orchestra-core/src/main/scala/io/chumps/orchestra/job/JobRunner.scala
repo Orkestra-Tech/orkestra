@@ -111,18 +111,24 @@ case class JobRunner[ParamValues <: HList: Encoder: Decoder, Result: Encoder: De
 
     override def stop(runId: RunId): Unit = JobUtils.delete(RunInfo(job.id, runId))
 
-    override def tags(): Seq[String] = Await.result(
-      for {
-        runs <- Elasticsearch.client
+    override def tags(): Seq[String] = {
+      val aggregationName = "tagsForJob"
+      Await.result(
+        Elasticsearch.client
           .execute(
             search(HistoryIndex.index)
               .query(boolQuery.filter(termQuery("runInfo.jobId", job.id.value)))
+              .aggregations(termsAgg(aggregationName, "tags"))
               .size(1000)
           )
-          .map(_.fold(failure => throw new IOException(failure.error.reason), identity).result.to[Run])
-      } yield runs.flatMap(_.tags),
-      1.minute
-    )
+          .map(
+            _.fold(failure => throw new IOException(failure.error.reason), identity).result.aggregations
+              .terms(aggregationName)
+              .buckets
+              .map(_.key)),
+        1.minute
+      )
+    }
 
     override def history(page: Page[Instant]): Seq[(Run, Seq[Stage])] = Await.result(
       for {

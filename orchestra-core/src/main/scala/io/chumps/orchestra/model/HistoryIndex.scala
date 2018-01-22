@@ -36,6 +36,7 @@ trait HistoryIndex extends Indexed {
           objectField("parentJob").fields(runInfoFields),
           dateField("latestUpdateOn"),
           objectField("result").dynamic(false),
+          keywordField("tags")
         )
       )
   }
