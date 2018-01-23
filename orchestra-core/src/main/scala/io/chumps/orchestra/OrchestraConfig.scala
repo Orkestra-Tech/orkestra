@@ -20,7 +20,6 @@ object OrchestraConfig {
     )
   )
   val workspace = OrchestraConfig("WORKSPACE").getOrElse("/opt/docker/workspace")
-  val home = OrchestraConfig("DATA").getOrElse(System.getProperty("user.home"))
   lazy val port =
     OrchestraConfig("PORT").map(_.toInt).getOrElse(throw new IllegalStateException("ORCHESTRA_PORT should be set"))
   lazy val url =
