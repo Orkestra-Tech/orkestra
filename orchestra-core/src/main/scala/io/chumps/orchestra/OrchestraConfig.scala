@@ -14,40 +14,38 @@ import io.chumps.orchestra.model.{EnvRunInfo, RunId, RunInfo}
 object OrchestraConfig {
   def apply(envVar: String) = Option(System.getenv(s"ORCHESTRA_$envVar")).filter(_.nonEmpty)
 
-  val elasticsearchUri = ElasticsearchClientUri(
+  lazy val elasticsearchUri = ElasticsearchClientUri(
     OrchestraConfig("ELASTICSEARCH_URI").getOrElse(
       throw new IllegalStateException("ORCHESTRA_ELASTICSEARCH_URI should be set")
     )
   )
-  val workspace = OrchestraConfig("WORKSPACE").getOrElse("/opt/docker/workspace")
+  lazy val workspace = OrchestraConfig("WORKSPACE").getOrElse("/opt/docker/workspace")
   lazy val port =
     OrchestraConfig("PORT").map(_.toInt).getOrElse(throw new IllegalStateException("ORCHESTRA_PORT should be set"))
   lazy val url =
     OrchestraConfig("URL").fold(throw new IllegalStateException("ORCHESTRA_URL should be set"))(Uri(_))
-  val runInfoMaybe =
+  lazy val runInfoMaybe =
     OrchestraConfig("RUN_INFO").map(
       runInfoJson =>
         decode[EnvRunInfo](runInfoJson)
           .fold(throw _, runInfo => RunInfo(runInfo.jobId, runInfo.runId.getOrElse(jobUid)))
     )
   lazy val runInfo = runInfoMaybe.getOrElse(throw new IllegalStateException("ORCHESTRA_RUN_INFO should be set"))
-  val kubeUri =
+  lazy val kubeUri =
     OrchestraConfig("KUBE_URI").getOrElse(throw new IllegalStateException("ORCHESTRA_KUBE_URI should be set"))
-  val podName =
+  lazy val podName =
     OrchestraConfig("POD_NAME").getOrElse(throw new IllegalStateException("ORCHESTRA_POD_NAME should be set"))
-  val namespace =
+  lazy val namespace =
     OrchestraConfig("NAMESPACE").getOrElse(throw new IllegalStateException("ORCHESTRA_NAMESPACE should be set"))
-
+  lazy val downwardApi = Paths.get("/var/run/downward-api")
   lazy val jobUid = {
     val controllerUidRegex = """controller-uid="(.+)"""".r
     Source
-      .fromFile(Paths.get(OrchestraConfig.downwardApi.toString, "labels").toFile)
+      .fromFile(OrchestraConfig.downwardApi.resolve("labels").toFile)
       .getLines()
       .collectFirst {
         case controllerUidRegex(jobUid) => RunId(jobUid)
       }
       .getOrElse(throw new IOException("Cannot find label controller-uid"))
   }
-
-  val downwardApi = Paths.get("/var/run/downward-api")
 }
