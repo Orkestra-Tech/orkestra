@@ -1,10 +1,10 @@
 package io.chumps.orchestra.model
 
+import com.sksamuel.elastic4s.http.ElasticDsl.keywordField
 import io.circe.{Decoder, Encoder}
 import io.circe.parser._
 import io.circe.generic.auto._
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
-
 import io.k8s.api.batch.v1.{Job => KubeJob}
 
 case class RunInfo(jobId: JobId, runId: RunId)
@@ -28,6 +28,11 @@ object RunInfo {
 
   implicit val encoder: Encoder[RunInfo] = deriveEncoder
   implicit val decoder: Decoder[RunInfo] = deriveDecoder
+
+  lazy val elasticsearchFields = Seq(
+    keywordField("jobId"),
+    keywordField("runId"),
+  )
 }
 
 case class EnvRunInfo(jobId: JobId, runId: Option[RunId])

@@ -24,8 +24,6 @@ import japgolly.scalajs.react.vdom.html_<^._
 import shapeless.HList
 import scalacss.ScalaCssReact._
 
-import io.circe.parser._
-
 import io.chumps.orchestra.css.Global
 import io.chumps.orchestra.board.Job
 import io.chumps.orchestra.component.StopButton
@@ -69,15 +67,14 @@ object JobPage {
             case ((run, stages), index) =>
               val paramsDescription =
                 paramOperations
-                  .paramsState(params,
-                               runIdOperation.remove(decode[ParamValues](run.paramValues).fold(throw _, identity)))
+                  .paramsState(params, runIdOperation.remove(run.paramValues))
                   .map(param => s"${param._1}: ${param._2}")
                   .mkString("\n")
               val rerunButton =
                 <.div(Global.Style.brandColorButton,
                       ^.width := "30px",
                       ^.height := "30px",
-                      ^.onClick ==> reRun(decode[ParamValues](run.paramValues).fold(throw _, identity), run.tags))("↻")
+                      ^.onClick ==> reRun(run.paramValues, run.tags))("↻")
               val stopButton = StopButton.component(StopButton.Props(job, run.runInfo.runId))
               def runIdDisplay(icon: String, runId: RunId, color: String, title: String) =
                 TagMod(

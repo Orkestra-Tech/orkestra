@@ -11,9 +11,9 @@ import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.model.headers.{Authorization, OAuth2BearerToken}
 import akka.http.scaladsl.server.Directives.{entity, _}
 import akka.util.ByteString
-import com.typesafe.scalalogging.LazyLogging
+import com.typesafe.scalalogging.{LazyLogging, Logger}
 
-import io.chumps.orchestra.{BuildInfo, JVMApp, OrchestraConfig}
+import io.chumps.orchestra.{BuildInfo, OrchestraConfig, OrchestraPlugin}
 import io.chumps.orchestra.utils.AkkaImplicits._
 import io.chumps.orchestra.github.State._
 import io.circe.parser._
@@ -24,12 +24,14 @@ import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider
 
 import io.chumps.orchestra.filesystem.{Directory, LocalFile}
 
-trait Github extends JVMApp {
+trait Github extends OrchestraPlugin {
+  private lazy val logger = Logger(getClass)
 
   def githubTriggers: Set[GithubTrigger]
 
-  override def main(args: Array[String]): Unit = {
-    super.main(args)
+  override def onMasterStart(): Unit = {
+    super.onMasterStart()
+    logger.info("Starting Github triggers webhook")
 
     lazy val routes =
       path("health") {
@@ -45,7 +47,7 @@ trait Github extends JVMApp {
           }
         }
 
-    if (OrchestraConfig.runInfoMaybe.isEmpty) Http().bindAndHandle(routes, "0.0.0.0", GithubConfig.githubPort)
+    Http().bindAndHandle(routes, "0.0.0.0", GithubConfig.githubPort)
   }
 }
 

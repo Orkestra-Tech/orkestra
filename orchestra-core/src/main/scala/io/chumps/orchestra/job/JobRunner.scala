@@ -5,10 +5,11 @@ import java.time.Instant
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
+import scala.util.Try
 
 import akka.http.scaladsl.server.Route
 import autowire.Core
-import io.circe.parser._
+import com.sksamuel.elastic4s.RefreshPolicy
 import io.circe.syntax._
 import io.circe.{Decoder, Encoder, Json}
 import io.k8s.api.core.v1.PodSpec
@@ -41,10 +42,9 @@ case class JobRunner[ParamValues <: HList: Encoder: Decoder, Result: Encoder: De
   private[orchestra] def run(runInfo: RunInfo): Result = Utils.elasticsearchOutErr(runInfo.runId) {
     Await.result(
       (for {
-        getRunResponse <- Elasticsearch.client.execute(
-          get(HistoryIndex.index, HistoryIndex.`type`, HistoryIndex.formatId(runInfo))
-        )
-        run = getRunResponse.fold(failure => throw new IOException(failure.error.reason), identity).result.to[Run]
+        run <- Elasticsearch.client
+          .execute(get(HistoryIndex.index, HistoryIndex.`type`, HistoryIndex.formatId(runInfo)))
+          .map(_.fold(failure => throw new IOException(failure.error.reason), identity).result.to[Run[ParamValues]])
 
         _ = system.scheduler.schedule(0.second, 1.second) {
           Elasticsearch.client
@@ -60,30 +60,28 @@ case class JobRunner[ParamValues <: HList: Encoder: Decoder, Result: Encoder: De
 
         _ = run.parentJob.map { parentJob =>
           system.scheduler.schedule(1.second, 1.second) {
-            if (!CommonApiServer.runningJobs().contains(parentJob))
+            if (!CommonApiServer.runningJobs().contains(parentJob)) {
               failJob(runInfo, new InterruptedException(s"Parent job ${parentJob.jobId.value} stopped"))
+            }
           }
         }
 
         _ = println(s"Running job ${job.name}")
-        result = func(decode[ParamValues](run.paramValues).fold(throw _, identity))
+        result = func(run.paramValues)
         _ = println(s"Job ${job.name} completed")
 
-        updateResultResponse <- Elasticsearch.client.execute(
-          updateById(
-            HistoryIndex.index.name + "/" + HistoryIndex.`type`, // TODO: Remove workaround when fixed in elastic4s
-            HistoryIndex.`type`,
-            HistoryIndex.formatId(runInfo)
-          ).doc(Json.obj("result" -> Option(Right(result.asJson.noSpaces): Either[Throwable, String]).asJson))
-            .retryOnConflict(1)
-        )
-        _ = updateResultResponse.fold(failure => throw new IOException(failure.error.reason), identity)
-      } yield result)
-        .recoverWith { case t => failJob(runInfo, t) }
-        .transformWith { tried =>
-          JobUtils.delete(runInfo)
-          Future.fromTry(tried)
-        },
+        _ <- Elasticsearch.client
+          .execute(
+            updateById(
+              HistoryIndex.index.name + "/" + HistoryIndex.`type`, // TODO: Remove workaround when fixed in elastic4s
+              HistoryIndex.`type`,
+              HistoryIndex.formatId(runInfo)
+            ).doc(Json.obj("result" -> Option(Right(result.asJson.noSpaces): Either[Throwable, String]).asJson))
+              .retryOnConflict(1)
+          )
+          .map(_.fold(failure => throw new IOException(failure.error.reason), identity))
+        _ <- JobUtils.delete(runInfo)
+      } yield result).recoverWith { case t => failJob(runInfo, t) },
       Duration.Inf
     )
   }
@@ -96,13 +94,7 @@ case class JobRunner[ParamValues <: HList: Encoder: Decoder, Result: Encoder: De
       val runInfo = RunInfo(job.id, runId)
       Await.result(
         (for {
-          indexResponse <- Elasticsearch.client.execute(
-            indexInto(HistoryIndex.index, HistoryIndex.`type`)
-              .id(HistoryIndex.formatId(runInfo))
-              .createOnly(true)
-              .source(Run(runInfo, paramValues.asJson.noSpaces, Instant.now(), parent, Instant.now(), None, tags))
-          )
-          _ = indexResponse.fold(failure => throw new IOException(failure.error.reason), identity)
+          _ <- Elasticsearch.indexRun(runInfo, paramValues, tags, parent, RefreshPolicy.None)
           _ <- JobUtils.create(runInfo, podSpec(paramValues))
         } yield ()).recoverWith { case t => failJob(runInfo, t) },
         1.minute
@@ -125,12 +117,13 @@ case class JobRunner[ParamValues <: HList: Encoder: Decoder, Result: Encoder: De
             _.fold(failure => throw new IOException(failure.error.reason), identity).result.aggregations
               .terms(aggregationName)
               .buckets
-              .map(_.key)),
+              .map(_.key)
+          ),
         1.minute
       )
     }
 
-    override def history(page: Page[Instant]): Seq[(Run, Seq[Stage])] = Await.result(
+    override def history(page: Page[Instant]): Seq[(Run[ParamValues], Seq[Stage])] = Await.result(
       for {
         runs <- Elasticsearch.client
           .execute(
@@ -147,18 +140,21 @@ case class JobRunner[ParamValues <: HList: Encoder: Decoder, Result: Encoder: De
               )
               .size(math.abs(page.size))
           )
-          .map(_.fold(failure => throw new IOException(failure.error.reason), identity).result.to[Run])
+          .map(
+            _.fold(failure => throw new IOException(failure.error.reason), identity).result.hits.hits
+              .flatMap(hit => Try(hit.to[Run[ParamValues]]).toOption)
+          )
 
         stages <- if (runs.nonEmpty)
           Elasticsearch.client
             .execute(
               search(StagesIndex.index)
-                .query(boolQuery.filter(termsQuery("runId", runs.map(_.runInfo.runId.value))))
+                .query(boolQuery.filter(termsQuery("runInfo.runId", runs.toSeq.map(_.runInfo.runId.value)))) // TODO remove .toSeq when fixed in elastic4s
                 .size(1000)
             )
             .map(_.fold(failure => throw new IOException(failure.error.reason), identity).result.to[Stage])
         else Future.successful(Seq.empty)
-      } yield runs.map(run => (run, stages.filter(_.runId == run.runInfo.runId).sortBy(_.startedOn))),
+      } yield runs.map(run => (run, stages.filter(_.runInfo.runId == run.runInfo.runId).sortBy(_.startedOn))),
       1.minute
     )
   }
@@ -174,6 +170,7 @@ case class JobRunner[ParamValues <: HList: Encoder: Decoder, Result: Encoder: De
         ).doc(Json.obj("result" -> Option(Left(t): Either[Throwable, String]).asJson))
           .retryOnConflict(1)
       )
+      .flatMap(_ => JobUtils.delete(runInfo))
       .flatMap(_ => Future.failed(t))
   }
 

@@ -22,7 +22,7 @@ trait StagesHelpers {
   def stage[Result](name: String)(f: => Result): Result =
     Await.result(
       for {
-        stageStart <- Future.successful(Stage(OrchestraConfig.runInfo.runId, name, Instant.now(), None))
+        stageStart <- Future.successful(Stage(OrchestraConfig.runInfo, name, Instant.now(), None))
         stageIndexResponse <- Elasticsearch.client
           .execute(indexInto(StagesIndex.index, StagesIndex.`type`).source(stageStart))
           .map(_.fold(failure => throw new IOException(failure.error.reason), identity))

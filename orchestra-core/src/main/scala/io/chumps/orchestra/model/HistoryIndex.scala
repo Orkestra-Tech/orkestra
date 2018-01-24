@@ -6,13 +6,13 @@ import com.sksamuel.elastic4s.Index
 import com.sksamuel.elastic4s.http.ElasticDsl._
 
 trait HistoryIndex extends Indexed {
-  case class Run(runInfo: RunInfo,
-                 paramValues: String,
-                 triggeredOn: Instant,
-                 parentJob: Option[RunInfo],
-                 latestUpdateOn: Instant,
-                 result: Option[Either[Throwable, String]],
-                 tags: Seq[String])
+  case class Run[ParamValues](runInfo: RunInfo,
+                              paramValues: ParamValues,
+                              triggeredOn: Instant,
+                              parentJob: Option[RunInfo],
+                              latestUpdateOn: Instant,
+                              result: Option[Either[Throwable, String]],
+                              tags: Seq[String])
 
   override def indices: Set[IndexDefinition] = super.indices + HistoryIndex
 
@@ -22,18 +22,13 @@ trait HistoryIndex extends Indexed {
 
     def formatId(runInfo: RunInfo) = s"${runInfo.jobId.value}-${runInfo.runId.value}"
 
-    val runInfoFields = Seq(
-      keywordField("jobId"),
-      keywordField("runId"),
-    )
-
     val createDefinition =
       createIndex(index.name).mappings(
         mapping(`type`).fields(
-          objectField("runInfo").fields(runInfoFields),
-          keywordField("paramValues"),
+          objectField("runInfo").fields(RunInfo.elasticsearchFields),
+          objectField("paramValues").dynamic(false),
           dateField("triggeredOn"),
-          objectField("parentJob").fields(runInfoFields),
+          objectField("parentJob").fields(RunInfo.elasticsearchFields),
           dateField("latestUpdateOn"),
           objectField("result").dynamic(false),
           keywordField("tags")

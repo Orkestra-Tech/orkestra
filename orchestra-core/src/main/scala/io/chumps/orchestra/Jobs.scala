@@ -6,13 +6,15 @@ import scala.concurrent.duration._
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Directives.{entity, _}
 import autowire.Core
+import com.typesafe.scalalogging.Logger
 import io.circe.java8.time._
 
-import io.chumps.orchestra.route.BackendRoutes
 import io.chumps.orchestra.utils.AkkaImplicits._
 import io.chumps.orchestra.job.JobRunner
+import io.chumps.orchestra.route.BackendRoutes
 
-trait Jobs extends JVMApp with BackendRoutes {
+trait Jobs extends BackendRoutes { self: OrchestraPlugin =>
+  private lazy val logger = Logger(getClass)
 
   def jobRunners: Set[JobRunner[_, _]]
 
@@ -30,14 +32,15 @@ trait Jobs extends JVMApp with BackendRoutes {
         }
     }
 
-  override def main(args: Array[String]): Unit = {
-    super.main(args)
-
+  def main(args: Array[String]): Unit = {
+    logger.info("Starting Orchestra")
     Await.result(Elasticsearch.init(), 1.minute)
 
     OrchestraConfig.runInfoMaybe.fold[Unit] {
+      onMasterStart()
       Http().bindAndHandle(routes, "0.0.0.0", OrchestraConfig.port)
     } { runInfo =>
+      onJobStart(runInfo)
       jobRunners
         .find(_.job.id == runInfo.jobId)
         .getOrElse(throw new IllegalArgumentException(s"No job found for id ${runInfo.jobId}"))

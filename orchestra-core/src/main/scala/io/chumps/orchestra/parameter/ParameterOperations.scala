@@ -17,10 +17,7 @@ object ParameterOperations {
     override def paramsState(params: HNil, paramValues: HNil) = Map.empty
   }
 
-  implicit def hCons[HeadParam <: Parameter[HeadParamValue],
-                     TailParams <: HList,
-                     HeadParamValue,
-                     TailParamValues <: HList](
+  implicit def hCons[HeadParam <: Parameter[HeadParamValue], TailParams <: HList, HeadParamValue, TailParamValues <: HList](
     implicit tailParamOperations: ParameterOperations[TailParams, TailParamValues]
   ) = new ParameterOperations[HeadParam :: TailParams, HeadParamValue :: TailParamValues] {
 

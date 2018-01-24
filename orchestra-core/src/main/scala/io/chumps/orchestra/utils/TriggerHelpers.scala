@@ -9,6 +9,7 @@ import com.sksamuel.elastic4s.http.ElasticDsl._
 import io.circe.Decoder
 import io.circe.generic.auto._
 import io.circe.java8.time._
+import io.circe.shapes._
 import io.circe.parser._
 import shapeless._
 import shapeless.ops.hlist.Tupler
@@ -44,7 +45,7 @@ trait TriggerHelpers {
     }
   }
 
-  implicit class TriggerableMultipleParamJob[ParamValues <: HList,
+  implicit class TriggerableMultipleParamJob[ParamValues <: HList: Decoder,
                                              ParamValuesNoRunId <: HList,
                                              TupledValues <: Product,
                                              Result: Decoder](
@@ -66,14 +67,19 @@ trait TriggerHelpers {
     }
   }
 
-  private def jobResult[Result: Decoder](jobRunner: JobRunner[_ <: HList, Result]): Future[Result] =
+  private def jobResult[ParamValues <: HList: Decoder, Result: Decoder](
+    jobRunner: JobRunner[ParamValues, Result]
+  ): Future[Result] =
     for {
       runResponse <- Elasticsearch.client.execute(
         get(HistoryIndex.index,
             HistoryIndex.`type`,
             HistoryIndex.formatId(RunInfo(jobRunner.job.id, OrchestraConfig.runInfo.runId)))
       )
-      run = runResponse.fold(failure => throw new IOException(failure.error.reason), identity).result.to[Run]
+      run = runResponse
+        .fold(failure => throw new IOException(failure.error.reason), identity)
+        .result
+        .to[Run[ParamValues]]
       result <- run.result
         .fold(jobResult(jobRunner))(_.fold(throw _, result => Future(decode[Result](result).fold(throw _, identity))))
     } yield result
