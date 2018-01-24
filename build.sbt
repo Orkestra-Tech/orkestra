@@ -2,7 +2,7 @@ import org.scalajs.sbtplugin.cross.CrossProject
 
 lazy val orchestra = project
   .in(file("."))
-  .aggregate(coreJVM, coreJS, github, cron, lock)
+  .aggregate(coreJVM, coreJS, githubJVM, githubJS, cronJVM, cronJS, lock)
   .settings(
     name := "Orchestra",
     ThisBuild / organization := "io.chumps",
@@ -48,16 +48,20 @@ lazy val core = CrossProject("orchestra-core", file("orchestra-core"), CrossType
 lazy val coreJVM = core.jvm
 lazy val coreJS = core.js
 
-lazy val github = Project("orchestra-github", file("orchestra-github"))
-  .dependsOn(coreJVM % Provided)
+lazy val github = CrossProject("orchestra-github", file("orchestra-github"), CrossType.Pure)
+  .dependsOn(core % Provided)
   .settings(
     name := "Orchestra Github",
     libraryDependencies += "org.eclipse.jgit" % "org.eclipse.jgit" % "4.9.0.201710071750-r"
   )
+lazy val githubJVM = github.jvm
+lazy val githubJS = github.js
 
-lazy val cron = Project("orchestra-cron", file("orchestra-cron"))
-  .dependsOn(coreJVM % Provided)
+lazy val cron = CrossProject("orchestra-cron", file("orchestra-cron"), CrossType.Pure)
+  .dependsOn(core % Provided)
   .settings(name := "Orchestra Cron")
+lazy val cronJVM = cron.jvm
+lazy val cronJS = cron.js
 
 lazy val lock = Project("orchestra-lock", file("orchestra-lock"))
   .dependsOn(coreJVM % Provided)

@@ -9,6 +9,7 @@ import scala.concurrent.{Await, Future}
 import io.circe._
 import io.circe.parser._
 import io.circe.syntax._
+import io.circe.generic.auto._
 import io.circe.java8.time._
 import org.scalajs.dom.ext.Ajax
 import com.sksamuel.elastic4s.http.ElasticDsl._

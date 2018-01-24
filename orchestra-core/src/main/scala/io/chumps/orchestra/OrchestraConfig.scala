@@ -7,6 +7,7 @@ import scala.io.Source
 
 import akka.http.scaladsl.model.Uri
 import com.sksamuel.elastic4s.ElasticsearchClientUri
+import io.circe.generic.auto._
 import io.circe.parser._
 
 import io.chumps.orchestra.model.{EnvRunInfo, RunId, RunInfo}

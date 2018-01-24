@@ -1,4 +1,4 @@
-package io.chumps
+package io.chumps.orchestra
 
 import scala.language.implicitConversions
 
@@ -8,7 +8,7 @@ import io.circe.generic.AutoDerivation
 
 import io.chumps.orchestra.utils.{ShellHelpers, StagesHelpers, TriggerHelpers}
 
-package object orchestra
+object Dsl
     extends HListInstances
     with AutoDerivation
     with DirectoryHelpers

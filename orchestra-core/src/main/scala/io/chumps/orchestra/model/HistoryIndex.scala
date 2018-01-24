@@ -16,16 +16,30 @@ import shapeless.HList
 import io.chumps.orchestra.utils.BaseEncoders._
 
 trait HistoryIndex extends Indexed {
-  case class Run[ParamValues <: HList](runInfo: RunInfo,
-                                       paramValues: ParamValues,
-                                       triggeredOn: Instant,
-                                       parentJob: Option[RunInfo],
-                                       latestUpdateOn: Instant,
-                                       result: Option[Either[Throwable, String]],
-                                       tags: Seq[String])
+  case class Run[ParamValues <: HList, Result](runInfo: RunInfo,
+                                               paramValues: ParamValues,
+                                               triggeredOn: Instant,
+                                               parentJob: Option[RunInfo],
+                                               latestUpdateOn: Instant,
+                                               result: Option[Either[Throwable, Result]],
+                                               tags: Seq[String])
 
   object Run {
-    implicit def encoder[ParamValues <: HList: Encoder]: Encoder[Run[ParamValues]] =
+    implicit def decoder[ParamValues <: HList: Decoder, Result: Decoder]: Decoder[Run[ParamValues, Result]] =
+      cursor =>
+        for {
+          runInfo <- cursor.downField("runInfo").as[RunInfo]
+          paramValuesString <- cursor.downField("paramValues").as[String]
+          paramValues <- decode[ParamValues](paramValuesString)
+            .leftMap(failure => DecodingFailure(failure.getMessage, List(DownField("paramValues"))))
+          triggeredOn <- cursor.downField("triggeredOn").as[Instant]
+          parentJob <- cursor.downField("parentJob").as[Option[RunInfo]]
+          latestUpdateOn <- cursor.downField("latestUpdateOn").as[Instant]
+          result <- cursor.downField("result").as[Option[Either[Throwable, Result]]]
+          tags <- cursor.downField("tags").as[Seq[String]]
+        } yield Run(runInfo, paramValues, triggeredOn, parentJob, latestUpdateOn, result, tags)
+
+    implicit def encoder[ParamValues <: HList: Encoder, Result: Encoder]: Encoder[Run[ParamValues, Result]] =
       run =>
         Json.obj(
           "runInfo" -> run.runInfo.asJson,
@@ -37,19 +51,8 @@ trait HistoryIndex extends Indexed {
           "tags" -> run.tags.asJson
       )
 
-    implicit def decoder[ParamValues <: HList: Decoder]: Decoder[Run[ParamValues]] =
-      cursor =>
-        for {
-          runInfo <- cursor.downField("runInfo").as[RunInfo]
-          paramValuesString <- cursor.downField("paramValues").as[String]
-          paramValues <- decode[ParamValues](paramValuesString)
-            .leftMap(failure => DecodingFailure(failure.getMessage, List(DownField("paramValues"))))
-          triggeredOn <- cursor.downField("triggeredOn").as[Instant]
-          parentJob <- cursor.downField("parentJob").as[Option[RunInfo]]
-          latestUpdateOn <- cursor.downField("latestUpdateOn").as[Instant]
-          result <- cursor.downField("result").as[Option[Either[Throwable, String]]]
-          tags <- cursor.downField("tags").as[Seq[String]]
-        } yield Run(runInfo, paramValues, triggeredOn, parentJob, latestUpdateOn, result, tags)
+    implicit def encoderResultNothing[ParamValues <: HList: Encoder]: Encoder[Run[ParamValues, Nothing]] =
+      encoder[ParamValues, Nothing]
   }
 
   override def indices: Set[IndexDefinition] = super.indices + HistoryIndex

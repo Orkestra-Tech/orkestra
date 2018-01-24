@@ -5,8 +5,8 @@ import java.io.IOException
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
-import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.RefreshPolicy
+import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.typesafe.scalalogging.Logger
 import io.k8s.api.batch.v1beta1.{CronJob, CronJobSpec, JobTemplateSpec}
 import io.k8s.api.core.v1.Pod
@@ -16,7 +16,6 @@ import io.circe.shapes._
 
 import io.chumps.orchestra.kubernetes.{JobSpecUtils, Kubernetes, MasterPod}
 import io.chumps.orchestra.model.{EnvRunInfo, JobId, RunInfo}
-import io.chumps.orchestra.model.Indexed.HistoryIndex
 import io.chumps.orchestra.utils.AkkaImplicits._
 import io.chumps.orchestra.{Elasticsearch, OrchestraConfig, OrchestraPlugin}
 
@@ -45,7 +44,11 @@ trait Cron extends OrchestraPlugin {
     super.onJobStart(runInfo)
 
     if (cronTriggers.exists(_.jobRunner.job.id == runInfo.jobId))
-      Await.result(Elasticsearch.indexRun[HNil](runInfo, HNil, Seq.empty, None, RefreshPolicy.WaitFor), 1.minute)
+      Await.result(
+        Elasticsearch.client
+          .execute(Elasticsearch.indexRun[HNil](runInfo, HNil, Seq.empty, None).refresh(RefreshPolicy.WaitFor)),
+        1.minute
+      )
   }
 
   private def deleteStaleCronJobs(currentCronJobNames: Set[String]) = {

@@ -7,6 +7,7 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Directives.{entity, _}
 import autowire.Core
 import com.typesafe.scalalogging.Logger
+import io.circe.generic.auto._
 import io.circe.java8.time._
 
 import io.chumps.orchestra.utils.AkkaImplicits._

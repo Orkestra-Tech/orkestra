@@ -34,7 +34,7 @@ trait Job[ParamValues <: HList, Result, Func, PodSpecFunc] extends Board {
     def trigger(runId: RunId, params: ParamValues, tags: Seq[String] = Seq.empty, by: Option[RunInfo] = None): Unit
     def stop(runId: RunId): Unit
     def tags(): Seq[String]
-    def history(page: Page[Instant]): Seq[(Run[ParamValues], Seq[Stage])]
+    def history(page: Page[Instant]): Seq[(Run[ParamValues, Result], Seq[Stage])]
   }
 
   private[orchestra] object Api {

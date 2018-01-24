@@ -10,7 +10,6 @@ import io.circe.Decoder
 import io.circe.generic.auto._
 import io.circe.java8.time._
 import io.circe.shapes._
-import io.circe.parser._
 import shapeless._
 import shapeless.ops.hlist.Tupler
 
@@ -79,8 +78,7 @@ trait TriggerHelpers {
       run = runResponse
         .fold(failure => throw new IOException(failure.error.reason), identity)
         .result
-        .to[Run[ParamValues]]
-      result <- run.result
-        .fold(jobResult(jobRunner))(_.fold(throw _, result => Future(decode[Result](result).fold(throw _, identity))))
+        .to[Run[ParamValues, Result]]
+      result <- run.result.fold(jobResult(jobRunner))(_.fold(throw _, Future(_)))
     } yield result
 }
