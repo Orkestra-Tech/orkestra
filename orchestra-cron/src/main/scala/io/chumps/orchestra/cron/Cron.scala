@@ -43,16 +43,9 @@ trait Cron extends OrchestraPlugin {
 
   override def onJobStart(runInfo: RunInfo): Unit = {
     super.onJobStart(runInfo)
-    Await.result(
-      for {
-        runExists <- Elasticsearch.client
-          .execute(exists(HistoryIndex.formatId(runInfo), HistoryIndex.index, HistoryIndex.`type`))
-          .map(_.fold(failure => throw new IOException(failure.error.reason), identity).result)
-        _ <- if (runExists) Future.unit
-        else Elasticsearch.indexRun[HNil](runInfo, HNil, Seq.empty, None, RefreshPolicy.WaitFor)
-      } yield (),
-      1.minute
-    )
+
+    if (cronTriggers.exists(_.jobRunner.job.id == runInfo.jobId))
+      Await.result(Elasticsearch.indexRun[HNil](runInfo, HNil, Seq.empty, None, RefreshPolicy.WaitFor), 1.minute)
   }
 
   private def deleteStaleCronJobs(currentCronJobNames: Set[String]) = {

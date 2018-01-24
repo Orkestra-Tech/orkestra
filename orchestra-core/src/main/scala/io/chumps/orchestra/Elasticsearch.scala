@@ -11,6 +11,7 @@ import com.sksamuel.elastic4s.circe._
 import com.sksamuel.elastic4s.http.HttpClient
 import io.circe.Encoder
 import io.circe.java8.time._
+import shapeless._
 
 import io.chumps.orchestra.model.{Indexed, RunInfo}
 import io.chumps.orchestra.model.Indexed._
@@ -23,11 +24,11 @@ object Elasticsearch {
 
   def init() = Future.traverse(Indexed.indices)(index => client.execute(index.createDefinition))
 
-  def indexRun[ParamValues: Encoder](runInfo: RunInfo,
-                                     paramValues: ParamValues,
-                                     tags: Seq[String],
-                                     parent: Option[RunInfo],
-                                     refreshPolicy: RefreshPolicy) =
+  def indexRun[ParamValues <: HList: Encoder](runInfo: RunInfo,
+                                              paramValues: ParamValues,
+                                              tags: Seq[String],
+                                              parent: Option[RunInfo],
+                                              refreshPolicy: RefreshPolicy) =
     for {
       run <- Future.successful(Run(runInfo, paramValues, Instant.now(), parent, Instant.now(), None, tags))
       indexResponse <- Elasticsearch.client

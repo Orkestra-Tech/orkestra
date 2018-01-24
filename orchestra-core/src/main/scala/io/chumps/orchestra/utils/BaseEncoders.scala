@@ -8,8 +8,8 @@ object BaseEncoders {
 
   implicit val encodeThrowable: Encoder[Throwable] = throwable =>
     Json.obj("message" -> Json.fromString(throwable.getMessage))
-  implicit val decodeThrowable: Decoder[Throwable] = c =>
+  implicit val decodeThrowable: Decoder[Throwable] = cursor =>
     for {
-      message <- c.downField("message").as[String]
+      message <- cursor.downField("message").as[String]
     } yield new Throwable(message)
 }
