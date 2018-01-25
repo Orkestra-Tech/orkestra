@@ -18,8 +18,6 @@ import shapeless.{::, _}
 
 import io.chumps.orchestra.job.SimpleJob
 import io.chumps.orchestra.model._
-import io.chumps.orchestra.model.Indexed.Run
-import io.chumps.orchestra.model.Indexed.Stage
 import io.chumps.orchestra.parameter.{Parameter, ParameterOperations}
 import io.chumps.orchestra.utils.RunIdOperation
 import io.chumps.orchestra.{AutowireServer, Jobs}
@@ -34,7 +32,7 @@ trait Job[ParamValues <: HList, Result, Func, PodSpecFunc] extends Board {
     def trigger(runId: RunId, params: ParamValues, tags: Seq[String] = Seq.empty, by: Option[RunInfo] = None): Unit
     def stop(runId: RunId): Unit
     def tags(): Seq[String]
-    def history(page: Page[Instant]): Seq[(Run[ParamValues, Result], Seq[Stage])]
+    def history(page: Page[Instant]): History[ParamValues, Result]
   }
 
   private[orchestra] object Api {

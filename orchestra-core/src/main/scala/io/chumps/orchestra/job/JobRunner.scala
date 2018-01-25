@@ -19,10 +19,7 @@ import com.sksamuel.elastic4s.circe._
 import io.circe.generic.auto._
 import io.circe.java8.time._
 
-import io.chumps.orchestra.model.Indexed.StagesIndex
-import io.chumps.orchestra.model.Indexed.HistoryIndex
-import io.chumps.orchestra.model.Indexed.Run
-import io.chumps.orchestra.model.Indexed.Stage
+import io.chumps.orchestra.model.Indexed._
 import io.chumps.orchestra.board.Job
 import io.chumps.orchestra.filesystem.Directory
 import io.chumps.orchestra.kubernetes.JobUtils
@@ -126,7 +123,7 @@ case class JobRunner[ParamValues <: HList: Encoder: Decoder, Result: Encoder: De
       )
     }
 
-    override def history(page: Page[Instant]): Seq[(Run[ParamValues, Result], Seq[Stage])] = Await.result(
+    override def history(page: Page[Instant]): History[ParamValues, Result] = Await.result(
       for {
         runs <- Elasticsearch.client
           .execute(
@@ -157,7 +154,9 @@ case class JobRunner[ParamValues <: HList: Encoder: Decoder, Result: Encoder: De
             )
             .map(_.fold(failure => throw new IOException(failure.error.reason), identity).result.to[Stage])
         else Future.successful(Seq.empty)
-      } yield runs.map(run => (run, stages.filter(_.runInfo.runId == run.runInfo.runId).sortBy(_.startedOn))),
+      } yield
+        History(runs.map(run => (run, stages.filter(_.runInfo.runId == run.runInfo.runId).sortBy(_.startedOn))),
+                Instant.now()),
       1.minute
     )
   }

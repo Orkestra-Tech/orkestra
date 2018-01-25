@@ -1,6 +1,5 @@
 package io.chumps.orchestra.page
 
-import java.time.Instant
 import java.time.temporal.ChronoUnit
 
 import scala.concurrent.duration._
@@ -63,7 +62,7 @@ object JobPage {
         .history(Page(None, -50)) // TODO load more as we scroll
         .call()
         .map { history =>
-          val runDisplays = history.zipWithIndex.toTagMod {
+          val runDisplays = history.runs.zipWithIndex.toTagMod {
             case ((run, stages), index) =>
               val paramsDescription =
                 paramOperations
@@ -94,8 +93,10 @@ object JobPage {
 
               val statusDisplay = run.result match {
                 case None if run.triggeredOn == run.latestUpdateOn =>
-                  TagMod(runIdDisplay("○", run.runInfo.runId, Global.Style.brandColor.value, "Triggered"), datesDisplay)
-                case None if run.latestUpdateOn.isBefore(Instant.now().minus(10, ChronoUnit.SECONDS)) =>
+                  TagMod(runIdDisplay("○", run.runInfo.runId, Global.Style.brandColor.value, "Triggered"),
+                         datesDisplay,
+                         stopButton)
+                case None if run.latestUpdateOn.isBefore(history.updatedOn.minus(10, ChronoUnit.SECONDS)) =>
                   TagMod(runIdDisplay("✗", run.runInfo.runId, "dimgrey", "Stopped"), datesDisplay, rerunButton)
                 case None =>
                   TagMod(runIdDisplay("≻", run.runInfo.runId, Global.Style.brandColor.value, "Running"),
@@ -129,7 +130,7 @@ object JobPage {
               )
           }
 
-          $.modState(_.copy(_3 = if (history.nonEmpty) runDisplays else "No job ran yet"))
+          $.modState(_.copy(_3 = if (history.runs.nonEmpty) runDisplays else "No job ran yet"))
         }
     }
 
