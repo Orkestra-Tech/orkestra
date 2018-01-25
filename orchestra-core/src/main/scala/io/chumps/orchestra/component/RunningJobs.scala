@@ -1,5 +1,7 @@
 package io.chumps.orchestra.component
 
+import java.time.temporal.ChronoUnit
+
 import scala.concurrent.duration._
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.scalajs.js
@@ -12,13 +14,15 @@ import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
 
 import io.circe.generic.auto._
+import io.circe.shapes._
 import japgolly.scalajs.react.extra.router.RouterCtl
+import japgolly.scalajs.react.vdom.Style
 import shapeless.HList
 
 import io.chumps.orchestra.CommonApi
 import io.chumps.orchestra.board.Job
 import io.chumps.orchestra.css.Global
-import io.chumps.orchestra.model.RunInfo
+import io.chumps.orchestra.model.Indexed._
 import io.chumps.orchestra.route.WebRouter.{BoardPageRoute, LogsPageRoute, PageRoute}
 
 object RunningJobs {
@@ -27,20 +31,19 @@ object RunningJobs {
 
   val component = ScalaComponent
     .builder[Props](getClass.getSimpleName)
-    .initialState[(Option[Seq[RunInfo]], SetIntervalHandle)]((None, null))
+    .initialState[(Option[Seq[Run[_, _]]], SetIntervalHandle)]((None, null))
     .renderP { ($, props) =>
       val runs = $.state._1 match {
         case Some(runningJobs) if runningJobs.nonEmpty =>
           runningJobs.zipWithIndex.toTagMod {
-            case (runInfo, index) =>
+            case (run, index) =>
               val job = props.jobs
-                .find(_.id == runInfo.jobId)
-                .getOrElse(throw new IllegalStateException(s"Can't find the job with id ${runInfo.jobId}"))
+                .find(_.id == run.runInfo.jobId)
+                .getOrElse(throw new IllegalStateException(s"Can't find the job with id ${run.runInfo.jobId}"))
 
-              <.div(^.display.flex, Global.Style.listItem(index % 2 == 0))(
+              TagMod(
                 <.div(
                   Global.Style.cell,
-                  ^.flexGrow := "1",
                   ^.overflow.hidden,
                   TopNav.Style.clickableItem(false),
                   ^.onClick --> props.ctl.set(BoardPageRoute(Seq.empty, job)).flatMap(_ => props.closeRunningJobs),
@@ -50,10 +53,11 @@ object RunningJobs {
                   Global.Style.runId,
                   TopNav.Style.clickableItem(false),
                   ^.onClick --> props.ctl
-                    .set(LogsPageRoute(Seq.empty, runInfo.runId))
+                    .set(LogsPageRoute(Seq.empty, run.runInfo.runId))
                     .flatMap(_ => props.closeRunningJobs)
-                )(runInfo.runId.value.toString),
-                StopButton.component(StopButton.Props(job, runInfo.runId))
+                )(run.runInfo.runId.value.toString),
+                <.div(Global.Style.cell)(s"${run.triggeredOn.until(run.latestUpdateOn, ChronoUnit.SECONDS)}s"),
+                StopButton.component(StopButton.Props(job, run.runInfo.runId))
               )
           }
         case Some(runningJobs) if runningJobs.isEmpty => <.div(Global.Style.cell)("No running jobs")
@@ -61,6 +65,8 @@ object RunningJobs {
       }
 
       <.div(
+        ^.display := "grid",
+        Style("grid-template-columns") := "1fr 0fr 0fr 0fr",
         ^.position.absolute,
         ^.right := "0",
         ^.width := "600px",
@@ -76,11 +82,8 @@ object RunningJobs {
     .build
 
   private def pullRunningJobs(
-    $ : ComponentDidMount[Props, (Option[Seq[RunInfo]], SetIntervalHandle), Unit]
-  ) =
-    Callback.future {
-      CommonApi.client.runningJobs().call().map { runningJobs =>
-        $.modState(_.copy(_1 = Option(runningJobs)))
-      }
-    }
+    $ : ComponentDidMount[Props, (Option[Seq[Run[_, _]]], SetIntervalHandle), Unit]
+  ) = Callback.future {
+    CommonApi.client.runningJobs().call().map(runningJobs => $.modState(_.copy(_1 = Option(runningJobs))))
+  }
 }

@@ -19,11 +19,11 @@ import com.sksamuel.elastic4s.circe._
 import io.circe.generic.auto._
 import io.circe.java8.time._
 
-import io.chumps.orchestra.model.Indexed._
 import io.chumps.orchestra.board.Job
 import io.chumps.orchestra.filesystem.Directory
 import io.chumps.orchestra.kubernetes.JobUtils
 import io.chumps.orchestra.model._
+import io.chumps.orchestra.model.Indexed._
 import io.chumps.orchestra.utils.Utils
 import io.chumps.orchestra.utils.BaseEncoders._
 import io.chumps.orchestra.utils.AkkaImplicits._
@@ -36,6 +36,18 @@ case class JobRunner[ParamValues <: HList: Encoder: Decoder, Result: Encoder: De
 ) {
 
   private[orchestra] def run(runInfo: RunInfo): Result = Utils.elasticsearchOutErr(runInfo.runId) {
+    val runningPong = system.scheduler.schedule(0.second, 1.second) {
+      Elasticsearch.client
+        .execute(
+          updateById(
+            HistoryIndex.index.name + "/" + HistoryIndex.`type`, // TODO: Remove workaround when fixed in elastic4s
+            HistoryIndex.`type`,
+            HistoryIndex.formatId(runInfo)
+          ).doc(Json.obj("latestUpdateOn" -> Instant.now().asJson))
+        )
+        .map(_.fold(failure => throw new IOException(failure.error.reason), identity))
+    }
+
     Await.result(
       (for {
         run <- Elasticsearch.client
@@ -44,23 +56,11 @@ case class JobRunner[ParamValues <: HList: Encoder: Decoder, Result: Encoder: De
             _.fold(failure => throw new IOException(failure.error.reason), identity).result.to[Run[ParamValues, Result]]
           )
 
-        _ = system.scheduler.schedule(0.second, 1.second) {
-          Elasticsearch.client
-            .execute(
-              updateById(
-                HistoryIndex.index.name + "/" + HistoryIndex.`type`, // TODO: Remove workaround when fixed in elastic4s
-                HistoryIndex.`type`,
-                HistoryIndex.formatId(runInfo)
-              ).doc(Json.obj("latestUpdateOn" -> Instant.now().asJson))
-            )
-            .map(_.fold(failure => throw new IOException(failure.error.reason), identity))
-        }
-
         _ = run.parentJob.map { parentJob =>
           system.scheduler.schedule(1.second, 1.second) {
-            if (!CommonApiServer.runningJobs().contains(parentJob)) {
+            if (!CommonApiServer.runningJobs().map(_.runInfo).contains(parentJob))
               failJob(runInfo, new InterruptedException(s"Parent job ${parentJob.jobId.value} stopped"))
-            }
+                .transformWith(_ => JobUtils.delete(runInfo))
           }
         }
 
@@ -78,8 +78,15 @@ case class JobRunner[ParamValues <: HList: Encoder: Decoder, Result: Encoder: De
               .retryOnConflict(1)
           )
           .map(_.fold(failure => throw new IOException(failure.error.reason), identity))
-        _ <- JobUtils.delete(runInfo)
-      } yield result).recoverWith { case t => failJob(runInfo, t) },
+      } yield result)
+        .transformWith { triedResult =>
+          for {
+            _ <- Future(runningPong.cancel())
+            _ <- JobUtils.delete(runInfo)
+            result <- Future.fromTry(triedResult)
+          } yield result
+        }
+        .recoverWith { case throwable => failJob(runInfo, throwable) },
       Duration.Inf
     )
   }
@@ -96,7 +103,7 @@ case class JobRunner[ParamValues <: HList: Encoder: Decoder, Result: Encoder: De
             .execute(Elasticsearch.indexRun(runInfo, paramValues, tags, parent))
             .map(_.fold(failure => throw new IOException(failure.error.reason), identity))
           _ <- JobUtils.create(runInfo, podSpec(paramValues))
-        } yield ()).recoverWith { case t => failJob(runInfo, t) },
+        } yield ()).recoverWith { case throwable => failJob(runInfo, throwable) },
         1.minute
       )
     }
@@ -161,19 +168,18 @@ case class JobRunner[ParamValues <: HList: Encoder: Decoder, Result: Encoder: De
     )
   }
 
-  private def failJob(runInfo: RunInfo, t: Throwable) = {
-    t.printStackTrace()
+  private def failJob(runInfo: RunInfo, throwable: Throwable) = {
+    throwable.printStackTrace()
     Elasticsearch.client
       .execute(
         updateById(
           HistoryIndex.index.name + "/" + HistoryIndex.`type`, // TODO: Remove workaround when fixed in elastic4s
           HistoryIndex.`type`,
           HistoryIndex.formatId(runInfo)
-        ).doc(Json.obj("result" -> Option(Left(t): Either[Throwable, Result]).asJson))
+        ).doc(Json.obj("result" -> Option(Left(throwable): Either[Throwable, Result]).asJson))
           .retryOnConflict(1)
       )
-      .flatMap(_ => JobUtils.delete(runInfo))
-      .flatMap(_ => Future.failed(t))
+      .flatMap(_ => Future.failed(throwable))
   }
 
   private[orchestra] val apiRoute: Route = {

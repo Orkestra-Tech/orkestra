@@ -50,9 +50,6 @@ trait HistoryIndex extends Indexed {
           "result" -> run.result.asJson,
           "tags" -> run.tags.asJson
       )
-
-    implicit def encoderResultNothing[ParamValues <: HList: Encoder]: Encoder[Run[ParamValues, Nothing]] =
-      encoder[ParamValues, Nothing]
   }
 
   override def indices: Set[IndexDefinition] = super.indices + HistoryIndex

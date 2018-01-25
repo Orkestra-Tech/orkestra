@@ -88,7 +88,7 @@ object JobPage {
                 )
               val datesDisplay =
                 <.div(Global.Style.cell, ^.flexGrow := "1", ^.justifyContent.center)(
-                  s"${run.triggeredOn} ${run.latestUpdateOn.getEpochSecond - run.triggeredOn.getEpochSecond}s"
+                  s"${run.triggeredOn} ${run.triggeredOn.until(run.latestUpdateOn, ChronoUnit.SECONDS)}s"
                 )
 
               val statusDisplay = run.result match {
@@ -120,7 +120,7 @@ object JobPage {
                 <.div(
                   stages.map { stage =>
                     val time =
-                      s" ${math.max(0, stage.completedOn.getOrElse(run.latestUpdateOn).getEpochSecond - stage.startedOn.getEpochSecond)}s"
+                      s" ${math.max(0, stage.startedOn.until(stage.completedOn.getOrElse(run.latestUpdateOn), ChronoUnit.SECONDS))}s"
 
                     <.div(^.padding := "4px",
                           ^.display.`inline-block`,

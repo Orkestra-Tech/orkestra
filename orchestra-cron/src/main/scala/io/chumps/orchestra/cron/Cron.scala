@@ -1,7 +1,5 @@
 package io.chumps.orchestra.cron
 
-import java.io.IOException
-
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 

@@ -25,6 +25,6 @@ object Elasticsearch {
                                               parent: Option[RunInfo]) =
     indexInto(HistoryIndex.index, HistoryIndex.`type`)
       .id(HistoryIndex.formatId(runInfo))
-      .source(Run[ParamValues, Nothing](runInfo, paramValues, Instant.now(), parent, Instant.now(), None, tags))
+      .source(Run[ParamValues, Unit](runInfo, paramValues, Instant.now(), parent, Instant.now(), None, tags))
       .createOnly(true)
 }

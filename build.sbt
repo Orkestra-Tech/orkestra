@@ -84,7 +84,7 @@ lazy val logging = Def.setting {
 }
 
 lazy val scalaCss = Def.setting {
-  val scalaCssVersion = "0.5.3"
+  val scalaCssVersion = "0.5.5"
   Seq(
     "com.github.japgolly.scalacss" %%%! "core" % scalaCssVersion,
     "com.github.japgolly.scalacss" %%%! "ext-react" % scalaCssVersion
