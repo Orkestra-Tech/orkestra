@@ -12,11 +12,19 @@ lazy val orchestra = project
       if (ver.contains("+")) ver + "-SNAPSHOT"
       else ver
     },
-    ThisBuild / scalacOptions ++= Seq("-deprecation",
-                                      "-feature",
-                                      "-Ywarn-unused:imports",
-                                      "-Ypartial-unification",
-                                      "-Ywarn-dead-code"),
+    ThisBuild / scalacOptions ++= Seq(
+      "-deprecation",
+      "-feature",
+      "-Xlint:unsound-match",
+      "-Ywarn-inaccessible",
+      "-Ywarn-infer-any",
+      "-Ywarn-unused:imports",
+      "-Ywarn-unused:locals",
+      "-Ywarn-unused:patvars",
+      "-Ywarn-unused:privates",
+      "-Ypartial-unification",
+      "-Ywarn-dead-code"
+    ),
     ThisBuild / publishTo := Option(
       "DriveTribe Private" at "s3://drivetribe-repositories.s3-eu-west-1.amazonaws.com/maven"
     ),

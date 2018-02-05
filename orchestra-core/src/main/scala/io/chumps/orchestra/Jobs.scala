@@ -1,6 +1,6 @@
 package io.chumps.orchestra
 
-import scala.concurrent.Await
+import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
 
 import akka.http.scaladsl.Http
@@ -34,21 +34,27 @@ trait Jobs extends BackendRoutes { self: OrchestraPlugin =>
         }
     }
 
-  def main(args: Array[String]): Unit = {
-    logger.info("Starting Orchestra")
-    Await.result(Elasticsearch.init(), 1.minute)
-
-    OrchestraConfig.runInfoMaybe.fold[Unit] {
-      onMasterStart()
-      Http().bindAndHandle(routes, "0.0.0.0", OrchestraConfig.port)
-    } { runInfo =>
-      onJobStart(runInfo)
-      jobRunners
-        .find(_.job.id == runInfo.jobId)
-        .getOrElse(throw new IllegalArgumentException(s"No job found for id ${runInfo.jobId}"))
-        .run(runInfo)
-    }
-  }
+  def main(args: Array[String]): Unit = Await.result(
+    for {
+      _ <- Future(logger.info("Starting Orchestra"))
+      _ <- Elasticsearch.init()
+      _ <- OrchestraConfig.runInfoMaybe.fold {
+        for {
+          _ <- Future(onMasterStart())
+          _ <- Http().bindAndHandle(routes, "0.0.0.0", OrchestraConfig.port)
+        } yield ()
+      } { runInfo =>
+        for {
+          _ <- Future(onJobStart(runInfo))
+          _ <- jobRunners
+            .find(_.job.id == runInfo.jobId)
+            .getOrElse(throw new IllegalArgumentException(s"No job found for id ${runInfo.jobId}"))
+            .run(runInfo)
+        } yield ()
+      }
+    } yield (),
+    Duration.Inf
+  )
 }
 
 object Jobs {

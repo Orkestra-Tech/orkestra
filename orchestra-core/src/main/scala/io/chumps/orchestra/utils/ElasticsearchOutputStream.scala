@@ -59,6 +59,5 @@ class ElasticsearchOutputStream(client: HttpClient, runId: RunId) extends Output
   override def close(): Unit = {
     scheduledFlush.cancel()
     flush()
-    client.close()
   }
 }

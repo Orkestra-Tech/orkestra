@@ -2,7 +2,7 @@ package io.chumps.orchestra.github
 
 import java.io.{IOException, PrintWriter, StringWriter}
 
-import scala.concurrent.Await
+import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
 
 import akka.http.scaladsl.Http
@@ -29,12 +29,12 @@ trait Github extends OrchestraPlugin {
 
   def githubTriggers: Set[GithubTrigger]
 
-  override def onMasterStart(): Unit = {
-    super.onMasterStart()
-    logger.info("Starting Github triggers webhook")
+  override def onMasterStart(): Future[Unit] =
+    for {
+      _ <- super.onMasterStart()
+      _ = logger.info("Starting Github triggers webhook")
 
-    lazy val routes =
-      path("health") {
+      routes = path("health") {
         complete(OK)
       } ~
         path("webhooks") {
@@ -47,8 +47,8 @@ trait Github extends OrchestraPlugin {
           }
         }
 
-    Http().bindAndHandle(routes, "0.0.0.0", GithubConfig.githubPort)
-  }
+      _ = Http().bindAndHandle(routes, "0.0.0.0", GithubConfig.githubPort)
+    } yield ()
 }
 
 object Github extends LazyLogging {

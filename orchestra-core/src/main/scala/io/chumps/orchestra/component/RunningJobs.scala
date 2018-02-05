@@ -35,30 +35,29 @@ object RunningJobs {
     .renderP { ($, props) =>
       val runs = $.state._1 match {
         case Some(runningJobs) if runningJobs.nonEmpty =>
-          runningJobs.zipWithIndex.toTagMod {
-            case (run, index) =>
-              val job = props.jobs
-                .find(_.id == run.runInfo.jobId)
-                .getOrElse(throw new IllegalStateException(s"Can't find the job with id ${run.runInfo.jobId}"))
+          runningJobs.toTagMod { run =>
+            val job = props.jobs
+              .find(_.id == run.runInfo.jobId)
+              .getOrElse(throw new IllegalStateException(s"Can't find the job with id ${run.runInfo.jobId}"))
 
-              TagMod(
-                <.div(
-                  Global.Style.cell,
-                  ^.overflow.hidden,
-                  TopNav.Style.clickableItem(false),
-                  ^.onClick --> props.ctl.set(BoardPageRoute(Seq.empty, job)).flatMap(_ => props.closeRunningJobs),
-                )(job.name),
-                <.div(
-                  Global.Style.cell,
-                  Global.Style.runId,
-                  TopNav.Style.clickableItem(false),
-                  ^.onClick --> props.ctl
-                    .set(LogsPageRoute(Seq.empty, run.runInfo.runId))
-                    .flatMap(_ => props.closeRunningJobs)
-                )(run.runInfo.runId.value.toString),
-                <.div(Global.Style.cell)(s"${run.triggeredOn.until(run.latestUpdateOn, ChronoUnit.SECONDS)}s"),
-                StopButton.component(StopButton.Props(job, run.runInfo.runId))
-              )
+            TagMod(
+              <.div(
+                Global.Style.cell,
+                ^.overflow.hidden,
+                TopNav.Style.clickableItem(false),
+                ^.onClick --> props.ctl.set(BoardPageRoute(Seq.empty, job)).flatMap(_ => props.closeRunningJobs),
+              )(job.name),
+              <.div(
+                Global.Style.cell,
+                Global.Style.runId,
+                TopNav.Style.clickableItem(false),
+                ^.onClick --> props.ctl
+                  .set(LogsPageRoute(Seq.empty, run.runInfo.runId))
+                  .flatMap(_ => props.closeRunningJobs)
+              )(run.runInfo.runId.value.toString),
+              <.div(Global.Style.cell)(s"${run.triggeredOn.until(run.latestUpdateOn, ChronoUnit.SECONDS)}s"),
+              StopButton.component(StopButton.Props(job, run.runInfo.runId))
+            )
           }
         case Some(runningJobs) if runningJobs.isEmpty => <.div(Global.Style.cell)("No running jobs")
         case None                                     => <.div(Global.Style.cell)("Loading running jobs")

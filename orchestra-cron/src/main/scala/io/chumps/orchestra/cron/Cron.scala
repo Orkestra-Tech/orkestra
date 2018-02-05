@@ -1,7 +1,6 @@
 package io.chumps.orchestra.cron
 
-import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
+import scala.concurrent.Future
 
 import com.sksamuel.elastic4s.RefreshPolicy
 import com.sksamuel.elastic4s.http.ElasticDsl._
@@ -22,32 +21,26 @@ trait Cron extends OrchestraPlugin {
 
   def cronTriggers: Set[CronTrigger]
 
-  override def onMasterStart(): Unit = {
-    super.onMasterStart()
-    logger.info("Configuring cron jobs")
+  override def onMasterStart(): Future[Unit] =
+    for {
+      _ <- super.onMasterStart()
+      _ = logger.info("Configuring cron jobs")
 
-    Await.result(
-      for {
-        masterPod <- MasterPod.get()
-        currentCronJobs <- Kubernetes.client.cronJobs.namespace(OrchestraConfig.namespace).list()
-        currentCronJobNames = currentCronJobs.items.flatMap(_.metadata).flatMap(_.name).toSet
-        _ <- deleteStaleCronJobs(currentCronJobNames)
-        _ <- applyCronJobs(masterPod)
-      } yield (),
-      1.minute
-    )
-  }
+      masterPod <- MasterPod.get()
+      currentCronJobs <- Kubernetes.client.cronJobs.namespace(OrchestraConfig.namespace).list()
+      currentCronJobNames = currentCronJobs.items.flatMap(_.metadata).flatMap(_.name).toSet
+      _ <- deleteStaleCronJobs(currentCronJobNames)
+      _ <- applyCronJobs(masterPod)
+    } yield ()
 
-  override def onJobStart(runInfo: RunInfo): Unit = {
-    super.onJobStart(runInfo)
-
-    if (cronTriggers.exists(_.jobRunner.job.id == runInfo.jobId))
-      Await.result(
+  override def onJobStart(runInfo: RunInfo): Future[Unit] =
+    for {
+      _ <- super.onJobStart(runInfo)
+      _ <- if (cronTriggers.exists(_.jobRunner.job.id == runInfo.jobId))
         Elasticsearch.client
-          .execute(Elasticsearch.indexRun[HNil](runInfo, HNil, Seq.empty, None).refresh(RefreshPolicy.WaitFor)),
-        1.minute
-      )
-  }
+          .execute(Elasticsearch.indexRun[HNil](runInfo, HNil, Seq.empty, None).refresh(RefreshPolicy.WaitFor))
+      else Future.unit
+    } yield ()
 
   private def deleteStaleCronJobs(currentCronJobNames: Set[String]) = {
     val cronJobNames = cronTriggers.map(cronTrigger => cronJobName(cronTrigger.jobRunner.job.id))
