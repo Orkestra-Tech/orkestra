@@ -120,7 +120,7 @@ object JobPage {
                 <.div(
                   stages.map { stage =>
                     val time =
-                      s" ${math.max(0, stage.startedOn.until(stage.completedOn.getOrElse(run.latestUpdateOn), ChronoUnit.SECONDS))}s"
+                      s" ${stage.startedOn.until(stage.completedOn.getOrElse(run.latestUpdateOn), ChronoUnit.SECONDS)}s"
 
                     <.div(^.padding := "4px",
                           ^.display.`inline-block`,
