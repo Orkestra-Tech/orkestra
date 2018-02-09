@@ -52,7 +52,7 @@ case class JobRunner[ParamValues <: HList: Encoder: Decoder, Result: Encoder: De
           _.fold(failure => throw new IOException(failure.error.reason), identity).result.to[Run[ParamValues, Result]]
         )
 
-      _ = run.parentJob.map { parentJob =>
+      _ = run.parentJob.foreach { parentJob =>
         system.scheduler.schedule(1.second, 1.second) {
           if (!CommonApiServer.runningJobs().map(_.runInfo).contains(parentJob))
             failJob(runInfo, new InterruptedException(s"Parent job ${parentJob.jobId.value} stopped"))
@@ -95,18 +95,16 @@ case class JobRunner[ParamValues <: HList: Encoder: Decoder, Result: Encoder: De
     override def trigger(runId: RunId,
                          paramValues: ParamValues,
                          tags: Seq[String] = Seq.empty,
-                         parent: Option[RunInfo] = None): Unit = {
-      val runInfo = RunInfo(job.id, runId)
-      Await.result(
-        for {
-          _ <- Elasticsearch.client
-            .execute(Elasticsearch.indexRun(runInfo, paramValues, tags, parent))
-            .map(_.fold(failure => throw new IOException(failure.error.reason), identity))
-          _ <- JobUtils.create(runInfo, podSpec(paramValues))
-        } yield (),
-        1.minute
-      )
-    }
+                         parent: Option[RunInfo] = None): Unit = Await.result(
+      for {
+        runInfo <- Future.successful(RunInfo(job.id, runId))
+        _ <- Elasticsearch.client
+          .execute(Elasticsearch.indexRun(runInfo, paramValues, tags, parent))
+          .map(_.fold(failure => throw new IOException(failure.error.reason), identity))
+        _ <- JobUtils.create(runInfo, podSpec(paramValues))
+      } yield (),
+      1.minute
+    )
 
     override def stop(runId: RunId): Unit = JobUtils.delete(RunInfo(job.id, runId))
 

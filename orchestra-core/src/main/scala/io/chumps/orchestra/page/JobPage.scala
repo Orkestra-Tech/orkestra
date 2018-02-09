@@ -118,18 +118,16 @@ object JobPage {
               )(
                 <.div(^.display.flex)(statusDisplay),
                 <.div(
-                  stages.map { stage =>
-                    val time = s" ${stage.startedOn.until(stage.latestUpdateOn, ChronoUnit.SECONDS)}s"
-
+                  stages.toTagMod { stage =>
                     <.div(
                       ^.padding := "4px",
                       ^.display.`inline-block`,
                       ^.backgroundColor := Utils.generateColour(stage.name),
-                      ^.opacity := (if (stage.startedOn.isBefore(run.triggeredOn) ||
-                                        stage.latestUpdateOn.isAfter(run.latestUpdateOn)) "0.6"
-                                    else "1")
-                    )(s"${stage.name}$time")
-                  }: _*
+                      ^.opacity := (if (stage.runInfo.jobId == job.id ||
+                                        stage.parentJob.exists(_.jobId == job.id)) "1"
+                                    else "0.6")
+                    )(s"${stage.name} ${stage.startedOn.until(stage.latestUpdateOn, ChronoUnit.SECONDS)}s")
+                  }
                 )
               )
           }
