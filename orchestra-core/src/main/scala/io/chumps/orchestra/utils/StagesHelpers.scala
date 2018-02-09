@@ -13,36 +13,32 @@ import io.circe.generic.auto._
 import io.circe.java8.time._
 
 import io.chumps.orchestra.{Elasticsearch, OrchestraConfig}
-import io.chumps.orchestra.model.Indexed.StagesIndex
-import io.chumps.orchestra.model.Indexed.Stage
+import io.chumps.orchestra.model.Indexed._
 import io.chumps.orchestra.utils.AkkaImplicits._
 
 trait StagesHelpers {
 
-  def stage[Result](name: String)(f: => Result): Result =
-    Await.result(
-      for {
-        stageStart <- Future.successful(Stage(OrchestraConfig.runInfo, name, Instant.now(), None))
-        stageIndexResponse <- Elasticsearch.client
-          .execute(indexInto(StagesIndex.index, StagesIndex.`type`).source(stageStart))
+  def stage[Result](name: String)(f: => Result): Result = Await.result(
+    for {
+      stageStart <- Future.successful(Stage(OrchestraConfig.runInfo, name, Instant.now(), Instant.now()))
+      stageIndexResponse <- Elasticsearch.client
+        .execute(indexInto(StagesIndex.index, StagesIndex.`type`).source(stageStart))
+        .map(_.fold(failure => throw new IOException(failure.error.reason), identity))
+      runningPong = system.scheduler.schedule(1.second, 1.second) {
+        Elasticsearch.client
+          .execute(
+            updateById(StagesIndex.index.name, StagesIndex.`type`, stageIndexResponse.result.id)
+              .source(stageStart.copy(latestUpdateOn = Instant.now()))
+          )
           .map(_.fold(failure => throw new IOException(failure.error.reason), identity))
-        result <- Future(StagesHelpers.stageVar.withValue(Option(name)) {
-          println(s"Stage: $name")
-          f
-        }).transformWith { triedResult =>
-          Elasticsearch.client
-            .execute(
-              updateById(
-                StagesIndex.index.name + "/" + StagesIndex.`type`, // TODO: Remove workaround when fixed in elastic4s
-                StagesIndex.`type`,
-                stageIndexResponse.result.id
-              ).source(stageStart.copy(completedOn = Option(Instant.now())))
-            )
-            .flatMap(_ => Future.fromTry(triedResult))
-        }
-      } yield result,
-      Duration.Inf
-    )
+      }
+    } yield
+      try StagesHelpers.stageVar.withValue(Option(name)) {
+        println(s"Stage: $name")
+        f
+      } finally runningPong.cancel(),
+    Duration.Inf
+  )
 }
 
 object StagesHelpers {

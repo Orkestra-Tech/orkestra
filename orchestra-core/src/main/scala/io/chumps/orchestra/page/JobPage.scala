@@ -119,12 +119,16 @@ object JobPage {
                 <.div(^.display.flex)(statusDisplay),
                 <.div(
                   stages.map { stage =>
-                    val time =
-                      s" ${stage.startedOn.until(stage.completedOn.getOrElse(run.latestUpdateOn), ChronoUnit.SECONDS)}s"
+                    val time = s" ${stage.startedOn.until(stage.latestUpdateOn, ChronoUnit.SECONDS)}s"
 
-                    <.div(^.padding := "4px",
-                          ^.display.`inline-block`,
-                          ^.backgroundColor := Utils.generateColour(stage.name))(s"${stage.name}$time")
+                    <.div(
+                      ^.padding := "4px",
+                      ^.display.`inline-block`,
+                      ^.backgroundColor := Utils.generateColour(stage.name),
+                      ^.opacity := (if (stage.startedOn.isBefore(run.triggeredOn) ||
+                                        stage.latestUpdateOn.isAfter(run.latestUpdateOn)) "0.6"
+                                    else "1")
+                    )(s"${stage.name}$time")
                   }: _*
                 )
               )

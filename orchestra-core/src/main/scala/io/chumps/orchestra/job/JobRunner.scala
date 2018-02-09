@@ -39,11 +39,8 @@ case class JobRunner[ParamValues <: HList: Encoder: Decoder, Result: Encoder: De
     val runningPong = system.scheduler.schedule(0.second, 1.second) {
       Elasticsearch.client
         .execute(
-          updateById(
-            HistoryIndex.index.name + "/" + HistoryIndex.`type`, // TODO: Remove workaround when fixed in elastic4s
-            HistoryIndex.`type`,
-            HistoryIndex.formatId(runInfo)
-          ).doc(Json.obj("latestUpdateOn" -> Instant.now().asJson))
+          updateById(HistoryIndex.index.name, HistoryIndex.`type`, HistoryIndex.formatId(runInfo))
+            .doc(Json.obj("latestUpdateOn" -> Instant.now().asJson))
         )
         .map(_.fold(failure => throw new IOException(failure.error.reason), identity))
     }
@@ -78,11 +75,8 @@ case class JobRunner[ParamValues <: HList: Encoder: Decoder, Result: Encoder: De
 
       _ <- Elasticsearch.client
         .execute(
-          updateById(
-            HistoryIndex.index.name + "/" + HistoryIndex.`type`, // TODO: Remove workaround when fixed in elastic4s
-            HistoryIndex.`type`,
-            HistoryIndex.formatId(runInfo)
-          ).doc(Json.obj("result" -> Option(Right(result): Either[Throwable, Result]).asJson))
+          updateById(HistoryIndex.index.name, HistoryIndex.`type`, HistoryIndex.formatId(runInfo))
+            .doc(Json.obj("result" -> Option(Right(result): Either[Throwable, Result]).asJson))
             .retryOnConflict(1)
         )
         .map(_.fold(failure => throw new IOException(failure.error.reason), identity))
@@ -177,11 +171,8 @@ case class JobRunner[ParamValues <: HList: Encoder: Decoder, Result: Encoder: De
   private def failJob(runInfo: RunInfo, throwable: Throwable) =
     Elasticsearch.client
       .execute(
-        updateById(
-          HistoryIndex.index.name + "/" + HistoryIndex.`type`, // TODO: Remove workaround when fixed in elastic4s
-          HistoryIndex.`type`,
-          HistoryIndex.formatId(runInfo)
-        ).doc(Json.obj("result" -> Option(Left(throwable): Either[Throwable, Result]).asJson))
+        updateById(HistoryIndex.index.name, HistoryIndex.`type`, HistoryIndex.formatId(runInfo))
+          .doc(Json.obj("result" -> Option(Left(throwable): Either[Throwable, Result]).asJson))
           .retryOnConflict(1)
       )
       .flatMap(_ => Future.failed(throwable))

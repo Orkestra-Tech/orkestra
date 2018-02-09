@@ -6,7 +6,7 @@ import com.sksamuel.elastic4s.Index
 import com.sksamuel.elastic4s.http.ElasticDsl._
 
 trait StagesIndex extends Indexed {
-  case class Stage(runInfo: RunInfo, name: String, startedOn: Instant, completedOn: Option[Instant])
+  case class Stage(runInfo: RunInfo, name: String, startedOn: Instant, latestUpdateOn: Instant)
 
   override def indices: Set[IndexDefinition] = super.indices + StagesIndex
 
@@ -20,7 +20,7 @@ trait StagesIndex extends Indexed {
           objectField("runInfo").fields(RunInfo.elasticsearchFields),
           textField("name"),
           dateField("startedOn"),
-          dateField("completedOn")
+          dateField("latestUpdateOn")
         )
       )
   }

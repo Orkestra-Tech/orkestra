@@ -8,7 +8,7 @@ import io.chumps.orchestra.model.RunId
 import io.chumps.orchestra.utils.RunIdOperation
 
 sealed trait GithubTrigger {
-  private[github] def trigger(eventType: String, json: Json): Unit
+  private[github] def trigger(eventType: String, json: Json): Boolean
 }
 
 case class BranchTrigger[ParamValuesNoRunIdBranch <: HList, ParamValuesNoBranch <: HList, ParamValues <: HList] private (
@@ -21,7 +21,7 @@ case class BranchTrigger[ParamValuesNoRunIdBranch <: HList, ParamValuesNoBranch 
   branchInjector: BranchInjector[ParamValuesNoBranch, ParamValues]
 ) extends GithubTrigger {
 
-  private[github] def trigger(eventType: String, json: Json): Unit =
+  private[github] def trigger(eventType: String, json: Json): Boolean =
     eventType match {
       case "push" =>
         val repoName = json.hcursor.downField("repository").downField("full_name").as[String].fold(throw _, identity)
@@ -29,10 +29,10 @@ case class BranchTrigger[ParamValuesNoRunIdBranch <: HList, ParamValuesNoBranch 
 
         if (repoName == repository.name && s"^$branchRegex$$".r.findFirstIn(branch).isDefined) {
           val runId = RunId.random()
-          job.ApiServer
-            .trigger(runId, branchInjector(runIdOperation.inject(values, runId), Branch(branch)))
-        }
-      case _ =>
+          job.ApiServer.trigger(runId, branchInjector(runIdOperation.inject(values, runId), Branch(branch)))
+          true
+        } else false
+      case _ => false
     }
 }
 
@@ -81,7 +81,7 @@ case class PullRequestTrigger[ParamValuesNoRunIdBranch <: HList, ParamValuesNoBr
   branchInjector: BranchInjector[ParamValuesNoBranch, ParamValues]
 ) extends GithubTrigger {
 
-  private[github] def trigger(eventType: String, json: Json): Unit =
+  private[github] def trigger(eventType: String, json: Json): Boolean =
     eventType match {
       case "pull_request" =>
         val eventRepoName =
@@ -94,8 +94,9 @@ case class PullRequestTrigger[ParamValuesNoRunIdBranch <: HList, ParamValuesNoBr
           job.ApiServer.trigger(runId,
                                 branchInjector(runIdOperation.inject(values, runId), Branch(branch)),
                                 Seq(branch))
-        }
-      case _ =>
+          true
+        } else false
+      case _ => false
     }
 }
 
