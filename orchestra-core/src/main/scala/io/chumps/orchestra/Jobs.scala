@@ -37,9 +37,9 @@ trait Jobs extends BackendRoutes { self: OrchestraPlugin =>
   def main(args: Array[String]): Unit = Await.result(
     for {
       _ <- Future(logger.info("Starting Orchestra"))
-      _ <- Elasticsearch.init()
       _ <- OrchestraConfig.runInfoMaybe.fold {
         for {
+          _ <- Elasticsearch.init()
           _ <- Future(onMasterStart())
           _ <- Http().bindAndHandle(routes, "0.0.0.0", OrchestraConfig.port)
         } yield ()
