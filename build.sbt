@@ -96,7 +96,6 @@ lazy val integrationTestsJVM = integrationTests.jvm
     dockerExposedPorts := Seq(8080),
     // Workaround the fact that ENTRYPOINT is not absolute, so when we change the WORKDIR it won't start
     dockerEntrypoint := Seq(s"${(Docker / defaultLinuxInstallLocation).value}/bin/${executableScriptName.value}"),
-    Docker / daemonUser := "root", // Workaround minikube volume rights
     dockerRepository := Option("registry.drivetribe.com/tools"),
     Test / test := (Test / test).dependsOn(Docker / publishLocal).value,
     TestCi / test := (Test / test).dependsOn(Docker / publish).value
