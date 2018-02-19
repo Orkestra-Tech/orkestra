@@ -4,7 +4,7 @@ import java.io.IOException
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-import scala.sys.process
+import scala.sys.process.Process
 
 import akka.http.scaladsl.model.ws.Message
 import akka.stream.scaladsl.{Flow, Keep, Sink, Source}
@@ -22,7 +22,7 @@ trait ShellHelpers {
 
   def sh(script: String)(implicit workDir: Directory): String = {
     runningMessage(script)
-    process.Process(Seq("sh", "-c", script), workDir.file).lineStream.fold("") { (acc, line) =>
+    Process(Seq("sh", "-c", script), workDir.file).lineStream.fold("") { (acc, line) =>
       println(line)
       s"$acc\n$line"
     }
@@ -54,8 +54,9 @@ trait ShellHelpers {
 
     def exec(timeout: Duration = 1.minute, interval: Duration = 300.millis): Future[String] =
       Kubernetes.client.pods
-        .namespace(OrchestraConfig.namespace)(OrchestraConfig.podName)
+        .namespace(OrchestraConfig.namespace)
         .exec(
+          OrchestraConfig.podName,
           flow,
           Option(container.name),
           Seq("sh", "-c", s"cd ${workDir.file.getAbsolutePath} && $script"),

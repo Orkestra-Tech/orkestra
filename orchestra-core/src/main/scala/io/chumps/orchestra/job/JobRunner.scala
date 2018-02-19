@@ -4,7 +4,7 @@ import java.io.IOException
 import java.time.Instant
 
 import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
+import scala.concurrent.Future
 import scala.util.Try
 
 import akka.http.scaladsl.server.Route
@@ -18,16 +18,18 @@ import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.circe._
 import io.circe.generic.auto._
 import io.circe.java8.time._
+import io.circe.parser._
+import io.circe.syntax._
 
 import io.chumps.orchestra.board.Job
 import io.chumps.orchestra.filesystem.Directory
 import io.chumps.orchestra.kubernetes.JobUtils
 import io.chumps.orchestra.model._
 import io.chumps.orchestra.model.Indexed._
-import io.chumps.orchestra.utils.Utils
+import io.chumps.orchestra.utils.{AutowireServer, Utils}
 import io.chumps.orchestra.utils.BaseEncoders._
 import io.chumps.orchestra.utils.AkkaImplicits._
-import io.chumps.orchestra.{AutowireServer, CommonApiServer, Elasticsearch}
+import io.chumps.orchestra.{CommonApiServer, Elasticsearch}
 
 case class JobRunner[ParamValues <: HList: Encoder: Decoder, Result: Encoder: Decoder](
   job: Job[ParamValues, Result, _, _],
@@ -95,40 +97,35 @@ case class JobRunner[ParamValues <: HList: Encoder: Decoder, Result: Encoder: De
     override def trigger(runId: RunId,
                          paramValues: ParamValues,
                          tags: Seq[String] = Seq.empty,
-                         parent: Option[RunInfo] = None): Unit = Await.result(
+                         parent: Option[RunInfo] = None): Future[Unit] =
       for {
         runInfo <- Future.successful(RunInfo(job.id, runId))
         _ <- Elasticsearch.client
           .execute(Elasticsearch.indexRun(runInfo, paramValues, tags, parent))
           .map(_.fold(failure => throw new IOException(failure.error.reason), identity))
         _ <- JobUtils.create(runInfo, podSpec(paramValues))
-      } yield (),
-      1.minute
-    )
+      } yield ()
 
-    override def stop(runId: RunId): Unit = JobUtils.delete(RunInfo(job.id, runId))
+    override def stop(runId: RunId): Future[Unit] = JobUtils.delete(RunInfo(job.id, runId))
 
-    override def tags(): Seq[String] = {
+    override def tags(): Future[Seq[String]] = {
       val aggregationName = "tagsForJob"
-      Await.result(
-        Elasticsearch.client
-          .execute(
-            search(HistoryIndex.index)
-              .query(boolQuery.filter(termQuery("runInfo.jobId", job.id.value)))
-              .aggregations(termsAgg(aggregationName, "tags"))
-              .size(1000)
-          )
-          .map(
-            _.fold(failure => throw new IOException(failure.error.reason), identity).result.aggregations
-              .terms(aggregationName)
-              .buckets
-              .map(_.key)
-          ),
-        1.minute
-      )
+      Elasticsearch.client
+        .execute(
+          search(HistoryIndex.index)
+            .query(boolQuery.filter(termQuery("runInfo.jobId", job.id.value)))
+            .aggregations(termsAgg(aggregationName, "tags"))
+            .size(1000)
+        )
+        .map(
+          _.fold(failure => throw new IOException(failure.error.reason), identity).result.aggregations
+            .terms(aggregationName)
+            .buckets
+            .map(_.key)
+        )
     }
 
-    override def history(page: Page[Instant]): History[ParamValues, Result] = Await.result(
+    override def history(page: Page[Instant]): Future[History[ParamValues, Result]] =
       for {
         runs <- Elasticsearch.client
           .execute(
@@ -161,9 +158,7 @@ case class JobRunner[ParamValues <: HList: Encoder: Decoder, Result: Encoder: De
         else Future.successful(Seq.empty)
       } yield
         History(runs.map(run => (run, stages.filter(_.runInfo.runId == run.runInfo.runId).sortBy(_.startedOn))),
-                Instant.now()),
-      1.minute
-    )
+                Instant.now())
   }
 
   private def failJob(runInfo: RunInfo, throwable: Throwable) =
@@ -179,9 +174,9 @@ case class JobRunner[ParamValues <: HList: Encoder: Decoder, Result: Encoder: De
     import akka.http.scaladsl.server.Directives._
     path(job.id.value / Segments) { segments =>
       entity(as[String]) { entity =>
-        val body = AutowireServer.read[Map[String, String]](entity)
+        val body = AutowireServer.read[Map[String, Json]](parse(entity).fold(throw _, identity))
         val request = job.Api.router(ApiServer).apply(Core.Request(segments, body))
-        onSuccess(request)(complete(_))
+        onSuccess(request)(json => complete(json.noSpaces))
       }
     }
   }

@@ -5,8 +5,5 @@ import io.chumps.orchestra.OrchestraConfig
 
 object MasterPod {
 
-  def get() =
-    Kubernetes.client.pods
-      .namespace(OrchestraConfig.namespace)(OrchestraConfig.podName)
-      .get()
+  def get() = Kubernetes.client.pods.namespace(OrchestraConfig.namespace).get(OrchestraConfig.podName)
 }

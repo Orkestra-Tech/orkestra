@@ -5,7 +5,6 @@ import java.nio.file.Paths
 
 import scala.io.Source
 
-import akka.http.scaladsl.model.Uri
 import com.sksamuel.elastic4s.ElasticsearchClientUri
 import io.circe.generic.auto._
 import io.circe.parser._
@@ -13,7 +12,7 @@ import io.circe.parser._
 import io.chumps.orchestra.model.{EnvRunInfo, RunId, RunInfo}
 
 object OrchestraConfig {
-  def apply(envVar: String) = Option(System.getenv(s"ORCHESTRA_$envVar")).filter(_.nonEmpty)
+  def apply(envVar: String) = sys.env.get(s"ORCHESTRA_$envVar").filter(_.nonEmpty)
 
   lazy val elasticsearchUri = ElasticsearchClientUri(
     OrchestraConfig("ELASTICSEARCH_URI").getOrElse(
@@ -21,10 +20,7 @@ object OrchestraConfig {
     )
   )
   lazy val workspace = OrchestraConfig("WORKSPACE").getOrElse("/opt/docker/workspace")
-  lazy val port =
-    OrchestraConfig("PORT").map(_.toInt).getOrElse(throw new IllegalStateException("ORCHESTRA_PORT should be set"))
-  lazy val url =
-    OrchestraConfig("URL").fold(throw new IllegalStateException("ORCHESTRA_URL should be set"))(Uri(_))
+  lazy val port = OrchestraConfig("PORT").map(_.toInt).getOrElse(80)
   lazy val runInfoMaybe =
     OrchestraConfig("RUN_INFO").map(
       runInfoJson =>

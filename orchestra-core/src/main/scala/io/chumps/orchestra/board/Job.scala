@@ -4,23 +4,20 @@ import java.time.Instant
 
 import scala.concurrent.{ExecutionContext, Future}
 
-import io.circe.parser._
-import io.circe.syntax._
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.auto._
 import io.circe.java8.time._
 import io.k8s.api.core.v1.PodSpec
 
 import io.chumps.orchestra.utils.BaseEncoders._
-import org.scalajs.dom.ext.Ajax
 import shapeless.ops.function.FnToProduct
 import shapeless.{::, _}
 
 import io.chumps.orchestra.job.SimpleJob
 import io.chumps.orchestra.model._
 import io.chumps.orchestra.parameter.{Parameter, ParameterOperations}
-import io.chumps.orchestra.utils.RunIdOperation
-import io.chumps.orchestra.{AutowireServer, Jobs}
+import io.chumps.orchestra.utils.{AutowireClient, AutowireServer, RunIdOperation}
+import io.chumps.orchestra.Jobs
 
 trait Job[ParamValues <: HList, Result, Func, PodSpecFunc] extends Board {
 
@@ -29,10 +26,13 @@ trait Job[ParamValues <: HList, Result, Func, PodSpecFunc] extends Board {
   val name: String
 
   private[orchestra] trait Api {
-    def trigger(runId: RunId, params: ParamValues, tags: Seq[String] = Seq.empty, by: Option[RunInfo] = None): Unit
-    def stop(runId: RunId): Unit
-    def tags(): Seq[String]
-    def history(page: Page[Instant]): History[ParamValues, Result]
+    def trigger(runId: RunId,
+                params: ParamValues,
+                tags: Seq[String] = Seq.empty,
+                by: Option[RunInfo] = None): Future[Unit]
+    def stop(runId: RunId): Future[Unit]
+    def tags(): Future[Seq[String]]
+    def history(page: Page[Instant]): Future[History[ParamValues, Result]]
   }
 
   private[orchestra] object Api {
@@ -43,22 +43,7 @@ trait Job[ParamValues <: HList, Result, Func, PodSpecFunc] extends Board {
                                decoderR: Decoder[Result]) =
       AutowireServer.route[Api](apiServer)
 
-    val client = new autowire.Client[String, Decoder, Encoder] {
-      import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
-
-      override def doCall(req: Request): Future[String] =
-        Ajax
-          .post(
-            url = (Jobs.apiSegment +: Jobs.jobSegment +: id.value +: req.path).mkString("/"),
-            data = req.args.asJson.noSpaces,
-            responseType = "application/json",
-            headers = Map("Content-Type" -> "application/json")
-          )
-          .map(_.responseText)
-
-      override def read[T: Decoder](raw: String) = decode[T](raw).fold(throw _, identity)
-      override def write[T: Encoder](obj: T) = obj.asJson.noSpaces
-    }.apply[Api]
+    val client = AutowireClient(s"${Jobs.jobSegment}/${id.value}")[Api]
   }
 }
 

@@ -47,7 +47,7 @@ trait Cron extends OrchestraPlugin {
     val jobsToRemove = currentCronJobNames.diff(cronJobNames)
     Future.traverse(jobsToRemove) { cronJobName =>
       logger.debug(s"Deleting cronjob $cronJobName")
-      Kubernetes.client.cronJobs.namespace(OrchestraConfig.namespace)(cronJobName).delete()
+      Kubernetes.client.cronJobs.namespace(OrchestraConfig.namespace).delete(cronJobName)
     }
   }
 

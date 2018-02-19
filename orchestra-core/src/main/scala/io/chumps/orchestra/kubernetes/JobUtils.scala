@@ -30,8 +30,8 @@ object JobUtils {
       jobList.items
         .find(RunInfo.fromKubeJob(_) == runInfo)
         .foreach { job =>
-          jobs(job.metadata.get.name.get)
-            .delete(Option(DeleteOptions(propagationPolicy = Option("Foreground"), gracePeriodSeconds = Option(0))))
+          jobs.delete(job.metadata.get.name.get,
+                      Option(DeleteOptions(propagationPolicy = Option("Foreground"), gracePeriodSeconds = Option(0))))
         }
     }
   }

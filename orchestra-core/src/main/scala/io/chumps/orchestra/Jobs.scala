@@ -7,6 +7,8 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Directives.{entity, _}
 import autowire.Core
 import com.typesafe.scalalogging.Logger
+import io.circe.Json
+import io.circe.parser._
 import io.circe.generic.auto._
 import io.circe.shapes._
 import io.circe.java8.time._
@@ -14,8 +16,9 @@ import io.circe.java8.time._
 import io.chumps.orchestra.utils.AkkaImplicits._
 import io.chumps.orchestra.job.JobRunner
 import io.chumps.orchestra.route.BackendRoutes
+import io.chumps.orchestra.utils.AutowireServer
 
-trait Jobs extends BackendRoutes { self: OrchestraPlugin =>
+trait Jobs extends BackendRoutes with OrchestraPlugin {
   private lazy val logger = Logger(getClass)
 
   def jobRunners: Set[JobRunner[_, _]]
@@ -27,9 +30,9 @@ trait Jobs extends BackendRoutes { self: OrchestraPlugin =>
       } ~
         path(Jobs.commonSegment / Segments) { segments =>
           entity(as[String]) { entity =>
-            val body = AutowireServer.read[Map[String, String]](entity)
+            val body = AutowireServer.read[Map[String, Json]](parse(entity).fold(throw _, identity))
             val request = AutowireServer.route[CommonApi](CommonApiServer)(Core.Request(segments, body))
-            onSuccess(request)(complete(_))
+            onSuccess(request)(json => complete(json.noSpaces))
           }
         }
     }

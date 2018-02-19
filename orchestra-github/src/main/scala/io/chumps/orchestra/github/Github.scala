@@ -48,7 +48,7 @@ trait Github extends OrchestraPlugin {
           }
         }
 
-      _ = Http().bindAndHandle(routes, "0.0.0.0", GithubConfig.githubPort)
+      _ = Http().bindAndHandle(routes, "0.0.0.0", GithubConfig.port)
     } yield ()
 }
 
@@ -72,7 +72,7 @@ object Github extends LazyLogging {
       .cloneRepository()
       .setURI(s"https://github.com/${repository.name}.git")
       .setCredentialsProvider(
-        new UsernamePasswordCredentialsProvider(BuildInfo.projectName.toLowerCase, GithubConfig.githubToken)
+        new UsernamePasswordCredentialsProvider(BuildInfo.projectName.toLowerCase, GithubConfig.token)
       )
       .setDirectory(LocalFile(repository.name))
       .setNoCheckout(true)
@@ -86,11 +86,11 @@ object Github extends LazyLogging {
         HttpRequest(
           HttpMethods.POST,
           s"https://api.github.com/repos/${repository.name}/statuses/${ref.name}",
-          List(Authorization(OAuth2BearerToken(GithubConfig.githubToken))),
+          List(Authorization(OAuth2BearerToken(GithubConfig.token))),
           HttpEntity(
             CheckStatus(
               state,
-              s"${OrchestraConfig.url}/#/logs/${OrchestraConfig.runInfo.runId.value}",
+              s"${GithubConfig.url}/#/logs/${OrchestraConfig.runInfo.runId.value}",
               state.description,
               s"${BuildInfo.projectName.toLowerCase}/pull-request"
             ).asJson.noSpaces

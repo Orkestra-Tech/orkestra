@@ -1,9 +1,10 @@
 package io.chumps.orchestra.kubernetes
 
-import io.chumps.orchestra.{AutowireServer, OrchestraConfig}
+import io.chumps.orchestra.OrchestraConfig
 import scala.language.reflectiveCalls
 
 import io.circe.generic.auto._
+import io.circe.syntax._
 import io.k8s.api.batch.v1.JobSpec
 import io.k8s.api.core.v1._
 
@@ -41,7 +42,7 @@ object JobSpecUtils {
   def createJobSpec(masterPod: Pod, runInfo: EnvRunInfo, podSpec: PodSpec) = {
     val masterSpec = masterPod.spec.get
     val masterContainer = masterSpec.containers.head
-    val runInfoEnvVar = EnvVar("ORCHESTRA_RUN_INFO", value = Option(AutowireServer.write(runInfo)))
+    val runInfoEnvVar = EnvVar("ORCHESTRA_RUN_INFO", value = Option(runInfo.asJson.noSpaces))
     val slaveContainer = masterContainer.copy(
       env = Option(distinctOnName(runInfoEnvVar +: masterContainer.env.toSeq.flatten)),
       workingDir = Option(OrchestraConfig.workspace),

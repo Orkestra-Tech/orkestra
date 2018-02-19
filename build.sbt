@@ -1,4 +1,5 @@
 import org.scalajs.sbtplugin.cross.CrossProject
+import sbt.Keys.test
 
 lazy val orchestra = project
   .in(file("."))
@@ -42,15 +43,15 @@ lazy val core = CrossProject("orchestra-core", file("orchestra-core"), CrossType
   )
   .settings(
     name := "Orchestra Core",
-    buildInfoKeys ++= Seq("projectName" -> "Orchestra"),
     buildInfoPackage := s"${organization.value}.orchestra",
+    buildInfoKeys ++= Seq("projectName" -> "Orchestra"),
     resolvers += Opts.resolver.sonatypeSnapshots,
     libraryDependencies ++= Seq(
       "com.chuusai" %%% "shapeless" % "2.3.3",
       "com.vmunier" %% "scalajs-scripts" % "1.1.1",
       "com.beachape" %%% "enumeratum" % "1.5.12" % Provided,
       "com.lihaoyi" %%% "autowire" % "0.2.6",
-      "com.goyeau" %% "kubernetes-client" % "0.0.1+28-929842cd-SNAPSHOT"
+      "com.goyeau" %% "kubernetes-client" % "0.0.1+33-64b1c327-SNAPSHOT"
     ) ++ scalaJsReact.value ++ akkaHttp.value ++ scalaCss.value ++ logging.value ++ circe.value ++ elastic4s.value
   )
 lazy val coreJVM = core.jvm
@@ -74,6 +75,33 @@ lazy val cronJS = cron.js
 lazy val lock = Project("orchestra-lock", file("orchestra-lock"))
   .dependsOn(coreJVM % Provided)
   .settings(name := "Orchestra Lock")
+
+lazy val TestCi = config("testci").extend(Test)
+lazy val integrationTests =
+  CrossProject("orchestra-integration-tests", file("orchestra-integration-tests"), CrossType.Pure)
+    .dependsOn(core)
+    .enablePlugins(BuildInfoPlugin)
+    .settings(
+      name := "Orchestra Integration Tests",
+      libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.4" % Test
+    )
+lazy val integrationTestsJVM = integrationTests.jvm
+  .enablePlugins(JavaAppPackaging)
+  .configs(TestCi)
+  .settings(
+    buildInfoPackage := s"${organization.value}.orchestra.integration.tests",
+    buildInfoKeys ++= Seq("artifactName" -> artifact.value.name),
+    version ~= (_.replace('+', '-')),
+    dockerUpdateLatest := true,
+    dockerExposedPorts := Seq(8080),
+    // Workaround the fact that ENTRYPOINT is not absolute, so when we change the WORKDIR it won't start
+    dockerEntrypoint := Seq(s"${(Docker / defaultLinuxInstallLocation).value}/bin/${executableScriptName.value}"),
+    Docker / daemonUser := "root", // Workaround minikube volume rights
+    dockerRepository := Option("registry.drivetribe.com/tools"),
+    Test / test := (Test / test).dependsOn(Docker / publishLocal).value,
+    TestCi / test := (Test / test).dependsOn(Docker / publish).value
+  )
+lazy val integrationTestsJS = integrationTests.js
 
 /*************** Dependencies ***************/
 lazy val akkaHttp = Def.setting {
