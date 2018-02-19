@@ -93,7 +93,6 @@ lazy val integrationTestsJVM = integrationTests.jvm
     buildInfoKeys ++= Seq("artifactName" -> artifact.value.name),
     version ~= (_.replace('+', '-')),
     dockerUpdateLatest := true,
-    dockerExposedPorts := Seq(8080),
     // Workaround the fact that ENTRYPOINT is not absolute, so when we change the WORKDIR it won't start
     dockerEntrypoint := Seq(s"${(Docker / defaultLinuxInstallLocation).value}/bin/${executableScriptName.value}"),
     dockerRepository := Option("registry.drivetribe.com/tools"),
