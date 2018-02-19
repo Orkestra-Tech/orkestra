@@ -20,7 +20,7 @@ object OrchestraConfig {
     )
   )
   lazy val workspace = OrchestraConfig("WORKSPACE").getOrElse("/opt/docker/workspace")
-  lazy val port = OrchestraConfig("PORT").map(_.toInt).getOrElse(80)
+  lazy val port = OrchestraConfig("PORT").map(_.toInt).getOrElse(8080)
   lazy val runInfoMaybe =
     OrchestraConfig("RUN_INFO").map(
       runInfoJson =>
