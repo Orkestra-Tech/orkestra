@@ -1,14 +1,17 @@
 package io.chumps.orchestra.github
 
+import scala.concurrent.Future
+
 import io.circe.Json
 import shapeless._
 
 import io.chumps.orchestra.job.JobRunner
 import io.chumps.orchestra.model.RunId
 import io.chumps.orchestra.utils.RunIdOperation
+import io.chumps.orchestra.utils.AkkaImplicits._
 
 sealed trait GithubTrigger {
-  private[github] def trigger(eventType: String, json: Json): Boolean
+  private[github] def trigger(eventType: String, json: Json): Future[Boolean]
 }
 
 case class BranchTrigger[ParamValuesNoRunIdBranch <: HList, ParamValuesNoBranch <: HList, ParamValues <: HList] private (
@@ -21,7 +24,7 @@ case class BranchTrigger[ParamValuesNoRunIdBranch <: HList, ParamValuesNoBranch 
   branchInjector: BranchInjector[ParamValuesNoBranch, ParamValues]
 ) extends GithubTrigger {
 
-  private[github] def trigger(eventType: String, json: Json): Boolean =
+  private[github] def trigger(eventType: String, json: Json): Future[Boolean] =
     eventType match {
       case "push" =>
         val repoName = json.hcursor.downField("repository").downField("full_name").as[String].fold(throw _, identity)
@@ -29,10 +32,11 @@ case class BranchTrigger[ParamValuesNoRunIdBranch <: HList, ParamValuesNoBranch 
 
         if (repoName == repository.name && s"^$branchRegex$$".r.findFirstIn(branch).isDefined) {
           val runId = RunId.random()
-          job.ApiServer.trigger(runId, branchInjector(runIdOperation.inject(values, runId), Branch(branch)))
-          true
-        } else false
-      case _ => false
+          job.ApiServer
+            .trigger(runId, branchInjector(runIdOperation.inject(values, runId), Branch(branch)))
+            .map(_ => true)
+        } else Future.successful(false)
+      case _ => Future.successful(false)
     }
 }
 
@@ -81,7 +85,7 @@ case class PullRequestTrigger[ParamValuesNoRunIdBranch <: HList, ParamValuesNoBr
   branchInjector: BranchInjector[ParamValuesNoBranch, ParamValues]
 ) extends GithubTrigger {
 
-  private[github] def trigger(eventType: String, json: Json): Boolean =
+  private[github] def trigger(eventType: String, json: Json): Future[Boolean] =
     eventType match {
       case "pull_request" =>
         val eventRepoName =
@@ -91,12 +95,11 @@ case class PullRequestTrigger[ParamValuesNoRunIdBranch <: HList, ParamValuesNoBr
 
         if (eventRepoName == repository.name) {
           val runId = RunId.random()
-          job.ApiServer.trigger(runId,
-                                branchInjector(runIdOperation.inject(values, runId), Branch(branch)),
-                                Seq(branch))
-          true
-        } else false
-      case _ => false
+          job.ApiServer
+            .trigger(runId, branchInjector(runIdOperation.inject(values, runId), Branch(branch)), Seq(branch))
+            .map(_ => true)
+        } else Future.successful(false)
+      case _ => Future.successful(false)
     }
 }
 

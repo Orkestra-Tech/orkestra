@@ -40,10 +40,11 @@ trait Github extends OrchestraPlugin {
         path("webhooks") {
           headerValueByName("X-GitHub-Event") { eventType =>
             entity(as[String]) { entity =>
-              complete(
-                if (githubTriggers.exists(_.trigger(eventType, parse(entity).fold(throw _, identity)))) OK
-                else Accepted
-              )
+              onSuccess(Future.traverse(githubTriggers)(_.trigger(eventType, parse(entity).fold(throw _, identity)))) {
+                case triggers if triggers.contains(true) => complete(OK)
+                case _                                   => complete(Accepted)
+
+              }
             }
           }
         }
