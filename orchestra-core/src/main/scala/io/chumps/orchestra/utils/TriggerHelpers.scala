@@ -23,25 +23,27 @@ import io.chumps.orchestra.{Elasticsearch, OrchestraConfig}
 trait TriggerHelpers {
 
   implicit class TriggerableNoParamJob[Result: Decoder](jobRunner: JobRunner[HNil, Result]) {
-    def trigger(): Unit =
+    def trigger(): Future[Unit] =
       jobRunner.ApiServer.trigger(OrchestraConfig.runInfo.runId, HNil)
 
-    def run(): Future[Result] = {
-      jobRunner.ApiServer.trigger(OrchestraConfig.runInfo.runId, HNil, parent = Option(OrchestraConfig.runInfo))
-      jobResult(jobRunner)
-    }
+    def run(): Future[Result] =
+      for {
+        _ <- jobRunner.ApiServer.trigger(OrchestraConfig.runInfo.runId, HNil, parent = Option(OrchestraConfig.runInfo))
+        result <- jobResult(jobRunner)
+      } yield result
   }
 
   implicit class TriggerableRunIdJob[Result: Decoder](jobRunner: JobRunner[RunId :: HNil, Result]) {
-    def trigger(): Unit =
+    def trigger(): Future[Unit] =
       jobRunner.ApiServer.trigger(OrchestraConfig.runInfo.runId, OrchestraConfig.runInfo.runId :: HNil)
 
-    def run(): Future[Result] = {
-      jobRunner.ApiServer.trigger(OrchestraConfig.runInfo.runId,
-                                  OrchestraConfig.runInfo.runId :: HNil,
-                                  parent = Option(OrchestraConfig.runInfo))
-      jobResult(jobRunner)
-    }
+    def run(): Future[Result] =
+      for {
+        _ <- jobRunner.ApiServer.trigger(OrchestraConfig.runInfo.runId,
+                                         OrchestraConfig.runInfo.runId :: HNil,
+                                         parent = Option(OrchestraConfig.runInfo))
+        result <- jobResult(jobRunner)
+      } yield result
   }
 
   implicit class TriggerableMultipleParamJob[ParamValues <: HList: Decoder,
@@ -54,16 +56,17 @@ trait TriggerHelpers {
     tupler: Tupler.Aux[ParamValuesNoRunId, TupledValues],
     tupleToHList: Generic.Aux[TupledValues, ParamValuesNoRunId]
   ) {
-    def trigger(values: TupledValues): Unit =
+    def trigger(values: TupledValues): Future[Unit] =
       jobRunner.ApiServer.trigger(OrchestraConfig.runInfo.runId,
                                   runIdOperation.inject(tupleToHList.to(values), OrchestraConfig.runInfo.runId))
 
-    def run(values: TupledValues): Future[Result] = {
-      jobRunner.ApiServer.trigger(OrchestraConfig.runInfo.runId,
-                                  runIdOperation.inject(tupleToHList.to(values), OrchestraConfig.runInfo.runId),
-                                  parent = Option(OrchestraConfig.runInfo))
-      jobResult(jobRunner)
-    }
+    def run(values: TupledValues): Future[Result] =
+      for {
+        _ <- jobRunner.ApiServer.trigger(OrchestraConfig.runInfo.runId,
+                                         runIdOperation.inject(tupleToHList.to(values), OrchestraConfig.runInfo.runId),
+                                         parent = Option(OrchestraConfig.runInfo))
+        result <- jobResult(jobRunner)
+      } yield result
   }
 
   private def jobResult[ParamValues <: HList: Decoder, Result: Decoder](

@@ -83,15 +83,15 @@ lazy val integrationTests =
     .enablePlugins(BuildInfoPlugin)
     .settings(
       name := "Orchestra Integration Tests",
+      version ~= (_.replace('+', '-')),
+      buildInfoPackage := s"${organization.value}.orchestra.integration.tests",
+      buildInfoKeys ++= Seq("artifactName" -> artifact.value.name),
       libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.4" % Test
     )
 lazy val integrationTestsJVM = integrationTests.jvm
   .enablePlugins(JavaAppPackaging)
   .configs(TestCi)
   .settings(
-    buildInfoPackage := s"${organization.value}.orchestra.integration.tests",
-    buildInfoKeys ++= Seq("artifactName" -> artifact.value.name),
-    version ~= (_.replace('+', '-')),
     dockerUpdateLatest := true,
     // Workaround the fact that ENTRYPOINT is not absolute, so when we change the WORKDIR it won't start
     dockerEntrypoint := Seq(s"${(Docker / defaultLinuxInstallLocation).value}/bin/${executableScriptName.value}"),
