@@ -1,4 +1,4 @@
-package io.chumps.orchestra
+package io.chumps.orchestra.utils
 
 import java.net.ConnectException
 import java.time.Instant
@@ -6,14 +6,15 @@ import java.time.Instant
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
-import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.circe._
+import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.http.{HttpClient, JavaClientExceptionWrapper}
 import io.circe.Encoder
 import shapeless._
 
-import io.chumps.orchestra.model.RunInfo
+import io.chumps.orchestra.OrchestraConfig
 import io.chumps.orchestra.model.Indexed._
+import io.chumps.orchestra.model.RunInfo
 import io.chumps.orchestra.utils.AkkaImplicits._
 
 object Elasticsearch {

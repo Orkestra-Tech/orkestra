@@ -2,7 +2,6 @@ package io.chumps.orchestra.utils
 
 import java.io.PrintStream
 
-import io.chumps.orchestra.Elasticsearch
 import io.chumps.orchestra.model.RunId
 
 object Utils {

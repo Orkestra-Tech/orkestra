@@ -26,10 +26,10 @@ import io.chumps.orchestra.filesystem.Directory
 import io.chumps.orchestra.kubernetes.JobUtils
 import io.chumps.orchestra.model._
 import io.chumps.orchestra.model.Indexed._
-import io.chumps.orchestra.utils.{AutowireServer, Utils}
+import io.chumps.orchestra.utils.{AutowireServer, Elasticsearch, Utils}
 import io.chumps.orchestra.utils.BaseEncoders._
 import io.chumps.orchestra.utils.AkkaImplicits._
-import io.chumps.orchestra.{CommonApiServer, Elasticsearch}
+import io.chumps.orchestra.CommonApiServer
 
 case class JobRunner[ParamValues <: HList: Encoder: Decoder, Result: Encoder: Decoder](
   job: Job[ParamValues, Result, _, _],
@@ -56,9 +56,12 @@ case class JobRunner[ParamValues <: HList: Encoder: Decoder, Result: Encoder: De
 
       _ = run.parentJob.foreach { parentJob =>
         system.scheduler.schedule(1.second, 1.second) {
-          if (!CommonApiServer.runningJobs().map(_.runInfo).contains(parentJob))
-            failJob(runInfo, new InterruptedException(s"Parent job ${parentJob.jobId.value} stopped"))
-              .transformWith(_ => JobUtils.delete(runInfo))
+          CommonApiServer.runningJobs().flatMap { runningJobs =>
+            if (runningJobs.exists(_.runInfo == parentJob))
+              failJob(runInfo, new InterruptedException(s"Parent job ${parentJob.jobId.value} stopped"))
+                .transformWith(_ => JobUtils.delete(runInfo))
+            else Future.unit
+          }
         }
       }
 
@@ -144,7 +147,7 @@ case class JobRunner[ParamValues <: HList: Encoder: Decoder, Result: Encoder: De
           )
           .map(
             _.fold(failure => throw new IOException(failure.error.reason), identity).result.hits.hits
-              .flatMap(hit => Try(hit.to[Run[ParamValues, Result]]).toOption)
+              .flatMap(hit => hit.safeTo[Run[ParamValues, Result]].toOption)
           )
 
         stages <- if (runs.nonEmpty)

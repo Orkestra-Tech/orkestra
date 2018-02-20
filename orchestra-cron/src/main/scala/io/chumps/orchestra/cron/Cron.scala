@@ -14,7 +14,8 @@ import io.circe.shapes._
 import io.chumps.orchestra.kubernetes.{JobSpecUtils, Kubernetes, MasterPod}
 import io.chumps.orchestra.model.{EnvRunInfo, JobId, RunInfo}
 import io.chumps.orchestra.utils.AkkaImplicits._
-import io.chumps.orchestra.{Elasticsearch, OrchestraConfig, OrchestraPlugin}
+import io.chumps.orchestra.utils.Elasticsearch
+import io.chumps.orchestra.{OrchestraConfig, OrchestraPlugin}
 
 trait Cron extends OrchestraPlugin {
   private lazy val logger = Logger(getClass)

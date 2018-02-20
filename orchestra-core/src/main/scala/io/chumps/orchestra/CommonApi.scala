@@ -3,8 +3,7 @@ package io.chumps.orchestra
 import java.io.IOException
 import java.time.Instant
 
-import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
+import scala.concurrent.Future
 
 import com.sksamuel.elastic4s.circe._
 import com.sksamuel.elastic4s.http.ElasticDsl._
@@ -17,11 +16,11 @@ import shapeless.HNil
 import io.chumps.orchestra.kubernetes.Kubernetes
 import io.chumps.orchestra.model.Indexed._
 import io.chumps.orchestra.model.{Page, RunId, RunInfo}
-import io.chumps.orchestra.utils.AutowireClient
+import io.chumps.orchestra.utils.{AutowireClient, Elasticsearch}
 
 trait CommonApi {
-  def logs(runId: RunId, page: Page[Instant]): Seq[LogLine]
-  def runningJobs(): Seq[Run[HNil, Unit]]
+  def logs(runId: RunId, page: Page[Instant]): Future[Seq[LogLine]]
+  def runningJobs(): Future[Seq[Run[HNil, Unit]]]
 }
 
 object CommonApi {
@@ -31,7 +30,7 @@ object CommonApi {
 object CommonApiServer extends CommonApi {
   import io.chumps.orchestra.utils.AkkaImplicits._
 
-  override def logs(runId: RunId, page: Page[Instant]): Seq[LogLine] = Await.result(
+  override def logs(runId: RunId, page: Page[Instant]): Future[Seq[LogLine]] =
     Elasticsearch.client
       .execute(
         search(LogsIndex.index)
@@ -48,11 +47,9 @@ object CommonApiServer extends CommonApi {
           )
           .size(math.abs(page.size))
       )
-      .map(_.fold(failure => throw new IOException(failure.error.reason), identity).result.to[LogLine]),
-    1.minute
-  )
+      .map(_.fold(failure => throw new IOException(failure.error.reason), identity).result.to[LogLine])
 
-  override def runningJobs(): Seq[Run[HNil, Unit]] = Await.result(
+  override def runningJobs(): Future[Seq[Run[HNil, Unit]]] =
     for {
       runInfos <- Kubernetes.client.jobs
         .namespace(OrchestraConfig.namespace)
@@ -72,7 +69,5 @@ object CommonApiServer extends CommonApi {
           )
           .map(_.fold(failure => throw new IOException(failure.error.reason), identity).result.to[Run[HNil, Unit]])
       else Future.successful(Seq.empty)
-    } yield runs,
-    1.minute
-  )
+    } yield runs
 }

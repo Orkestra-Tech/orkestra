@@ -13,8 +13,8 @@ import com.sksamuel.elastic4s.{ElasticDate, Index, Minutes}
 import io.circe.generic.auto._
 import io.circe.java8.time._
 
-import io.chumps.orchestra.Elasticsearch
 import io.chumps.orchestra.utils.AkkaImplicits._
+import io.chumps.orchestra.utils.Elasticsearch
 
 case class Lock(id: String) {
 

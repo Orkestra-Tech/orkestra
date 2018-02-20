@@ -18,7 +18,7 @@ import io.chumps.orchestra.model.Indexed.{HistoryIndex, Run}
 import io.chumps.orchestra.model.{RunId, RunInfo}
 import io.chumps.orchestra.utils.BaseEncoders._
 import io.chumps.orchestra.utils.AkkaImplicits._
-import io.chumps.orchestra.{Elasticsearch, OrchestraConfig}
+import io.chumps.orchestra.OrchestraConfig
 
 trait TriggerHelpers {
 
@@ -81,7 +81,7 @@ trait TriggerHelpers {
       run = runResponse
         .fold(failure => throw new IOException(failure.error.reason), identity)
         .result
-        .to[Run[ParamValues, Result]]
-      result <- run.result.fold(jobResult(jobRunner))(_.fold(throw _, Future(_)))
+        .toOpt[Run[ParamValues, Result]]
+      result <- run.fold(jobResult(jobRunner))(_.result.fold(jobResult(jobRunner))(_.fold(throw _, Future(_))))
     } yield result
 }

@@ -16,7 +16,7 @@ import io.circe.java8.time._
 import io.chumps.orchestra.utils.AkkaImplicits._
 import io.chumps.orchestra.job.JobRunner
 import io.chumps.orchestra.route.BackendRoutes
-import io.chumps.orchestra.utils.AutowireServer
+import io.chumps.orchestra.utils.{AutowireServer, Elasticsearch}
 
 trait Jobs extends BackendRoutes with OrchestraPlugin {
   private lazy val logger = Logger(getClass)

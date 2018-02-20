@@ -14,7 +14,7 @@ import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.circe._
 import shapeless._
 
-import io.chumps.orchestra.{Elasticsearch, OrchestraConfig}
+import io.chumps.orchestra.OrchestraConfig
 import io.chumps.orchestra.model.Indexed._
 import io.chumps.orchestra.utils.AkkaImplicits._
 
