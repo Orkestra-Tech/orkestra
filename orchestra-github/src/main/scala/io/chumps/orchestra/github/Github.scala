@@ -55,7 +55,8 @@ trait Github extends OrchestraPlugin {
 
 object Github extends LazyLogging {
 
-  def pullRequest[T](repository: Repository, ref: Branch)(body: Directory => T)(implicit workDir: Directory): T =
+  def pullRequest[Result](repository: Repository,
+                          ref: Branch)(body: Directory => Result)(implicit workDir: Directory): Result =
     try {
       notify(repository, ref, State.Pending)
       clone(repository, ref)
