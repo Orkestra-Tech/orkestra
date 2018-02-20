@@ -48,6 +48,6 @@ trait StagesUtils {
   )
 }
 
-object StagesUtils {
+object StagesUtils extends StagesUtils {
   private[orchestra] val stageVar = new DynamicVariable[Option[String]](None)
 }

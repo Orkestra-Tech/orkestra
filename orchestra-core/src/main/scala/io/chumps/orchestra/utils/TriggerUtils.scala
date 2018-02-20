@@ -85,3 +85,5 @@ trait TriggerUtils {
       result <- run.fold(jobResult(jobRunner))(_.result.fold(jobResult(jobRunner))(_.fold(throw _, Future(_))))
     } yield result
 }
+
+object TriggerUtils extends TriggerUtils

@@ -8,7 +8,7 @@ object GithubConfig {
   def apply(envVar: String) = OrchestraConfig(s"GITHUB_$envVar")
 
   lazy val url =
-    OrchestraConfig("URL").fold(throw new IllegalStateException("ORCHESTRA_GITHUB_URL should be set"))(Uri(_))
+    GithubConfig("URL").fold(throw new IllegalStateException("ORCHESTRA_GITHUB_URL should be set"))(Uri(_))
   lazy val port = GithubConfig("PORT").map(_.toInt).getOrElse(8081)
   lazy val token =
     GithubConfig("TOKEN").getOrElse(throw new IllegalStateException("ORCHESTRA_GITHUB_TOKEN should be set"))

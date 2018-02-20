@@ -56,7 +56,7 @@ case class JobRunner[ParamValues <: HList: Encoder: Decoder, Result: Encoder: De
       _ = run.parentJob.foreach { parentJob =>
         system.scheduler.schedule(1.second, 1.second) {
           CommonApiServer.runningJobs().flatMap { runningJobs =>
-            if (runningJobs.exists(_.runInfo == parentJob))
+            if (!runningJobs.exists(_.runInfo == parentJob))
               failJob(runInfo, new InterruptedException(s"Parent job ${parentJob.jobId.value} stopped"))
                 .transformWith(_ => JobUtils.delete(runInfo))
             else Future.unit
