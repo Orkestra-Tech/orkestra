@@ -18,7 +18,7 @@ import io.chumps.orchestra.OrchestraConfig
 import io.chumps.orchestra.model.Indexed._
 import io.chumps.orchestra.utils.AkkaImplicits._
 
-trait StagesHelpers {
+trait StagesUtils {
 
   def stage[Result](name: String)(f: => Result): Result = Await.result(
     for {
@@ -40,7 +40,7 @@ trait StagesHelpers {
           .map(_.fold(failure => throw new IOException(failure.error.reason), identity))
       }
     } yield
-      try StagesHelpers.stageVar.withValue(Option(name)) {
+      try StagesUtils.stageVar.withValue(Option(name)) {
         println(s"Stage: $name")
         f
       } finally runningPong.cancel(),
@@ -48,6 +48,6 @@ trait StagesHelpers {
   )
 }
 
-object StagesHelpers {
+object StagesUtils {
   private[orchestra] val stageVar = new DynamicVariable[Option[String]](None)
 }

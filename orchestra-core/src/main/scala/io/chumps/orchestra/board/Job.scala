@@ -60,7 +60,6 @@ object Job {
       runIdOperation: RunIdOperation[ParamValuesNoRunId, ParamValues],
       encoderP: Encoder[ParamValues],
       decoderP: Decoder[ParamValues],
-      encoderR: Encoder[Result],
       decoderR: Decoder[Result]
     ) = SimpleJob[ParamValuesNoRunId, ParamValues, HNil, Result, Func, PodSpecFunc](id, name, HNil)
 
@@ -74,7 +73,6 @@ object Job {
       paramOperations: ParameterOperations[Param :: HNil, ParamValuesNoRunId],
       encoderP: Encoder[ParamValues],
       decoderP: Decoder[ParamValues],
-      encoderR: Encoder[Result],
       decoderR: Decoder[Result]
     ) = SimpleJob[ParamValuesNoRunId, ParamValues, Param :: HNil, Result, Func, PodSpecFunc](id, name, param :: HNil)
 
@@ -89,7 +87,6 @@ object Job {
       paramOperations: ParameterOperations[Params, ParamValuesNoRunId],
       encoderP: Encoder[ParamValues],
       decoderP: Decoder[ParamValues],
-      encoderR: Encoder[Result],
       decoderR: Decoder[Result]
     ) =
       SimpleJob[ParamValuesNoRunId, ParamValues, Params, Result, Func, PodSpecFunc](id, name, tupleToHList.to(params))

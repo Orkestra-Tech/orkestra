@@ -5,7 +5,6 @@ import java.time.Instant
 
 import scala.concurrent.duration._
 import scala.concurrent.Future
-import scala.util.Try
 
 import akka.http.scaladsl.server.Route
 import autowire.Core

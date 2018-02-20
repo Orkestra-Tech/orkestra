@@ -20,7 +20,7 @@ import io.chumps.orchestra.utils.BaseEncoders._
 import io.chumps.orchestra.utils.AkkaImplicits._
 import io.chumps.orchestra.OrchestraConfig
 
-trait TriggerHelpers {
+trait TriggerUtils {
 
   implicit class TriggerableNoParamJob[Result: Decoder](jobRunner: JobRunner[HNil, Result]) {
     def trigger(): Future[Unit] =

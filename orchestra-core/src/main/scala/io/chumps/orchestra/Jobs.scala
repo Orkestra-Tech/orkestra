@@ -43,12 +43,12 @@ trait Jobs extends BackendRoutes with OrchestraPlugin {
       _ <- OrchestraConfig.runInfoMaybe.fold {
         for {
           _ <- Elasticsearch.init()
-          _ <- Future(onMasterStart())
+          _ <- onMasterStart()
           _ <- Http().bindAndHandle(routes, "0.0.0.0", OrchestraConfig.port)
         } yield ()
       } { runInfo =>
         for {
-          _ <- Future(onJobStart(runInfo))
+          _ <- onJobStart(runInfo)
           _ <- jobRunners
             .find(_.job.id == runInfo.jobId)
             .getOrElse(throw new IllegalArgumentException(s"No job found for id ${runInfo.jobId}"))

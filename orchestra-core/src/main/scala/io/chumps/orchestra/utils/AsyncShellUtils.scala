@@ -3,7 +3,7 @@ package io.chumps.orchestra.utils
 import java.io.IOException
 
 import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
+import scala.concurrent.Future
 import scala.sys.process.Process
 
 import akka.http.scaladsl.model.ws.Message
@@ -12,15 +12,15 @@ import com.goyeau.kubernetesclient.KubernetesException
 import io.k8s.api.core.v1.Container
 import io.k8s.apimachinery.pkg.apis.meta.v1.Status
 
-import AkkaImplicits._
 import io.chumps.orchestra.OrchestraConfig
 import io.chumps.orchestra.filesystem.Directory
 import io.chumps.orchestra.kubernetes.Kubernetes
+import io.chumps.orchestra.utils.AkkaImplicits._
 
-trait ShellHelpers {
+trait AsyncShellUtils {
   private def runningMessage(script: String) = println(s"Running: $script")
 
-  def sh(script: String)(implicit workDir: Directory): String = {
+  def sh(script: String)(implicit workDir: Directory): Future[String] = Future {
     runningMessage(script)
     Process(Seq("sh", "-c", script), workDir.file).lineStream.fold("") { (acc, line) =>
       println(line)
@@ -28,12 +28,12 @@ trait ShellHelpers {
     }
   }
 
-  def sh(script: String, container: Container)(implicit workDir: Directory): String = {
+  def sh(script: String, container: Container)(implicit workDir: Directory): Future[String] = {
     runningMessage(script)
-    val stageId = StagesHelpers.stageVar.value
+    val stageId = StagesUtils.stageVar.value
 
     val sink = Sink.fold[String, Either[Status, String]]("") { (acc, data) =>
-      StagesHelpers.stageVar.withValue(stageId) {
+      StagesUtils.stageVar.withValue(stageId) {
         data match {
           case Left(Status(_, _, _, _, _, _, _, Some("Success"))) =>
             println()
@@ -69,6 +69,8 @@ trait ShellHelpers {
             exec(timeout - interval, interval)
         }
 
-    Await.result(exec(), Duration.Inf)
+    exec()
   }
 }
+
+object AsyncShellUtils extends AsyncShellUtils
