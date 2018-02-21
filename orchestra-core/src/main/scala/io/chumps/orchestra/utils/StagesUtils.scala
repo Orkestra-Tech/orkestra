@@ -44,11 +44,15 @@ trait StagesUtils {
             )
             .map(_.fold(failure => throw new IOException(failure.error.reason), identity))
         }
-        result = StagesUtils.stageVar.withValue(Option(name)) {
-          println(s"Stage: $name")
-          try Await.result(f, Duration.Inf)
-          finally runningPong.cancel()
+
+        oldValue = StagesUtils.stageVar.value
+        _ = StagesUtils.stageVar.value = Option(name)
+        _ = println(s"Stage: $name")
+        result <- f.transformWith { triedResult =>
+          runningPong.cancel()
+          Future.fromTry(triedResult)
         }
+        _ = StagesUtils.stageVar.value = oldValue
       } yield result
   }
 }

@@ -55,21 +55,26 @@ trait Github extends OrchestraPlugin {
 
 object Github extends LazyLogging {
 
-  def pullRequest[Result](repository: Repository,
-                          ref: Branch)(body: Directory => Result)(implicit workDir: Directory): Result =
-    try {
-      notify(repository, ref, State.Pending)
-      clone(repository, ref)
-      val result = body(Directory(LocalFile(repository.name)))
-      notify(repository, ref, State.Success)
-      result
-    } catch {
-      case t: Throwable =>
-        notify(repository, ref, State.Failure)
-        throw t
-    }
+  def pullRequest[Result](repository: Repository, ref: Branch) = PullRequestBuilder(repository, ref)
 
-  private def clone(repository: Repository, ref: Branch)(implicit workDir: Directory): Unit = {
+  case class PullRequestBuilder(repository: Repository, ref: Branch) {
+    def apply[Result](body: Directory => Result)(implicit workDir: Directory): Result =
+      Await.result(apply((workDir: Directory) => Future(body(workDir))), Duration.Inf)
+
+    def apply[Result](body: Directory => Future[Result])(implicit workDir: Directory): Future[Result] =
+      (for {
+        _ <- pushStatus(repository, ref, State.Pending)
+        _ <- cloneRepo(repository, ref)
+        result <- body(Directory(LocalFile(repository.name)))
+        _ <- pushStatus(repository, ref, State.Success)
+      } yield result).recoverWith {
+        case throwable: Throwable =>
+          pushStatus(repository, ref, State.Failure)
+          Future.failed(throwable)
+      }
+  }
+
+  private def cloneRepo(repository: Repository, ref: Branch)(implicit workDir: Directory) = Future {
     val git = Git
       .cloneRepository()
       .setURI(s"https://github.com/${repository.name}.git")
@@ -82,7 +87,7 @@ object Github extends LazyLogging {
     git.checkout().setName(ref.name).call()
   }
 
-  private def notify(repository: Repository, ref: Branch, state: State) = Await.result(
+  private def pushStatus(repository: Repository, ref: Branch, state: State) =
     for {
       response <- Http().singleRequest(
         HttpRequest(
@@ -107,7 +112,5 @@ object Github extends LazyLogging {
         logger.error(writer.toString)
         throw exception
       }
-    } yield response,
-    1.minute
-  )
+    } yield response
 }
