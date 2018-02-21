@@ -24,11 +24,11 @@ trait Jobs extends BackendRoutes with OrchestraPlugin {
   def jobRunners: Set[JobRunner[_, _]]
 
   override lazy val routes = super.routes ~
-    pathPrefix(Jobs.apiSegment) {
-      pathPrefix(Jobs.jobSegment) {
+    pathPrefix(OrchestraConfig.apiSegment) {
+      pathPrefix(OrchestraConfig.jobSegment) {
         jobRunners.map(_.apiRoute).reduce(_ ~ _)
       } ~
-        path(Jobs.commonSegment / Segments) { segments =>
+        path(OrchestraConfig.commonSegment / Segments) { segments =>
           entity(as[String]) { entity =>
             val body = AutowireServer.read[Map[String, Json]](parse(entity).fold(throw _, identity))
             val request = AutowireServer.route[CommonApi](CommonApiServer)(Core.Request(segments, body))
@@ -58,10 +58,4 @@ trait Jobs extends BackendRoutes with OrchestraPlugin {
     } yield (),
     Duration.Inf
   )
-}
-
-object Jobs {
-  val apiSegment = "api"
-  val jobSegment = "job"
-  val commonSegment = "common"
 }

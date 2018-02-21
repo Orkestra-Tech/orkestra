@@ -24,7 +24,7 @@ trait CommonApi {
 }
 
 object CommonApi {
-  val client = AutowireClient(Jobs.commonSegment)[CommonApi]
+  val client = AutowireClient(OrchestraConfig.commonSegment)[CommonApi]
 }
 
 object CommonApiServer extends CommonApi {

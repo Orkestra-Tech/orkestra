@@ -1,23 +1,13 @@
 package io.chumps.orchestra
 
-import scala.scalajs.js.JSApp
 import scalajs.html.scripts
 
 import akka.http.scaladsl.model.{ContentTypes, HttpEntity}
-import akka.http.scaladsl.server.Directives.{complete, pathSingleSlash, _}
+import akka.http.scaladsl.server.Directives._
 
-import io.chumps.orchestra.css.AppCss
-import io.chumps.orchestra.route.{BackendRoutes, WebRouter}
-import org.scalajs.dom
+import io.chumps.orchestra.route.BackendRoutes
 
-import io.chumps.orchestra.board.Board
-
-trait Boards extends BackendRoutes with JSApp {
-
-  def board: Board
-
-  lazy val topElementId = BuildInfo.projectName.toLowerCase
-
+trait Boards extends BackendRoutes {
   override lazy val routes = super.routes ~
     pathPrefix("assets" / Remaining) { file =>
       encodeResponse {
@@ -34,7 +24,7 @@ trait Boards extends BackendRoutes with JSApp {
              |    <title>${BuildInfo.projectName}</title>
              |</head>
              |<body>
-             |<div id="$topElementId"></div>
+             |<div id="${BuildInfo.projectName.toLowerCase}"></div>
              |${scripts(
                "web",
                name => s"/assets/$name",
@@ -46,9 +36,4 @@ trait Boards extends BackendRoutes with JSApp {
         )
       }
     }
-
-  def main(): Unit = {
-    AppCss.load()
-    WebRouter.router(board).renderIntoDOM(dom.document.getElementById(topElementId))
-  }
 }

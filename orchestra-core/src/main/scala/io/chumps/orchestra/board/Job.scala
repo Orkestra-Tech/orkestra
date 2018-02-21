@@ -17,10 +17,9 @@ import io.chumps.orchestra.job.SimpleJob
 import io.chumps.orchestra.model._
 import io.chumps.orchestra.parameter.{Parameter, ParameterOperations}
 import io.chumps.orchestra.utils.{AutowireClient, AutowireServer, RunIdOperation}
-import io.chumps.orchestra.Jobs
+import io.chumps.orchestra.OrchestraConfig
 
 trait Job[ParamValues <: HList, Result, Func, PodSpecFunc] extends Board {
-
   val id: JobId
   val segment = id.value
   val name: String
@@ -43,7 +42,7 @@ trait Job[ParamValues <: HList, Result, Func, PodSpecFunc] extends Board {
                                decoderR: Decoder[Result]) =
       AutowireServer.route[Api](apiServer)
 
-    val client = AutowireClient(s"${Jobs.jobSegment}/${id.value}")[Api]
+    val client = AutowireClient(s"${OrchestraConfig.jobSegment}/${id.value}")[Api]
   }
 }
 

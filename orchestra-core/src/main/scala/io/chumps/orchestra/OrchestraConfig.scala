@@ -45,4 +45,8 @@ object OrchestraConfig {
       }
       .getOrElse(throw new IOException("Cannot find label controller-uid"))
   }
+
+  val apiSegment = "api"
+  val jobSegment = "job"
+  val commonSegment = "common"
 }

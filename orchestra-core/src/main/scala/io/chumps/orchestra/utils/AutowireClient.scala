@@ -8,7 +8,7 @@ import io.circe.parser._
 import io.circe.syntax._
 import org.scalajs.dom.ext.Ajax
 
-import io.chumps.orchestra.Jobs
+import io.chumps.orchestra.OrchestraConfig
 
 object AutowireClient {
 
@@ -16,7 +16,7 @@ object AutowireClient {
     override def doCall(request: Request): Future[Json] =
       Ajax
         .post(
-          url = (Jobs.apiSegment +: segment +: request.path).mkString("/"),
+          url = (OrchestraConfig.apiSegment +: segment +: request.path).mkString("/"),
           data = request.args.asJson.noSpaces,
           responseType = "application/json",
           headers = Map("Content-Type" -> "application/json")
