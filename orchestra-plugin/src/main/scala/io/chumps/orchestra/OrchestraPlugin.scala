@@ -18,8 +18,6 @@ import webscalajs.WebScalaJS.autoImport._
 
 object OrchestraPlugin extends AutoPlugin {
   object autoImport {
-    val orchestraVersion = settingKey[String]("The version of Orchestra.")
-
     object OrchestraProject {
       def apply(id: String, base: File): CrossProject = {
         val cross = CrossProject(id, base, CrossType.Pure)
@@ -40,12 +38,7 @@ object OrchestraPlugin extends AutoPlugin {
           .settings(libraryDependencies += "io.chumps" %%% "orchestra-core" % BuildInfo.version)
       }
     }
+
+    val orchestraVersion = BuildInfo.version
   }
-  import autoImport._
-
-  override def trigger = allRequirements
-
-  override val projectSettings = Seq(
-    orchestraVersion := BuildInfo.version
-  )
 }
