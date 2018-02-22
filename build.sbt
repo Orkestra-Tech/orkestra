@@ -1,9 +1,8 @@
 import org.scalajs.sbtplugin.cross.CrossProject
-import sbt.Keys.test
 
 lazy val orchestra = project
   .in(file("."))
-  .aggregate(coreJVM, coreJS, githubJVM, githubJS, cronJVM, cronJS, lock)
+  .aggregate(coreJVM, coreJS, githubJVM, githubJS, cronJVM, cronJS, lock, plugin)
   .settings(
     name := "Orchestra",
     ThisBuild / organization := "io.chumps",
@@ -75,6 +74,18 @@ lazy val cronJS = cron.js
 lazy val lock = Project("orchestra-lock", file("orchestra-lock"))
   .dependsOn(coreJVM % Provided)
   .settings(name := "Orchestra Lock")
+
+lazy val plugin = Project("orchestra-plugin", file("orchestra-plugin"))
+  .enablePlugins(BuildInfoPlugin)
+  .settings(
+    name := "Orchestra Plugin",
+    moduleName := "sbt-orchestra",
+    sbtPlugin := true,
+    buildInfoPackage := s"${organization.value}.orchestra",
+    addSbtPlugin("org.scala-js" %% "sbt-scalajs" % "0.6.21"),
+    addSbtPlugin("com.vmunier" %% "sbt-web-scalajs" % "1.0.6"),
+    addSbtPlugin("com.typesafe.sbt" %% "sbt-native-packager" % "1.3.3")
+  )
 
 lazy val TestCi = config("testci").extend(Test)
 lazy val integrationTests =
