@@ -6,7 +6,7 @@ import org.scalajs.dom
 
 import io.chumps.orchestra.board.Board
 
-trait Boards {
+trait UI {
   def board: Board
 
   def main(args: Array[String]): Unit = {

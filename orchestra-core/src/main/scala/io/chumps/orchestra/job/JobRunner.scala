@@ -1,6 +1,6 @@
 package io.chumps.orchestra.job
 
-import java.io.IOException
+import java.io.{IOException, PrintStream}
 import java.time.Instant
 
 import scala.concurrent.duration._
@@ -8,27 +8,26 @@ import scala.concurrent.Future
 
 import akka.http.scaladsl.server.Route
 import autowire.Core
-import io.circe.syntax._
+import com.goyeau.kubernetesclient.KubernetesClient
 import io.circe.{Decoder, Encoder, Json}
 import io.k8s.api.core.v1.PodSpec
 import shapeless._
 import shapeless.ops.function.FnToProduct
 import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.circe._
+import com.sksamuel.elastic4s.http.HttpClient
 import io.circe.generic.auto._
 import io.circe.java8.time._
 import io.circe.parser._
-import io.circe.syntax._
 
 import io.chumps.orchestra.board.Job
 import io.chumps.orchestra.filesystem.Directory
-import io.chumps.orchestra.kubernetes.JobUtils
+import io.chumps.orchestra.kubernetes.Jobs
 import io.chumps.orchestra.model._
 import io.chumps.orchestra.model.Indexed._
-import io.chumps.orchestra.utils.{AutowireServer, Elasticsearch, Utils}
-import io.chumps.orchestra.utils.BaseEncoders._
+import io.chumps.orchestra.utils.{AutowireServer, Elasticsearch, ElasticsearchOutputStream}
 import io.chumps.orchestra.utils.AkkaImplicits._
-import io.chumps.orchestra.CommonApiServer
+import io.chumps.orchestra.{CommonApiServer, OrchestraConfig}
 
 case class JobRunner[ParamValues <: HList: Encoder: Decoder, Result: Encoder: Decoder](
   job: Job[ParamValues, Result, _, _],
@@ -36,18 +35,13 @@ case class JobRunner[ParamValues <: HList: Encoder: Decoder, Result: Encoder: De
   func: ParamValues => Result
 ) {
 
-  private[orchestra] def run(runInfo: RunInfo): Future[Result] = {
-    val runningPong = system.scheduler.schedule(0.second, 1.second) {
-      Elasticsearch.client
-        .execute(
-          updateById(HistoryIndex.index.name, HistoryIndex.`type`, HistoryIndex.formatId(runInfo))
-            .doc(Json.obj("latestUpdateOn" -> Instant.now().asJson))
-        )
-        .map(_.fold(failure => throw new IOException(failure.error.reason), identity))
-    }
+  private[orchestra] def run(runInfo: RunInfo)(implicit orchestraConfig: OrchestraConfig,
+                                               kubernetesClient: KubernetesClient,
+                                               elasticsearchClient: HttpClient): Future[Result] = {
+    val runningPong = system.scheduler.schedule(0.second, 1.second)(JobRunners.pong(runInfo))
 
     (for {
-      run <- Elasticsearch.client
+      run <- elasticsearchClient
         .execute(get(HistoryIndex.index, HistoryIndex.`type`, HistoryIndex.formatId(runInfo)))
         .map(
           _.fold(failure => throw new IOException(failure.error.reason), identity).result.to[Run[ParamValues, Result]]
@@ -55,16 +49,19 @@ case class JobRunner[ParamValues <: HList: Encoder: Decoder, Result: Encoder: De
 
       _ = run.parentJob.foreach { parentJob =>
         system.scheduler.schedule(1.second, 1.second) {
-          CommonApiServer.runningJobs().flatMap { runningJobs =>
+          CommonApiServer().runningJobs().flatMap { runningJobs =>
             if (!runningJobs.exists(_.runInfo == parentJob))
-              failJob(runInfo, new InterruptedException(s"Parent job ${parentJob.jobId.value} stopped"))
-                .transformWith(_ => JobUtils.delete(runInfo))
+              JobRunners
+                .failJob(runInfo, new InterruptedException(s"Parent job ${parentJob.jobId.value} stopped"))
+                .transformWith(_ => Jobs.delete(runInfo))
             else Future.unit
           }
         }
       }
 
-      result = Utils.elasticsearchOutErr(runInfo.runId) {
+      result = JobRunners.withOutErr(
+        new PrintStream(new ElasticsearchOutputStream(Elasticsearch.client, runInfo.runId))
+      ) {
         println(s"Running job ${job.name}")
         val result =
           try func(run.paramValues)
@@ -77,42 +74,39 @@ case class JobRunner[ParamValues <: HList: Encoder: Decoder, Result: Encoder: De
         result
       }
 
-      _ <- Elasticsearch.client
-        .execute(
-          updateById(HistoryIndex.index.name, HistoryIndex.`type`, HistoryIndex.formatId(runInfo))
-            .doc(Json.obj("result" -> Option(Right(result): Either[Throwable, Result]).asJson))
-            .retryOnConflict(1)
-        )
-        .map(_.fold(failure => throw new IOException(failure.error.reason), identity))
+      _ <- JobRunners.succeedJob(runInfo, result)
     } yield result)
-      .recoverWith { case throwable => failJob(runInfo, throwable) }
+      .recoverWith { case throwable => JobRunners.failJob(runInfo, throwable) }
       .transformWith { triedResult =>
         for {
           _ <- Future(runningPong.cancel())
-          _ <- JobUtils.delete(runInfo)
+          _ <- Jobs.delete(runInfo)
           result <- Future.fromTry(triedResult)
         } yield result
       }
   }
 
-  private[orchestra] object ApiServer extends job.Api {
+  private[orchestra] case class ApiServer()(implicit orchestraConfig: OrchestraConfig,
+                                            kubernetesClient: KubernetesClient,
+                                            elasticsearchClient: HttpClient)
+      extends job.Api {
     override def trigger(runId: RunId,
                          paramValues: ParamValues,
                          tags: Seq[String] = Seq.empty,
                          parent: Option[RunInfo] = None): Future[Unit] =
       for {
         runInfo <- Future.successful(RunInfo(job.id, runId))
-        _ <- Elasticsearch.client
+        _ <- elasticsearchClient
           .execute(Elasticsearch.indexRun(runInfo, paramValues, tags, parent))
           .map(_.fold(failure => throw new IOException(failure.error.reason), identity))
-        _ <- JobUtils.create(runInfo, podSpec(paramValues))
+        _ <- Jobs.create(runInfo, podSpec(paramValues))
       } yield ()
 
-    override def stop(runId: RunId): Future[Unit] = JobUtils.delete(RunInfo(job.id, runId))
+    override def stop(runId: RunId): Future[Unit] = Jobs.delete(RunInfo(job.id, runId))
 
     override def tags(): Future[Seq[String]] = {
       val aggregationName = "tagsForJob"
-      Elasticsearch.client
+      elasticsearchClient
         .execute(
           search(HistoryIndex.index)
             .query(boolQuery.filter(termQuery("runInfo.jobId", job.id.value)))
@@ -129,7 +123,7 @@ case class JobRunner[ParamValues <: HList: Encoder: Decoder, Result: Encoder: De
 
     override def history(page: Page[Instant]): Future[History[ParamValues, Result]] =
       for {
-        runs <- Elasticsearch.client
+        runs <- elasticsearchClient
           .execute(
             search(HistoryIndex.index)
               .query(boolQuery.filter(termQuery("runInfo.jobId", job.id.value)))
@@ -150,7 +144,7 @@ case class JobRunner[ParamValues <: HList: Encoder: Decoder, Result: Encoder: De
           )
 
         stages <- if (runs.nonEmpty)
-          Elasticsearch.client
+          elasticsearchClient
             .execute(
               search(StagesIndex.index)
                 .query(boolQuery.filter(termsQuery("runInfo.runId", runs.toSeq.map(_.runInfo.runId.value)))) // TODO remove .toSeq when fixed in elastic4s
@@ -163,21 +157,14 @@ case class JobRunner[ParamValues <: HList: Encoder: Decoder, Result: Encoder: De
                 Instant.now())
   }
 
-  private def failJob(runInfo: RunInfo, throwable: Throwable) =
-    Elasticsearch.client
-      .execute(
-        updateById(HistoryIndex.index.name, HistoryIndex.`type`, HistoryIndex.formatId(runInfo))
-          .doc(Json.obj("result" -> Option(Left(throwable): Either[Throwable, Result]).asJson))
-          .retryOnConflict(1)
-      )
-      .flatMap(_ => Future.failed(throwable))
-
-  private[orchestra] val apiRoute: Route = {
+  private[orchestra] def apiRoute(implicit orchestraConfig: OrchestraConfig,
+                                  kubernetesClient: KubernetesClient,
+                                  elasticsearchClient: HttpClient): Route = {
     import akka.http.scaladsl.server.Directives._
     path(job.id.value / Segments) { segments =>
       entity(as[String]) { entity =>
         val body = AutowireServer.read[Map[String, Json]](parse(entity).fold(throw _, identity))
-        val request = job.Api.router(ApiServer).apply(Core.Request(segments, body))
+        val request = job.Api.router(ApiServer()).apply(Core.Request(segments, body))
         onSuccess(request)(json => complete(json.noSpaces))
       }
     }

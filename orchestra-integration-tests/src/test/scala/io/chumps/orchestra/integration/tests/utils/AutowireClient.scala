@@ -8,7 +8,7 @@ import io.circe.{Decoder, Encoder, Json}
 import io.circe.parser._
 import io.circe.syntax._
 
-import io.chumps.orchestra.Jobs
+import io.chumps.orchestra.OrchestraConfig
 import io.chumps.orchestra.utils.AkkaImplicits._
 
 object AutowireClient {
@@ -21,9 +21,9 @@ object AutowireClient {
           .proxy(
             DeployOrchestration.service.metadata.get.name.get,
             HttpMethods.POST,
-            (Jobs.apiSegment +: segment +: request.path).mkString("/"),
-            Option(request.args.asJson.noSpaces),
-            ContentTypes.`application/json`
+            s"/${(OrchestraConfig.apiSegment +: segment +: request.path).mkString("/")}",
+            ContentTypes.`application/json`,
+            Option(request.args.asJson.noSpaces)
           )
           .map(raw => parse(raw).fold(throw _, identity))
 

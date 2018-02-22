@@ -19,7 +19,7 @@ import org.scalajs.dom.{document, window}
 
 import io.chumps.orchestra.model.Page
 import io.chumps.orchestra.model.Indexed.LogLine
-import io.chumps.orchestra.utils.Utils
+import io.chumps.orchestra.utils.Colours
 
 object LogsPage {
   case class Props(page: LogsPageRoute)
@@ -36,7 +36,7 @@ object LogsPage {
           case Some(log) if log.nonEmpty && log.size <= PrettyDisplayMaxLines =>
             log.zipWithIndex.toTagMod {
               case (logLine, lineNumber) =>
-                <.tr(^.backgroundColor :=? logLine.stageName.map(name => Utils.generateColour(name)))(
+                <.tr(^.backgroundColor :=? logLine.stageName.map(name => Colours.generate(name)))(
                   <.td(^.width := "50px", ^.verticalAlign.`text-top`, ^.textAlign.right, ^.paddingRight := "5px")(
                     lineNumber + 1
                   ),

@@ -11,9 +11,9 @@ import com.goyeau.kubernetesclient.KubeConfig
 
 object Kubernetes {
 
-  lazy val client = KubernetesClient(
+  def client(implicit orchestraConfig: OrchestraConfig) = KubernetesClient(
     KubeConfig(
-      server = OrchestraConfig.kubeUri,
+      server = orchestraConfig.kubeUri,
       oauthToken = Option(Source.fromFile("/var/run/secrets/kubernetes.io/serviceaccount/token").mkString),
       caCertFile = Option(new File("/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"))
     )

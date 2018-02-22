@@ -6,7 +6,8 @@ import io.chumps.orchestra.filesystem.DirectoryUtils
 import io.circe.shapes.HListInstances
 import io.circe.generic.AutoDerivation
 
-import io.chumps.orchestra.utils.{AsyncShellUtils, ShellUtils, StagesUtils, TriggerUtils}
+import io.chumps.orchestra.kubernetes.Kubernetes
+import io.chumps.orchestra.utils._
 
 trait AutoTuple1 {
   implicit def autoTuple1[T](o: T): Tuple1[T] = Tuple1(o)
@@ -18,8 +19,12 @@ object AsyncDsl
     with AutoTuple1
     with DirectoryUtils
     with TriggerUtils
-    with StagesUtils
-    with AsyncShellUtils
+    with StageUtils
+    with AsyncShellUtils {
+  override implicit val orchestraConfig = OrchestraConfig.fromEnvVars()
+  override val kubernetesClient = Kubernetes.client
+  override val elasticsearchClient = Elasticsearch.client
+}
 
 object Dsl
     extends HListInstances
@@ -27,5 +32,9 @@ object Dsl
     with AutoTuple1
     with DirectoryUtils
     with TriggerUtils
-    with StagesUtils
-    with ShellUtils
+    with StageUtils
+    with ShellUtils {
+  override implicit val orchestraConfig = OrchestraConfig.fromEnvVars()
+  override val kubernetesClient = Kubernetes.client
+  override val elasticsearchClient = Elasticsearch.client
+}

@@ -1,3 +1,3 @@
 package io.chumps.orchestra
 
-trait Jobs
+trait Orchestra

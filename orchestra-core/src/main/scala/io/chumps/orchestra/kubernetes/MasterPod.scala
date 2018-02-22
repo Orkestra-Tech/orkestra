@@ -1,9 +1,11 @@
 package io.chumps.orchestra.kubernetes
 
-import io.chumps.orchestra.utils.AkkaImplicits._
+import com.goyeau.kubernetesclient.KubernetesClient
+
 import io.chumps.orchestra.OrchestraConfig
 
 object MasterPod {
 
-  def get() = Kubernetes.client.pods.namespace(OrchestraConfig.namespace).get(OrchestraConfig.podName)
+  def get()(implicit orchestraConfig: OrchestraConfig, kubernetesClient: KubernetesClient) =
+    kubernetesClient.pods.namespace(orchestraConfig.namespace).get(orchestraConfig.podName)
 }

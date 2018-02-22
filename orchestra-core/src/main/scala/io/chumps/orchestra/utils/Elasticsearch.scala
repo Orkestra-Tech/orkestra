@@ -1,6 +1,5 @@
 package io.chumps.orchestra.utils
 
-import java.net.ConnectException
 import java.time.Instant
 
 import scala.concurrent.Future
@@ -18,14 +17,17 @@ import io.chumps.orchestra.model.RunInfo
 import io.chumps.orchestra.utils.AkkaImplicits._
 
 object Elasticsearch {
-  lazy val client = HttpClient(OrchestraConfig.elasticsearchUri)
+  def client(implicit orchestraConfig: OrchestraConfig) = HttpClient(orchestraConfig.elasticsearchUri)
 
-  def init(): Future[Unit] =
-    Future.traverse(indices)(index => client.execute(index.createDefinition)).map(_ => ()).recoverWith {
-      case JavaClientExceptionWrapper(_: ConnectException) =>
-        Thread.sleep(1.second.toMillis)
-        init()
-    }
+  def init()(implicit elasticsearchClient: HttpClient): Future[Unit] =
+    Future
+      .traverse(indices)(indexDef => elasticsearchClient.execute(indexDef.createDefinition))
+      .map(_ => ())
+      .recoverWith {
+        case JavaClientExceptionWrapper(_) =>
+          Thread.sleep(1.second.toMillis)
+          init()
+      }
 
   def indexRun[ParamValues <: HList: Encoder](runInfo: RunInfo,
                                               paramValues: ParamValues,

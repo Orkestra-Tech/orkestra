@@ -6,7 +6,5 @@ object BaseEncoders {
   implicit val encodeThrowable: Encoder[Throwable] = throwable =>
     Json.obj("message" -> Json.fromString(Option(throwable.getMessage).getOrElse("")))
   implicit val decodeThrowable: Decoder[Throwable] = cursor =>
-    for {
-      message <- cursor.downField("message").as[String]
-    } yield new Throwable(message)
+    cursor.downField("message").as[String].map(new Throwable(_))
 }

@@ -4,8 +4,10 @@ import java.io.IOException
 
 import scala.concurrent.Future
 
+import com.goyeau.kubernetesclient.KubernetesClient
 import com.sksamuel.elastic4s.circe._
 import com.sksamuel.elastic4s.http.ElasticDsl._
+import com.sksamuel.elastic4s.http.HttpClient
 import io.circe.Decoder
 import io.circe.generic.auto._
 import io.circe.java8.time._
@@ -19,29 +21,37 @@ import io.chumps.orchestra.model.{RunId, RunInfo}
 import io.chumps.orchestra.utils.BaseEncoders._
 import io.chumps.orchestra.utils.AkkaImplicits._
 import io.chumps.orchestra.OrchestraConfig
+import io.chumps.orchestra.kubernetes.Kubernetes
 
 trait TriggerUtils {
+  protected implicit val orchestraConfig: OrchestraConfig
+  protected implicit val kubernetesClient: KubernetesClient
+  protected implicit val elasticsearchClient: HttpClient
 
   implicit class TriggerableNoParamJob[Result: Decoder](jobRunner: JobRunner[HNil, Result]) {
     def trigger(): Future[Unit] =
-      jobRunner.ApiServer.trigger(OrchestraConfig.runInfo.runId, HNil)
+      jobRunner.ApiServer().trigger(orchestraConfig.runInfo.runId, HNil)
 
     def run(): Future[Result] =
       for {
-        _ <- jobRunner.ApiServer.trigger(OrchestraConfig.runInfo.runId, HNil, parent = Option(OrchestraConfig.runInfo))
+        _ <- jobRunner
+          .ApiServer()
+          .trigger(orchestraConfig.runInfo.runId, HNil, parent = Option(orchestraConfig.runInfo))
         result <- jobResult(jobRunner)
       } yield result
   }
 
   implicit class TriggerableRunIdJob[Result: Decoder](jobRunner: JobRunner[RunId :: HNil, Result]) {
     def trigger(): Future[Unit] =
-      jobRunner.ApiServer.trigger(OrchestraConfig.runInfo.runId, OrchestraConfig.runInfo.runId :: HNil)
+      jobRunner.ApiServer().trigger(orchestraConfig.runInfo.runId, orchestraConfig.runInfo.runId :: HNil)
 
     def run(): Future[Result] =
       for {
-        _ <- jobRunner.ApiServer.trigger(OrchestraConfig.runInfo.runId,
-                                         OrchestraConfig.runInfo.runId :: HNil,
-                                         parent = Option(OrchestraConfig.runInfo))
+        _ <- jobRunner
+          .ApiServer()
+          .trigger(orchestraConfig.runInfo.runId,
+                   orchestraConfig.runInfo.runId :: HNil,
+                   parent = Option(orchestraConfig.runInfo))
         result <- jobResult(jobRunner)
       } yield result
   }
@@ -57,14 +67,18 @@ trait TriggerUtils {
     tupleToHList: Generic.Aux[TupledValues, ParamValuesNoRunId]
   ) {
     def trigger(values: TupledValues): Future[Unit] =
-      jobRunner.ApiServer.trigger(OrchestraConfig.runInfo.runId,
-                                  runIdOperation.inject(tupleToHList.to(values), OrchestraConfig.runInfo.runId))
+      jobRunner
+        .ApiServer()
+        .trigger(orchestraConfig.runInfo.runId,
+                 runIdOperation.inject(tupleToHList.to(values), orchestraConfig.runInfo.runId))
 
     def run(values: TupledValues): Future[Result] =
       for {
-        _ <- jobRunner.ApiServer.trigger(OrchestraConfig.runInfo.runId,
-                                         runIdOperation.inject(tupleToHList.to(values), OrchestraConfig.runInfo.runId),
-                                         parent = Option(OrchestraConfig.runInfo))
+        _ <- jobRunner
+          .ApiServer()
+          .trigger(orchestraConfig.runInfo.runId,
+                   runIdOperation.inject(tupleToHList.to(values), orchestraConfig.runInfo.runId),
+                   parent = Option(orchestraConfig.runInfo))
         result <- jobResult(jobRunner)
       } yield result
   }
@@ -73,10 +87,10 @@ trait TriggerUtils {
     jobRunner: JobRunner[ParamValues, Result]
   ): Future[Result] =
     for {
-      runResponse <- Elasticsearch.client.execute(
+      runResponse <- elasticsearchClient.execute(
         get(HistoryIndex.index,
             HistoryIndex.`type`,
-            HistoryIndex.formatId(RunInfo(jobRunner.job.id, OrchestraConfig.runInfo.runId)))
+            HistoryIndex.formatId(RunInfo(jobRunner.job.id, orchestraConfig.runInfo.runId)))
       )
       run = runResponse
         .fold(failure => throw new IOException(failure.error.reason), identity)
@@ -86,4 +100,8 @@ trait TriggerUtils {
     } yield result
 }
 
-object TriggerUtils extends TriggerUtils
+object TriggerUtils extends TriggerUtils {
+  override implicit val orchestraConfig = OrchestraConfig.fromEnvVars()
+  override val kubernetesClient = Kubernetes.client
+  override val elasticsearchClient = Elasticsearch.client
+}

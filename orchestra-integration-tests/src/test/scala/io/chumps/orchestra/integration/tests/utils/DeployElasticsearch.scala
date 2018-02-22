@@ -16,12 +16,7 @@ object DeployElasticsearch {
     spec = Option(
       ServiceSpec(
         selector = appElasticsearchLabel,
-        ports = Option(
-          Seq(
-            ServicePort(name = Option("http"), port = 9200, targetPort = Option(IntValue(9200))),
-            ServicePort(name = Option("transport"), port = 9300, targetPort = Option(IntValue(9300)))
-          )
-        )
+        ports = Option(Seq(ServicePort(port = 9200, targetPort = Option(IntValue(9200)))))
       )
     )
   )
@@ -75,7 +70,7 @@ object DeployElasticsearch {
                         valueFrom =
                           Option(EnvVarSource(fieldRef = Option(ObjectFieldSelector(fieldPath = "metadata.name"))))
                       ),
-                      EnvVar(name = "discovery.zen.ping.unicast.hosts", value = Option("elasticsearch-internal"))
+                      EnvVar(name = "discovery.zen.ping.unicast.hosts", value = internalService.metadata.get.name)
                     )
                   ),
                   volumeMounts = Option(Seq(VolumeMount(name = "data", mountPath = "/usr/share/elasticsearch/data")))

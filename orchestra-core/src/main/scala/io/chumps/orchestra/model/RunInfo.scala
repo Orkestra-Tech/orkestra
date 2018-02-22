@@ -18,10 +18,9 @@ object RunInfo {
         envs <- container.env
         env <- envs.find(_.name == "ORCHESTRA_RUN_INFO")
         runInfoJson <- env.value
-        jobUid = RunId(job.metadata.get.uid.get)
       } yield
         decode[EnvRunInfo](runInfoJson)
-          .fold(throw _, runInfo => RunInfo(runInfo.jobId, runInfo.runId.getOrElse(jobUid)))
+          .fold(throw _, runInfo => RunInfo(runInfo.jobId, runInfo.runId.getOrElse(RunId(job.metadata.get.uid.get))))
     ).getOrElse(throw new IllegalArgumentException(s"Wrong job format: $job"))
 
   lazy val elasticsearchFields = Seq(

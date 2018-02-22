@@ -44,14 +44,17 @@ lazy val core = CrossProject("orchestra-core", file("orchestra-core"), CrossType
     name := "Orchestra Core",
     buildInfoPackage := s"${organization.value}.orchestra",
     buildInfoKeys ++= Seq("projectName" -> "Orchestra"),
-    resolvers += Opts.resolver.sonatypeSnapshots,
+    resolvers ++= Seq(
+      Opts.resolver.sonatypeSnapshots,
+      "btomala at bintray" at "https://dl.bintray.com/btomala/maven/"
+    ),
     libraryDependencies ++= Seq(
       "com.chuusai" %%% "shapeless" % "2.3.3",
       "com.vmunier" %% "scalajs-scripts" % "1.1.1",
       "com.beachape" %%% "enumeratum" % "1.5.12" % Provided,
       "com.lihaoyi" %%% "autowire" % "0.2.6",
-      "com.goyeau" %% "kubernetes-client" % "0.0.1+33-64b1c327-SNAPSHOT"
-    ) ++ scalaJsReact.value ++ akkaHttp.value ++ scalaCss.value ++ logging.value ++ circe.value ++ elastic4s.value
+      "com.goyeau" %% "kubernetes-client" % "0.0.2+3-ec9869ea+20180302-1440-SNAPSHOT"
+    ) ++ scalaJsReact.value ++ akkaHttp.value ++ scalaCss.value ++ logging.value ++ circe.value ++ elastic4s.value ++ scalaTest.value
   )
 lazy val coreJVM = core.jvm
 lazy val coreJS = core.js
@@ -97,7 +100,7 @@ lazy val integrationTests =
       version ~= (_.replace('+', '-')),
       buildInfoPackage := s"${organization.value}.orchestra.integration.tests",
       buildInfoKeys ++= Seq("artifactName" -> artifact.value.name),
-      libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.4" % Test
+      libraryDependencies ++= scalaTest.value
     )
 lazy val integrationTestsJVM = integrationTests.jvm
   .enablePlugins(JavaAppPackaging)
@@ -153,7 +156,7 @@ lazy val react = Def.setting {
 }
 
 lazy val circe = Def.setting {
-  val version = "0.9.0"
+  val version = "0.9.1"
   Seq(
     "io.circe" %%% "circe-core" % version,
     "io.circe" %%% "circe-generic" % version,
@@ -167,6 +170,11 @@ lazy val elastic4s = Def.setting {
   val elastic4sVersion = "6.1.4"
   Seq(
     "com.sksamuel.elastic4s" %% "elastic4s-http" % elastic4sVersion,
-    "com.sksamuel.elastic4s" %% "elastic4s-circe" % elastic4sVersion
+    "com.sksamuel.elastic4s" %% "elastic4s-circe" % elastic4sVersion,
+    "com.sksamuel.elastic4s" %% "elastic4s-testkit" % elastic4sVersion % Test
   )
+}
+
+lazy val scalaTest = Def.setting {
+  Seq("org.scalatest" %% "scalatest" % "3.0.4" % Test)
 }

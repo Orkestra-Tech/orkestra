@@ -29,7 +29,7 @@ class ElasticsearchOutputStream(client: HttpClient, runId: RunId) extends Output
     if (index != 0) {
       lineBuffer.updateAndGet(
         _ ++ stringBuffer.value.substring(0, index).split("\\n").map { line =>
-          LogLine(runId, Instant.now(), line, StagesUtils.stageVar.value)
+          LogLine(runId, Instant.now(), line, ElasticsearchOutputStream.stageVar.value)
         }
       )
       stringBuffer.value.delete(0, index)
@@ -60,4 +60,8 @@ class ElasticsearchOutputStream(client: HttpClient, runId: RunId) extends Output
     scheduledFlush.cancel()
     flush()
   }
+}
+
+object ElasticsearchOutputStream {
+  private[orchestra] val stageVar = new DynamicVariable[Option[String]](None)
 }

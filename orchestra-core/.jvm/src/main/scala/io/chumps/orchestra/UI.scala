@@ -7,7 +7,9 @@ import akka.http.scaladsl.server.Directives._
 
 import io.chumps.orchestra.route.BackendRoutes
 
-trait Boards extends BackendRoutes {
+trait UI extends BackendRoutes {
+  protected implicit val orchestraConfig: OrchestraConfig
+
   override lazy val routes = super.routes ~
     pathPrefix("assets" / Remaining) { file =>
       encodeResponse {
@@ -22,6 +24,7 @@ trait Boards extends BackendRoutes {
              |<html>
              |<head>
              |    <title>${BuildInfo.projectName}</title>
+             |    <meta name="basePath" content="${orchestraConfig.basePath}">
              |</head>
              |<body>
              |<div id="${BuildInfo.projectName.toLowerCase}"></div>

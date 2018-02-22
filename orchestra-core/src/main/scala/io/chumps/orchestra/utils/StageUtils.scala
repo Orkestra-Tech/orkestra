@@ -5,20 +5,22 @@ import java.time.Instant
 
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
-import scala.util.DynamicVariable
 
 import io.circe.generic.auto._
 import io.circe.java8.time._
 import io.circe.shapes._
 import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.circe._
+import com.sksamuel.elastic4s.http.HttpClient
 import shapeless._
 
 import io.chumps.orchestra.OrchestraConfig
 import io.chumps.orchestra.model.Indexed._
 import io.chumps.orchestra.utils.AkkaImplicits._
 
-trait StagesUtils {
+trait StageUtils {
+  protected val orchestraConfig: OrchestraConfig
+  protected val elasticsearchClient: HttpClient
 
   def stage[Result](name: String) = StageBuilder(name)
 
@@ -27,17 +29,17 @@ trait StagesUtils {
 
     def apply[Result](f: => Future[Result]): Future[Result] =
       for {
-        run <- Elasticsearch.client
-          .execute(get(HistoryIndex.index, HistoryIndex.`type`, HistoryIndex.formatId(OrchestraConfig.runInfo)))
+        run <- elasticsearchClient
+          .execute(get(HistoryIndex.index, HistoryIndex.`type`, HistoryIndex.formatId(orchestraConfig.runInfo)))
           .map(_.fold(failure => throw new IOException(failure.error.reason), identity).result.to[Run[HNil, Unit]])
 
-        stageStart = Stage(OrchestraConfig.runInfo, run.parentJob, name, Instant.now(), Instant.now())
-        stageIndexResponse <- Elasticsearch.client
+        stageStart = Stage(orchestraConfig.runInfo, run.parentJob, name, Instant.now(), Instant.now())
+        stageIndexResponse <- elasticsearchClient
           .execute(indexInto(StagesIndex.index, StagesIndex.`type`).source(stageStart))
           .map(_.fold(failure => throw new IOException(failure.error.reason), identity))
 
         runningPong = system.scheduler.schedule(1.second, 1.second) {
-          Elasticsearch.client
+          elasticsearchClient
             .execute(
               updateById(StagesIndex.index.name, StagesIndex.`type`, stageIndexResponse.result.id)
                 .source(stageStart.copy(latestUpdateOn = Instant.now()))
@@ -45,18 +47,19 @@ trait StagesUtils {
             .map(_.fold(failure => throw new IOException(failure.error.reason), identity))
         }
 
-        oldValue = StagesUtils.stageVar.value
-        _ = StagesUtils.stageVar.value = Option(name)
+        oldValue = ElasticsearchOutputStream.stageVar.value
+        _ = ElasticsearchOutputStream.stageVar.value = Option(name)
         _ = println(s"Stage: $name")
         result <- f.transformWith { triedResult =>
           runningPong.cancel()
           Future.fromTry(triedResult)
         }
-        _ = StagesUtils.stageVar.value = oldValue
+        _ = ElasticsearchOutputStream.stageVar.value = oldValue
       } yield result
   }
 }
 
-object StagesUtils extends StagesUtils {
-  private[orchestra] val stageVar = new DynamicVariable[Option[String]](None)
+object StageUtils extends StageUtils {
+  override implicit val orchestraConfig = OrchestraConfig.fromEnvVars()
+  override val elasticsearchClient = Elasticsearch.client
 }

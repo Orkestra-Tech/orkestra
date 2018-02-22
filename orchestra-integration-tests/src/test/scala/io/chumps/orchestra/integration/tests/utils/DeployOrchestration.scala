@@ -20,7 +20,7 @@ object DeployOrchestration {
     spec = Option(
       ServiceSpec(
         selector = appOrchestrationLabel,
-        ports = Option(Seq(ServicePort(port = 80, targetPort = Option(IntValue(80)))))
+        ports = Option(Seq(ServicePort(port = 80, targetPort = Option(IntValue(8080)))))
       )
     )
   )
@@ -67,7 +67,7 @@ object DeployOrchestration {
   def awaitOrchestrationReady(kubernetesClient: KubernetesClient): Future[Unit] =
     kubernetesClient.services
       .namespace(Kubernetes.namespace.metadata.get.name.get)
-      .proxy(service.metadata.get.name.get, HttpMethods.GET, "api")
+      .proxy(service.metadata.get.name.get, HttpMethods.GET, "/api")
       .map(_ => ())
       .recoverWith {
         case KubernetesException(StatusCodes.ServiceUnavailable.intValue, _, _) =>

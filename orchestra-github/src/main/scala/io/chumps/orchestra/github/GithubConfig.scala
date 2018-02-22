@@ -5,7 +5,7 @@ import akka.http.scaladsl.model.Uri
 import io.chumps.orchestra.OrchestraConfig
 
 object GithubConfig {
-  def apply(envVar: String) = OrchestraConfig(s"GITHUB_$envVar")
+  def apply(envVar: String) = OrchestraConfig.fromEnvVar(s"GITHUB_$envVar")
 
   lazy val url =
     GithubConfig("URL").fold(throw new IllegalStateException("ORCHESTRA_GITHUB_URL should be set"))(Uri(_))

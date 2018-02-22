@@ -18,6 +18,8 @@ import webscalajs.WebScalaJS.autoImport._
 
 object OrchestraPlugin extends AutoPlugin {
   object autoImport {
+    val orchestraVersion = BuildInfo.version
+
     object OrchestraProject {
       def apply(id: String, base: File): CrossProject = {
         val cross = CrossProject(id, base, CrossType.Pure)
@@ -35,10 +37,8 @@ object OrchestraPlugin extends AutoPlugin {
           )
           .jsConfigure(_.enablePlugins(ScalaJSPlugin, ScalaJSWeb))
           .jsSettings(scalaJSUseMainModuleInitializer := true, moduleName := "web")
-          .settings(libraryDependencies += "io.chumps" %%% "orchestra-core" % BuildInfo.version)
+          .settings(libraryDependencies += "io.chumps" %%% "orchestra-core" % orchestraVersion)
       }
     }
-
-    val orchestraVersion = BuildInfo.version
   }
 }

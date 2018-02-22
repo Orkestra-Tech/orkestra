@@ -11,30 +11,41 @@ import io.circe.parser._
 
 import io.chumps.orchestra.model.{EnvRunInfo, RunId, RunInfo}
 
-object OrchestraConfig {
-  def apply(envVar: String) = sys.env.get(s"ORCHESTRA_$envVar").filter(_.nonEmpty)
-
-  lazy val elasticsearchUri = ElasticsearchClientUri(
-    OrchestraConfig("ELASTICSEARCH_URI").getOrElse(
-      throw new IllegalStateException("ORCHESTRA_ELASTICSEARCH_URI should be set")
-    )
-  )
-  lazy val workspace = OrchestraConfig("WORKSPACE").getOrElse("/opt/docker/workspace")
-  lazy val port = OrchestraConfig("PORT").map(_.toInt).getOrElse(8080)
-  lazy val runInfoMaybe =
-    OrchestraConfig("RUN_INFO").map(
-      runInfoJson =>
-        decode[EnvRunInfo](runInfoJson)
-          .fold(throw _, runInfo => RunInfo(runInfo.jobId, runInfo.runId.getOrElse(jobUid)))
-    )
+case class OrchestraConfig(elasticsearchUri: ElasticsearchClientUri,
+                           workspace: String = OrchestraConfig.defaultWorkspace,
+                           port: Int = OrchestraConfig.defaultPort,
+                           runInfoMaybe: Option[RunInfo] = None,
+                           kubeUri: String,
+                           namespace: String,
+                           podName: String,
+                           basePath: String = OrchestraConfig.defaultBasePath) {
   lazy val runInfo = runInfoMaybe.getOrElse(throw new IllegalStateException("ORCHESTRA_RUN_INFO should be set"))
-  lazy val kubeUri =
-    OrchestraConfig("KUBE_URI").getOrElse(throw new IllegalStateException("ORCHESTRA_KUBE_URI should be set"))
-  lazy val podName =
-    OrchestraConfig("POD_NAME").getOrElse(throw new IllegalStateException("ORCHESTRA_POD_NAME should be set"))
-  lazy val namespace =
-    OrchestraConfig("NAMESPACE").getOrElse(throw new IllegalStateException("ORCHESTRA_NAMESPACE should be set"))
-  lazy val downwardApi = Paths.get("/var/run/downward-api")
+}
+
+object OrchestraConfig {
+  def fromEnvVars() = OrchestraConfig(
+    ElasticsearchClientUri(
+      fromEnvVar("ELASTICSEARCH_URI").getOrElse(
+        throw new IllegalStateException("ORCHESTRA_ELASTICSEARCH_URI should be set")
+      )
+    ),
+    fromEnvVar("WORKSPACE").getOrElse("/opt/docker/workspace"),
+    fromEnvVar("PORT").map(_.toInt).getOrElse(defaultPort),
+    fromEnvVar("RUN_INFO").map { runInfoJson =>
+      decode[EnvRunInfo](runInfoJson).fold(throw _, runInfo => RunInfo(runInfo.jobId, runInfo.runId.getOrElse(jobUid)))
+    },
+    fromEnvVar("KUBE_URI").getOrElse(throw new IllegalStateException("ORCHESTRA_KUBE_URI should be set")),
+    fromEnvVar("NAMESPACE").getOrElse(throw new IllegalStateException("ORCHESTRA_NAMESPACE should be set")),
+    fromEnvVar("POD_NAME").getOrElse(throw new IllegalStateException("ORCHESTRA_POD_NAME should be set")),
+    fromEnvVar("BASEPATH").getOrElse(defaultBasePath)
+  )
+
+  def fromEnvVar(envVar: String) = sys.env.get(s"ORCHESTRA_$envVar").filter(_.nonEmpty)
+
+  val defaultPort = 8080
+  val defaultBasePath = ""
+  val defaultWorkspace = "/opt/docker/workspace"
+  val downwardApi = Paths.get("/var/run/downward-api")
   lazy val jobUid = {
     val controllerUidRegex = """controller-uid="(.+)"""".r
     Source

@@ -10,9 +10,10 @@ import io.k8s.api.core.v1._
 
 import io.chumps.orchestra.model.EnvRunInfo
 
-object JobSpecUtils {
+object JobSpecs {
   private val home = "home"
-  private val homeDirMount = VolumeMount(home, mountPath = OrchestraConfig.workspace)
+  private def homeDirMount(implicit orchestraConfig: OrchestraConfig) =
+    VolumeMount(home, mountPath = orchestraConfig.workspace)
   private val homeDirVolume = Volume(home, emptyDir = Option(EmptyDirVolumeSource()))
 
   private val downwardApi = "downward-api"
@@ -26,12 +27,13 @@ object JobSpecUtils {
     )
   )
 
-  private def createContainer(container: Container, masterContainer: Container): Container =
+  private def createContainer(container: Container,
+                              masterContainer: Container)(implicit orchestraConfig: OrchestraConfig): Container =
     container.copy(
       stdin = Option(true),
       env = Option((container.env ++ masterContainer.env).flatten.toSeq),
       envFrom = Option((container.envFrom ++ masterContainer.envFrom).flatten.toSeq),
-      workingDir = container.workingDir.orElse(Option(OrchestraConfig.workspace)),
+      workingDir = container.workingDir.orElse(Option(orchestraConfig.workspace)),
       volumeMounts = Option(
         distinctOnName(
           homeDirMount +: (container.volumeMounts ++ masterContainer.volumeMounts).flatten.toSeq
@@ -39,13 +41,13 @@ object JobSpecUtils {
       )
     )
 
-  def createJobSpec(masterPod: Pod, runInfo: EnvRunInfo, podSpec: PodSpec) = {
+  def create(masterPod: Pod, runInfo: EnvRunInfo, podSpec: PodSpec)(implicit orchestraConfig: OrchestraConfig) = {
     val masterSpec = masterPod.spec.get
     val masterContainer = masterSpec.containers.head
     val runInfoEnvVar = EnvVar("ORCHESTRA_RUN_INFO", value = Option(runInfo.asJson.noSpaces))
     val slaveContainer = masterContainer.copy(
       env = Option(distinctOnName(runInfoEnvVar +: masterContainer.env.toSeq.flatten)),
-      workingDir = Option(OrchestraConfig.workspace),
+      workingDir = Option(orchestraConfig.workspace),
       volumeMounts =
         Option(distinctOnName(homeDirMount +: downwardApiMount +: masterContainer.volumeMounts.toSeq.flatten))
     )

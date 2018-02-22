@@ -8,7 +8,7 @@ import scala.sys.process.Process
 
 import akka.http.scaladsl.model.ws.Message
 import akka.stream.scaladsl.{Flow, Keep, Sink, Source}
-import com.goyeau.kubernetesclient.KubernetesException
+import com.goyeau.kubernetesclient.{KubernetesClient, KubernetesException}
 import io.k8s.api.core.v1.Container
 import io.k8s.apimachinery.pkg.apis.meta.v1.Status
 
@@ -18,6 +18,9 @@ import io.chumps.orchestra.kubernetes.Kubernetes
 import io.chumps.orchestra.utils.AkkaImplicits._
 
 trait AsyncShellUtils {
+  protected val orchestraConfig: OrchestraConfig
+  protected val kubernetesClient: KubernetesClient
+
   private def runningMessage(script: String) = println(s"Running: $script")
 
   def sh(script: String)(implicit workDir: Directory): Future[String] = Future {
@@ -30,10 +33,10 @@ trait AsyncShellUtils {
 
   def sh(script: String, container: Container)(implicit workDir: Directory): Future[String] = {
     runningMessage(script)
-    val stageId = StagesUtils.stageVar.value
+    val stageId = ElasticsearchOutputStream.stageVar.value
 
     val sink = Sink.fold[String, Either[Status, String]]("") { (acc, data) =>
-      StagesUtils.stageVar.withValue(stageId) {
+      ElasticsearchOutputStream.stageVar.withValue(stageId) {
         data match {
           case Left(Status(_, _, _, _, _, _, _, Some("Success"))) =>
             println()
@@ -53,10 +56,10 @@ trait AsyncShellUtils {
     val flow = Flow.fromSinkAndSourceMat(sink, Source.maybe[Message])(Keep.left)
 
     def exec(timeout: Duration = 1.minute, interval: Duration = 300.millis): Future[String] =
-      Kubernetes.client.pods
-        .namespace(OrchestraConfig.namespace)
+      kubernetesClient.pods
+        .namespace(orchestraConfig.namespace)
         .exec(
-          OrchestraConfig.podName,
+          orchestraConfig.podName,
           flow,
           Option(container.name),
           Seq("sh", "-c", s"cd ${workDir.file.getAbsolutePath} && $script"),
@@ -73,4 +76,7 @@ trait AsyncShellUtils {
   }
 }
 
-object AsyncShellUtils extends AsyncShellUtils
+object AsyncShellUtils extends AsyncShellUtils {
+  override implicit val orchestraConfig = OrchestraConfig.fromEnvVars()
+  override val kubernetesClient = Kubernetes.client
+}

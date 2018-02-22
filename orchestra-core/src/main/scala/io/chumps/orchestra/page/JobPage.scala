@@ -27,7 +27,7 @@ import io.chumps.orchestra.css.Global
 import io.chumps.orchestra.board.Job
 import io.chumps.orchestra.component.StopButton
 import io.chumps.orchestra.model.{Page, RunId}
-import io.chumps.orchestra.utils.{RunIdOperation, Utils}
+import io.chumps.orchestra.utils.{Colours, RunIdOperation}
 
 object JobPage {
 
@@ -122,7 +122,7 @@ object JobPage {
                     <.div(
                       ^.padding := "4px",
                       ^.display.`inline-block`,
-                      ^.backgroundColor := Utils.generateColour(stage.name),
+                      ^.backgroundColor := Colours.generate(stage.name),
                       ^.opacity := (if (stage.runInfo.jobId == job.id ||
                                         stage.parentJob.exists(_.jobId == job.id)) "1"
                                     else "0.6")
