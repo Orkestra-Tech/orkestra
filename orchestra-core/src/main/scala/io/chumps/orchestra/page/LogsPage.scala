@@ -41,7 +41,7 @@ object LogsPage {
                     lineNumber + 1
                   ),
                   <.td(^.width.auto)(
-                    <.pre(^.margin := "0", ^.wordWrap.`break-word`, ^.dangerouslySetInnerHtml := format(logLine.line))
+                    <.pre(^.margin := "0", ^.whiteSpace.`pre-wrap`, ^.dangerouslySetInnerHtml := format(logLine.line))
                   )
                 )
             }
@@ -49,7 +49,7 @@ object LogsPage {
             <.tr(
               <.td(
                 <.div(s"Pretty display disabled as the log is over $PrettyDisplayMaxLines lines"),
-                <.pre(^.wordWrap.`break-word`, ^.dangerouslySetInnerHtml := format(log.map(_.line).mkString("\n")))
+                <.pre(^.whiteSpace.`pre-wrap`, ^.dangerouslySetInnerHtml := format(log.map(_.line).mkString("\n")))
               )
             )
           case Some(log) if log.isEmpty => <.tr(<.td("No logged message yet"))
