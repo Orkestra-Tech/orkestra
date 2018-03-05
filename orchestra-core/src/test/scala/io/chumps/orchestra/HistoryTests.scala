@@ -19,7 +19,7 @@ class HistoryTests
     with OrchestraConfigTest
     with KubernetesTest
     with ElasticsearchTest
-    with StageUtils {
+    with Stages {
 
   scenario("Job triggered") {
     val tags = Seq("firstTag", "secondTag")

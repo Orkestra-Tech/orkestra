@@ -4,9 +4,9 @@ import io.k8s.api.core.v1.Container
 import org.scalatest.Matchers._
 
 import io.chumps.orchestra.filesystem.Implicits.workDir
-import io.chumps.orchestra.utils.{AsyncShellUtils, KubernetesTest, OrchestraConfigTest, OrchestraSpec}
+import io.chumps.orchestra.utils.{AsyncShells, KubernetesTest, OrchestraConfigTest, OrchestraSpec}
 
-class ShellTests extends OrchestraSpec with OrchestraConfigTest with KubernetesTest with AsyncShellUtils {
+class ShellTests extends OrchestraSpec with OrchestraConfigTest with KubernetesTest with AsyncShells {
 
   scenario("Run shell command") {
     val log = sh("echo Hello").futureValue

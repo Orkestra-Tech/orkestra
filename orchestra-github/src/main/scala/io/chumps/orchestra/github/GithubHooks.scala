@@ -24,7 +24,7 @@ import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider
 
 import io.chumps.orchestra.filesystem.{Directory, LocalFile}
 
-trait Github extends OrchestraPlugin {
+trait GithubHooks extends OrchestraPlugin {
   private lazy val logger = Logger(getClass)
 
   def githubTriggers: Set[GithubTrigger]
@@ -49,11 +49,13 @@ trait Github extends OrchestraPlugin {
           }
         }
 
-      _ = Http().bindAndHandle(routes, "0.0.0.0", GithubConfig.port)
+      _ = Http().bindAndHandle(routes, "0.0.0.0", GithubConfig.fromEnvVars().port)
     } yield ()
 }
 
-object Github extends LazyLogging {
+trait Github extends LazyLogging {
+  protected val orchestraConfig: OrchestraConfig
+  protected val githubConfig: GithubConfig
 
   def pullRequest[Result](repository: Repository, ref: Branch) = PullRequestBuilder(repository, ref)
 
@@ -79,7 +81,7 @@ object Github extends LazyLogging {
       .cloneRepository()
       .setURI(s"https://github.com/${repository.name}.git")
       .setCredentialsProvider(
-        new UsernamePasswordCredentialsProvider(BuildInfo.projectName.toLowerCase, GithubConfig.token)
+        new UsernamePasswordCredentialsProvider(BuildInfo.projectName.toLowerCase, githubConfig.token)
       )
       .setDirectory(LocalFile(repository.name))
       .setNoCheckout(true)
@@ -93,11 +95,11 @@ object Github extends LazyLogging {
         HttpRequest(
           HttpMethods.POST,
           s"https://api.github.com/repos/${repository.name}/statuses/${ref.name}",
-          List(Authorization(OAuth2BearerToken(GithubConfig.token))),
+          List(Authorization(OAuth2BearerToken(githubConfig.token))),
           HttpEntity(
             CheckStatus(
               state,
-              s"${GithubConfig.url}/#/logs/${OrchestraConfig.runInfo.runId.value}",
+              s"${githubConfig.uri}/#/logs/${orchestraConfig.runInfo.runId.value}",
               state.description,
               s"${BuildInfo.projectName.toLowerCase}/pull-request"
             ).asJson.noSpaces
@@ -113,4 +115,9 @@ object Github extends LazyLogging {
         throw exception
       }
     } yield response
+}
+
+object Github extends Github {
+  override implicit val orchestraConfig = OrchestraConfig.fromEnvVars()
+  override implicit val githubConfig = GithubConfig.fromEnvVars()
 }

@@ -4,12 +4,14 @@ import akka.http.scaladsl.model.Uri
 
 import io.chumps.orchestra.OrchestraConfig
 
-object GithubConfig {
-  def apply(envVar: String) = OrchestraConfig.fromEnvVar(s"GITHUB_$envVar")
+case class GithubConfig(uri: Uri, port: Int, token: String)
 
-  lazy val url =
-    GithubConfig("URL").fold(throw new IllegalStateException("ORCHESTRA_GITHUB_URL should be set"))(Uri(_))
-  lazy val port = GithubConfig("PORT").map(_.toInt).getOrElse(8081)
-  lazy val token =
-    GithubConfig("TOKEN").getOrElse(throw new IllegalStateException("ORCHESTRA_GITHUB_TOKEN should be set"))
+object GithubConfig {
+  def fromEnvVars() = GithubConfig(
+    fromEnvVar("URI").fold(throw new IllegalStateException("ORCHESTRA_GITHUB_URI should be set"))(Uri(_)),
+    fromEnvVar("PORT").map(_.toInt).getOrElse(8081),
+    fromEnvVar("TOKEN").getOrElse(throw new IllegalStateException("ORCHESTRA_GITHUB_TOKEN should be set"))
+  )
+
+  def fromEnvVar(envVar: String) = OrchestraConfig.fromEnvVar(s"GITHUB_$envVar")
 }

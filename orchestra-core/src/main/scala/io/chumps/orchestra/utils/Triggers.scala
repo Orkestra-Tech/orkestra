@@ -23,7 +23,7 @@ import io.chumps.orchestra.utils.AkkaImplicits._
 import io.chumps.orchestra.OrchestraConfig
 import io.chumps.orchestra.kubernetes.Kubernetes
 
-trait TriggerUtils {
+trait Triggers {
   protected implicit val orchestraConfig: OrchestraConfig
   protected implicit val kubernetesClient: KubernetesClient
   protected implicit val elasticsearchClient: HttpClient
@@ -100,7 +100,7 @@ trait TriggerUtils {
     } yield result
 }
 
-object TriggerUtils extends TriggerUtils {
+object Triggers extends Triggers {
   override implicit val orchestraConfig = OrchestraConfig.fromEnvVars()
   override val kubernetesClient = Kubernetes.client
   override val elasticsearchClient = Elasticsearch.client

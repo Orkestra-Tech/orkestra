@@ -18,9 +18,9 @@ object AsyncDsl
     with AutoDerivation
     with AutoTuple1
     with DirectoryUtils
-    with TriggerUtils
-    with StageUtils
-    with AsyncShellUtils {
+    with Triggers
+    with Stages
+    with AsyncShells {
   override implicit val orchestraConfig = OrchestraConfig.fromEnvVars()
   override val kubernetesClient = Kubernetes.client
   override val elasticsearchClient = Elasticsearch.client
@@ -31,9 +31,9 @@ object Dsl
     with AutoDerivation
     with AutoTuple1
     with DirectoryUtils
-    with TriggerUtils
-    with StageUtils
-    with ShellUtils {
+    with Triggers
+    with Stages
+    with Shells {
   override implicit val orchestraConfig = OrchestraConfig.fromEnvVars()
   override val kubernetesClient = Kubernetes.client
   override val elasticsearchClient = Elasticsearch.client

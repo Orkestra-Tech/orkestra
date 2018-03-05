@@ -15,7 +15,7 @@ class LoggingTests
     with OrchestraConfigTest
     with KubernetesTest
     with ElasticsearchTest
-    with StageUtils {
+    with Stages {
 
   scenario("Log stuff and get it back") {
     val message = "Hello"

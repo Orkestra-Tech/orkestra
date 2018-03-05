@@ -10,13 +10,13 @@ import io.chumps.orchestra.OrchestraConfig
 import io.chumps.orchestra.filesystem.Directory
 import io.chumps.orchestra.kubernetes.Kubernetes
 
-trait ShellUtils {
+trait Shells {
   protected val orchestraConfig: OrchestraConfig
   protected val kubernetesClient: KubernetesClient
 
-  val asyncShellUtils = new AsyncShellUtils {
-    override val orchestraConfig = ShellUtils.orchestraConfig
-    override val kubernetesClient = ShellUtils.kubernetesClient
+  val asyncShellUtils = new AsyncShells {
+    override val orchestraConfig = Shells.orchestraConfig
+    override val kubernetesClient = Shells.kubernetesClient
   }
 
   def sh(script: String)(implicit workDir: Directory): String =
@@ -26,7 +26,7 @@ trait ShellUtils {
     Await.result(asyncShellUtils.sh(script, container), Duration.Inf)
 }
 
-object ShellUtils extends ShellUtils {
+object Shells extends Shells {
   override implicit val orchestraConfig = OrchestraConfig.fromEnvVars()
   override val kubernetesClient = Kubernetes.client
 }

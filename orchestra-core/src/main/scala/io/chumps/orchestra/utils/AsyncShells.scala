@@ -17,7 +17,7 @@ import io.chumps.orchestra.filesystem.Directory
 import io.chumps.orchestra.kubernetes.Kubernetes
 import io.chumps.orchestra.utils.AkkaImplicits._
 
-trait AsyncShellUtils {
+trait AsyncShells {
   protected val orchestraConfig: OrchestraConfig
   protected val kubernetesClient: KubernetesClient
 
@@ -76,7 +76,7 @@ trait AsyncShellUtils {
   }
 }
 
-object AsyncShellUtils extends AsyncShellUtils {
+object AsyncShells extends AsyncShells {
   override implicit val orchestraConfig = OrchestraConfig.fromEnvVars()
   override val kubernetesClient = Kubernetes.client
 }
