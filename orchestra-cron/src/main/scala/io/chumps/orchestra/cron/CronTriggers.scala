@@ -2,10 +2,8 @@ package io.chumps.orchestra.cron
 
 import scala.concurrent.Future
 
-import com.goyeau.kubernetesclient.KubernetesClient
 import com.sksamuel.elastic4s.RefreshPolicy
 import com.sksamuel.elastic4s.http.ElasticDsl._
-import com.sksamuel.elastic4s.http.HttpClient
 import com.typesafe.scalalogging.Logger
 import shapeless._
 import io.circe.shapes._
@@ -13,13 +11,10 @@ import io.circe.shapes._
 import io.chumps.orchestra.model.RunInfo
 import io.chumps.orchestra.utils.AkkaImplicits._
 import io.chumps.orchestra.utils.Elasticsearch
-import io.chumps.orchestra.{OrchestraConfig, OrchestraPlugin}
+import io.chumps.orchestra.OrchestraPlugin
 
 trait CronTriggers extends OrchestraPlugin {
   private lazy val logger = Logger(getClass)
-  protected implicit val orchestraConfig: OrchestraConfig
-  protected implicit val kubernetesClient: KubernetesClient
-  protected implicit val elasticsearchClient: HttpClient
 
   def cronTriggers: Set[CronTrigger]
 

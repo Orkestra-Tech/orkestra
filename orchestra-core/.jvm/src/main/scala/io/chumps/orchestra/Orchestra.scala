@@ -23,9 +23,9 @@ import io.chumps.orchestra.utils.{AutowireServer, Elasticsearch}
 
 trait Orchestra extends BackendRoutes with OrchestraPlugin {
   private lazy val logger = Logger(getClass)
-  private implicit val orchestraConfig: OrchestraConfig = OrchestraConfig.fromEnvVars()
-  private implicit val kubernetesClient: KubernetesClient = Kubernetes.client
-  private implicit val elasticsearchClient: HttpClient = Elasticsearch.client
+  override implicit lazy val orchestraConfig: OrchestraConfig = OrchestraConfig.fromEnvVars()
+  override implicit lazy val kubernetesClient: KubernetesClient = Kubernetes.client
+  override implicit lazy val elasticsearchClient: HttpClient = Elasticsearch.client
 
   def jobRunners: Set[JobRunner[_, _]]
 

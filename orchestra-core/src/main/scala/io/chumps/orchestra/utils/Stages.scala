@@ -19,8 +19,8 @@ import io.chumps.orchestra.model.Indexed._
 import io.chumps.orchestra.utils.AkkaImplicits._
 
 trait Stages {
-  protected val orchestraConfig: OrchestraConfig
-  protected val elasticsearchClient: HttpClient
+  protected def orchestraConfig: OrchestraConfig
+  protected def elasticsearchClient: HttpClient
 
   def stage[Result](name: String) = StageBuilder(name)
 
@@ -60,6 +60,6 @@ trait Stages {
 }
 
 object Stages extends Stages {
-  override implicit val orchestraConfig: OrchestraConfig = OrchestraConfig.fromEnvVars()
-  override val elasticsearchClient: HttpClient = Elasticsearch.client
+  override implicit lazy val orchestraConfig: OrchestraConfig = OrchestraConfig.fromEnvVars()
+  override lazy val elasticsearchClient: HttpClient = Elasticsearch.client
 }

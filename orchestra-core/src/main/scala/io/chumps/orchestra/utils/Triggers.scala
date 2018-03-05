@@ -24,9 +24,9 @@ import io.chumps.orchestra.OrchestraConfig
 import io.chumps.orchestra.kubernetes.Kubernetes
 
 trait Triggers {
-  protected implicit val orchestraConfig: OrchestraConfig
-  protected implicit val kubernetesClient: KubernetesClient
-  protected implicit val elasticsearchClient: HttpClient
+  protected implicit def orchestraConfig: OrchestraConfig
+  protected implicit def kubernetesClient: KubernetesClient
+  protected implicit def elasticsearchClient: HttpClient
 
   implicit class TriggerableNoParamJob[Result: Decoder](jobRunner: JobRunner[HNil, Result]) {
     def trigger(): Future[Unit] =
@@ -101,7 +101,7 @@ trait Triggers {
 }
 
 object Triggers extends Triggers {
-  override implicit val orchestraConfig: OrchestraConfig = OrchestraConfig.fromEnvVars()
-  override val kubernetesClient: KubernetesClient = Kubernetes.client
-  override val elasticsearchClient: HttpClient = Elasticsearch.client
+  override implicit lazy val orchestraConfig: OrchestraConfig = OrchestraConfig.fromEnvVars()
+  override lazy val kubernetesClient: KubernetesClient = Kubernetes.client
+  override lazy val elasticsearchClient: HttpClient = Elasticsearch.client
 }

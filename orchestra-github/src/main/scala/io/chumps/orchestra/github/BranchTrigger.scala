@@ -49,9 +49,9 @@ case class BranchTrigger[ParamValuesNoRunIdBranch <: HList, ParamValuesNoBranch 
 }
 
 object BranchTrigger {
-  private implicit val orchestraConfig: OrchestraConfig = OrchestraConfig.fromEnvVars()
-  private implicit val kubernetesClient: KubernetesClient = Kubernetes.client
-  private implicit val httpClient: HttpClient = Elasticsearch.client
+  private implicit lazy val orchestraConfig: OrchestraConfig = OrchestraConfig.fromEnvVars()
+  private implicit lazy val kubernetesClient: KubernetesClient = Kubernetes.client
+  private implicit lazy val httpClient: HttpClient = Elasticsearch.client
 
   def apply[ParamValues <: HList](repository: Repository, branchRegex: String, job: JobRunner[ParamValues, _]) =
     new BranchTriggerBuilder[ParamValues](repository, branchRegex, job)
@@ -118,9 +118,9 @@ case class PullRequestTrigger[ParamValuesNoRunIdBranch <: HList, ParamValuesNoBr
 }
 
 object PullRequestTrigger {
-  private implicit val orchestraConfig: OrchestraConfig = OrchestraConfig.fromEnvVars()
-  private implicit val kubernetesClient: KubernetesClient = Kubernetes.client
-  private implicit val httpClient: HttpClient = Elasticsearch.client
+  private implicit lazy val orchestraConfig: OrchestraConfig = OrchestraConfig.fromEnvVars()
+  private implicit lazy val kubernetesClient: KubernetesClient = Kubernetes.client
+  private implicit lazy val httpClient: HttpClient = Elasticsearch.client
 
   def apply[ParamValues <: HList](repository: Repository, job: JobRunner[ParamValues, _]) =
     new PullRequestTriggerBuilder[ParamValues](repository, job)

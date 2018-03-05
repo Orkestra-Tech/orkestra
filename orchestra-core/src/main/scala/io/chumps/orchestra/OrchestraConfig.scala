@@ -42,10 +42,10 @@ object OrchestraConfig {
 
   def fromEnvVar(envVar: String) = sys.env.get(s"ORCHESTRA_$envVar").filter(_.nonEmpty)
 
-  val defaultPort = 8080
-  val defaultBasePath = ""
-  val defaultWorkspace = "/opt/docker/workspace"
-  val downwardApi = Paths.get("/var/run/downward-api")
+  lazy val defaultPort = 8080
+  lazy val defaultBasePath = ""
+  lazy val defaultWorkspace = "/opt/docker/workspace"
+  lazy val downwardApi = Paths.get("/var/run/downward-api")
   lazy val jobUid = {
     val controllerUidRegex = """controller-uid="(.+)"""".r
     Source

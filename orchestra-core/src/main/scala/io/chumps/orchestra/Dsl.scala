@@ -24,9 +24,9 @@ object AsyncDsl
     with Triggers
     with Stages
     with AsyncShells {
-  override implicit val orchestraConfig: OrchestraConfig = OrchestraConfig.fromEnvVars()
-  override val kubernetesClient: KubernetesClient = Kubernetes.client
-  override val elasticsearchClient: HttpClient = Elasticsearch.client
+  override implicit lazy val orchestraConfig: OrchestraConfig = OrchestraConfig.fromEnvVars()
+  override lazy val kubernetesClient: KubernetesClient = Kubernetes.client
+  override lazy val elasticsearchClient: HttpClient = Elasticsearch.client
 }
 
 object Dsl
@@ -37,7 +37,7 @@ object Dsl
     with Triggers
     with Stages
     with Shells {
-  override implicit val orchestraConfig: OrchestraConfig = OrchestraConfig.fromEnvVars()
-  override val kubernetesClient: KubernetesClient = Kubernetes.client
-  override val elasticsearchClient: HttpClient = Elasticsearch.client
+  override implicit lazy val orchestraConfig: OrchestraConfig = OrchestraConfig.fromEnvVars()
+  override lazy val kubernetesClient: KubernetesClient = Kubernetes.client
+  override lazy val elasticsearchClient: HttpClient = Elasticsearch.client
 }

@@ -18,8 +18,8 @@ import io.chumps.orchestra.kubernetes.Kubernetes
 import io.chumps.orchestra.utils.AkkaImplicits._
 
 trait AsyncShells {
-  protected val orchestraConfig: OrchestraConfig
-  protected val kubernetesClient: KubernetesClient
+  protected def orchestraConfig: OrchestraConfig
+  protected def kubernetesClient: KubernetesClient
 
   private def runningMessage(script: String) = println(s"Running: $script")
 
@@ -77,6 +77,6 @@ trait AsyncShells {
 }
 
 object AsyncShells extends AsyncShells {
-  override implicit val orchestraConfig: OrchestraConfig = OrchestraConfig.fromEnvVars()
-  override val kubernetesClient: KubernetesClient = Kubernetes.client
+  override implicit lazy val orchestraConfig: OrchestraConfig = OrchestraConfig.fromEnvVars()
+  override lazy val kubernetesClient: KubernetesClient = Kubernetes.client
 }
