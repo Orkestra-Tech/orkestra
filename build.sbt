@@ -53,7 +53,7 @@ lazy val core = CrossProject("orchestra-core", file("orchestra-core"), CrossType
       "com.vmunier" %% "scalajs-scripts" % "1.1.1",
       "com.beachape" %%% "enumeratum" % "1.5.12" % Provided,
       "com.lihaoyi" %%% "autowire" % "0.2.6",
-      "com.goyeau" %% "kubernetes-client" % "0.0.2+3-ec9869ea+20180302-1440-SNAPSHOT"
+      "com.goyeau" %% "kubernetes-client" % "0.0.3"
     ) ++ scalaJsReact.value ++ akkaHttp.value ++ scalaCss.value ++ logging.value ++ circe.value ++ elastic4s.value ++ scalaTest.value
   )
 lazy val coreJVM = core.jvm
