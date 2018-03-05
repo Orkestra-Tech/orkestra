@@ -101,7 +101,7 @@ trait Triggers {
 }
 
 object Triggers extends Triggers {
-  override implicit val orchestraConfig = OrchestraConfig.fromEnvVars()
-  override val kubernetesClient = Kubernetes.client
-  override val elasticsearchClient = Elasticsearch.client
+  override implicit val orchestraConfig: OrchestraConfig = OrchestraConfig.fromEnvVars()
+  override val kubernetesClient: KubernetesClient = Kubernetes.client
+  override val elasticsearchClient: HttpClient = Elasticsearch.client
 }

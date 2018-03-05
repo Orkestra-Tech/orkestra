@@ -77,6 +77,6 @@ trait AsyncShells {
 }
 
 object AsyncShells extends AsyncShells {
-  override implicit val orchestraConfig = OrchestraConfig.fromEnvVars()
-  override val kubernetesClient = Kubernetes.client
+  override implicit val orchestraConfig: OrchestraConfig = OrchestraConfig.fromEnvVars()
+  override val kubernetesClient: KubernetesClient = Kubernetes.client
 }

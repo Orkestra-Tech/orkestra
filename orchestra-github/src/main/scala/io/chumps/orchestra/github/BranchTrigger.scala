@@ -2,12 +2,16 @@ package io.chumps.orchestra.github
 
 import scala.concurrent.Future
 
+import com.goyeau.kubernetesclient.KubernetesClient
+import com.sksamuel.elastic4s.http.HttpClient
 import io.circe.Json
 import shapeless._
 
+import io.chumps.orchestra.OrchestraConfig
 import io.chumps.orchestra.job.JobRunner
+import io.chumps.orchestra.kubernetes.Kubernetes
 import io.chumps.orchestra.model.RunId
-import io.chumps.orchestra.utils.RunIdOperation
+import io.chumps.orchestra.utils.{Elasticsearch, RunIdOperation}
 import io.chumps.orchestra.utils.AkkaImplicits._
 
 sealed trait GithubTrigger {
@@ -21,7 +25,10 @@ case class BranchTrigger[ParamValuesNoRunIdBranch <: HList, ParamValuesNoBranch 
   values: ParamValuesNoRunIdBranch
 )(
   implicit runIdOperation: RunIdOperation[ParamValuesNoRunIdBranch, ParamValuesNoBranch],
-  branchInjector: BranchInjector[ParamValuesNoBranch, ParamValues]
+  branchInjector: BranchInjector[ParamValuesNoBranch, ParamValues],
+  orchestraConfig: OrchestraConfig,
+  kubernetesClient: KubernetesClient,
+  elasticsearchClient: HttpClient
 ) extends GithubTrigger {
 
   private[github] def trigger(eventType: String, json: Json): Future[Boolean] =
@@ -32,7 +39,8 @@ case class BranchTrigger[ParamValuesNoRunIdBranch <: HList, ParamValuesNoBranch 
 
         if (repoName == repository.name && s"^$branchRegex$$".r.findFirstIn(branch).isDefined) {
           val runId = RunId.random()
-          job.ApiServer
+          job
+            .ApiServer()
             .trigger(runId, branchInjector(runIdOperation.inject(values, runId), Branch(branch)))
             .map(_ => true)
         } else Future.successful(false)
@@ -41,6 +49,9 @@ case class BranchTrigger[ParamValuesNoRunIdBranch <: HList, ParamValuesNoBranch 
 }
 
 object BranchTrigger {
+  private implicit val orchestraConfig: OrchestraConfig = OrchestraConfig.fromEnvVars()
+  private implicit val kubernetesClient: KubernetesClient = Kubernetes.client
+  private implicit val httpClient: HttpClient = Elasticsearch.client
 
   def apply[ParamValues <: HList](repository: Repository, branchRegex: String, job: JobRunner[ParamValues, _]) =
     new BranchTriggerBuilder[ParamValues](repository, branchRegex, job)
@@ -72,7 +83,6 @@ object BranchTrigger {
       runIdOperation: RunIdOperation[ParamValuesNoRunIdBranch, ParamValuesNoBranch]
     ): BranchTrigger[ParamValuesNoRunIdBranch, ParamValuesNoBranch, ParamValues] =
       BranchTrigger(repository, branchRegex, job, tupleToHList.to(paramValues))
-
   }
 }
 
@@ -82,7 +92,10 @@ case class PullRequestTrigger[ParamValuesNoRunIdBranch <: HList, ParamValuesNoBr
   values: ParamValuesNoRunIdBranch
 )(
   implicit runIdOperation: RunIdOperation[ParamValuesNoRunIdBranch, ParamValuesNoBranch],
-  branchInjector: BranchInjector[ParamValuesNoBranch, ParamValues]
+  branchInjector: BranchInjector[ParamValuesNoBranch, ParamValues],
+  orchestraConfig: OrchestraConfig,
+  kubernetesClient: KubernetesClient,
+  elasticsearchClient: HttpClient
 ) extends GithubTrigger {
 
   private[github] def trigger(eventType: String, json: Json): Future[Boolean] =
@@ -95,7 +108,8 @@ case class PullRequestTrigger[ParamValuesNoRunIdBranch <: HList, ParamValuesNoBr
 
         if (eventRepoName == repository.name) {
           val runId = RunId.random()
-          job.ApiServer
+          job
+            .ApiServer()
             .trigger(runId, branchInjector(runIdOperation.inject(values, runId), Branch(branch)), Seq(branch))
             .map(_ => true)
         } else Future.successful(false)
@@ -104,6 +118,9 @@ case class PullRequestTrigger[ParamValuesNoRunIdBranch <: HList, ParamValuesNoBr
 }
 
 object PullRequestTrigger {
+  private implicit val orchestraConfig: OrchestraConfig = OrchestraConfig.fromEnvVars()
+  private implicit val kubernetesClient: KubernetesClient = Kubernetes.client
+  private implicit val httpClient: HttpClient = Elasticsearch.client
 
   def apply[ParamValues <: HList](repository: Repository, job: JobRunner[ParamValues, _]) =
     new PullRequestTriggerBuilder[ParamValues](repository, job)
@@ -133,6 +150,5 @@ object PullRequestTrigger {
       runIdOperation: RunIdOperation[ParamValuesNoRunIdBranch, ParamValuesNoBranch]
     ): PullRequestTrigger[ParamValuesNoRunIdBranch, ParamValuesNoBranch, ParamValues] =
       PullRequestTrigger(repository, job, tupleToHList.to(paramValues))
-
   }
 }

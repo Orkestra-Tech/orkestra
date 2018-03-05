@@ -11,6 +11,7 @@ import shapeless.HNil
 import io.chumps.orchestra.OrchestraConfig
 import io.chumps.orchestra.kubernetes.{JobSpecs, MasterPod}
 import io.chumps.orchestra.model.{EnvRunInfo, JobId}
+import io.chumps.orchestra.utils.AkkaImplicits._
 
 object Crons {
   private lazy val logger = Logger(getClass)

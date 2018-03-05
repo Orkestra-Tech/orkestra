@@ -11,7 +11,6 @@ import io.chumps.orchestra.filesystem.Directory
 import io.chumps.orchestra.kubernetes.Kubernetes
 
 trait Shells {
-  protected val orchestraConfig: OrchestraConfig
   protected val kubernetesClient: KubernetesClient
 
   val asyncShellUtils = new AsyncShells {
@@ -27,6 +26,6 @@ trait Shells {
 }
 
 object Shells extends Shells {
-  override implicit val orchestraConfig = OrchestraConfig.fromEnvVars()
-  override val kubernetesClient = Kubernetes.client
+  private implicit val orchestraConfig: OrchestraConfig = OrchestraConfig.fromEnvVars()
+  override val kubernetesClient: KubernetesClient = Kubernetes.client
 }
