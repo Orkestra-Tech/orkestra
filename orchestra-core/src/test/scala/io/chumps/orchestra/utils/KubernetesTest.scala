@@ -21,9 +21,8 @@ import io.chumps.orchestra.utils.AkkaImplicits._
 
 trait KubernetesTest extends BeforeAndAfterEach with BeforeAndAfterAll with ScalaFutures {
   self: Suite with OrchestraConfigTest =>
-  override implicit val patienceConfig = PatienceConfig(timeout = 10.seconds)
-
-  implicit val kubernetesClient = KubernetesClient(KubeConfig(orchestraConfig.kubeUri))
+  override implicit val patienceConfig: PatienceConfig = PatienceConfig(timeout = 10.seconds)
+  implicit val kubernetesClient: KubernetesClient = KubernetesClient(KubeConfig(orchestraConfig.kubeUri))
 
   private var runningKubeJobs = Seq.empty[Job]
   private val routes =

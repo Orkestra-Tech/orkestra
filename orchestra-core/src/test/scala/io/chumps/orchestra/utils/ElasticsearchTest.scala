@@ -5,6 +5,8 @@ import scala.concurrent.duration._
 
 import com.sksamuel.elastic4s.Indexes
 import com.sksamuel.elastic4s.http.ElasticDsl._
+import com.sksamuel.elastic4s.http.index.admin.RefreshIndexResponse
+import com.sksamuel.elastic4s.http.{RequestFailure, RequestSuccess}
 import com.sksamuel.elastic4s.testkit.AlwaysNewLocalNodeProvider
 import org.scalatest.concurrent.{Eventually, ScalaFutures}
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, Suite}
@@ -18,11 +20,11 @@ trait ElasticsearchTest
     with BeforeAndAfterAll
     with ScalaFutures
     with Eventually { self: Suite =>
-  override implicit val patienceConfig = PatienceConfig(timeout = 10.seconds)
+  override implicit val patienceConfig: PatienceConfig = PatienceConfig(timeout = 10.seconds)
 
   // https://discuss.elastic.co/t/elasticsearch-5-4-1-availableprocessors-is-already-set/88036
   System.setProperty("es.set.netty.runtime.available.processors", false.toString)
-  implicit val elasticsearchClient = http
+  implicit val elasticsearchClient: _root_.com.sksamuel.elastic4s.http.HttpClient = http
 
   override def beforeAll(): Unit = {
     super.beforeAll()
@@ -47,5 +49,6 @@ trait ElasticsearchTest
     } yield ()).futureValue
   }
 
-  def refreshIndices() = elasticsearchClient.execute(refreshIndex(Indexes.All))
+  def refreshIndices(): Future[Either[RequestFailure, RequestSuccess[RefreshIndexResponse]]] =
+    elasticsearchClient.execute(refreshIndex(Indexes.All))
 }

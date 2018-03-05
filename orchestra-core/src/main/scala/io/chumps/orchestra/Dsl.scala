@@ -2,6 +2,9 @@ package io.chumps.orchestra
 
 import scala.language.implicitConversions
 
+import com.goyeau.kubernetesclient.KubernetesClient
+import com.sksamuel.elastic4s.http.HttpClient
+
 import io.chumps.orchestra.filesystem.DirectoryUtils
 import io.circe.shapes.HListInstances
 import io.circe.generic.AutoDerivation
@@ -21,9 +24,9 @@ object AsyncDsl
     with Triggers
     with Stages
     with AsyncShells {
-  override implicit val orchestraConfig = OrchestraConfig.fromEnvVars()
-  override val kubernetesClient = Kubernetes.client
-  override val elasticsearchClient = Elasticsearch.client
+  override implicit val orchestraConfig: OrchestraConfig = OrchestraConfig.fromEnvVars()
+  override val kubernetesClient: KubernetesClient = Kubernetes.client
+  override val elasticsearchClient: HttpClient = Elasticsearch.client
 }
 
 object Dsl
@@ -34,7 +37,7 @@ object Dsl
     with Triggers
     with Stages
     with Shells {
-  override implicit val orchestraConfig = OrchestraConfig.fromEnvVars()
-  override val kubernetesClient = Kubernetes.client
-  override val elasticsearchClient = Elasticsearch.client
+  override implicit val orchestraConfig: OrchestraConfig = OrchestraConfig.fromEnvVars()
+  override val kubernetesClient: KubernetesClient = Kubernetes.client
+  override val elasticsearchClient: HttpClient = Elasticsearch.client
 }

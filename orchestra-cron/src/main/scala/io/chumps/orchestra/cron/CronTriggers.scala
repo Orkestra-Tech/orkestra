@@ -7,13 +7,10 @@ import com.sksamuel.elastic4s.RefreshPolicy
 import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.http.HttpClient
 import com.typesafe.scalalogging.Logger
-import io.k8s.api.batch.v1beta1.{CronJob, CronJobSpec, JobTemplateSpec}
-import io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta
 import shapeless._
 import io.circe.shapes._
 
-import io.chumps.orchestra.kubernetes.{JobSpecs, MasterPod}
-import io.chumps.orchestra.model.{EnvRunInfo, JobId, RunInfo}
+import io.chumps.orchestra.model.RunInfo
 import io.chumps.orchestra.utils.AkkaImplicits._
 import io.chumps.orchestra.utils.Elasticsearch
 import io.chumps.orchestra.{OrchestraConfig, OrchestraPlugin}
