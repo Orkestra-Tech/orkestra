@@ -93,7 +93,7 @@ lazy val plugin = Project("orchestra-plugin", file("orchestra-plugin"))
 lazy val TestCi = config("testci").extend(Test)
 lazy val integrationTests =
   CrossProject("orchestra-integration-tests", file("orchestra-integration-tests"), CrossType.Pure)
-    .dependsOn(core)
+    .dependsOn(core, github, cron)
     .enablePlugins(BuildInfoPlugin)
     .settings(
       name := "Orchestra Integration Tests",
@@ -103,6 +103,7 @@ lazy val integrationTests =
       libraryDependencies ++= scalaTest.value
     )
 lazy val integrationTestsJVM = integrationTests.jvm
+  .dependsOn(lock)
   .enablePlugins(JavaAppPackaging)
   .configs(TestCi)
   .settings(

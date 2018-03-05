@@ -7,7 +7,7 @@ import com.goyeau.kubernetesclient.{KubeConfig, KubernetesClient}
 import io.k8s.api.core.v1.Namespace
 import io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta
 
-import io.chumps.orchestra.kubernetes
+import io.chumps.orchestra.{kubernetes, OrchestraConfig}
 import io.chumps.orchestra.utils.AkkaImplicits._
 
 object Kubernetes {
@@ -16,6 +16,7 @@ object Kubernetes {
   )
 
   val configFile = new File(s"${System.getProperty("user.home")}/.kube/config")
+  implicit val orchestraConfig = OrchestraConfig.fromEnvVars()
   val client =
     if (configFile.exists()) KubernetesClient(KubeConfig(configFile, "minikube"))
     else kubernetes.Kubernetes.client
