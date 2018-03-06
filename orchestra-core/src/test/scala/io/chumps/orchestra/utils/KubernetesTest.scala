@@ -26,20 +26,30 @@ trait KubernetesTest extends BeforeAndAfterEach with BeforeAndAfterAll with Scal
 
   private var runningKubeJobs = Seq.empty[Job]
   private val routes =
-    path("apis" / "batch" / "v1" / "namespaces" / orchestraConfig.namespace / "jobs") {
-      get {
-        complete(
-          OK, {
-            val jobList = JobList(runningKubeJobs)
-            jobList.asJson // For some reason we need to call .asJson twice
-            jobList.asJson.noSpaces
+    pathPrefix("apis" / "batch" / "v1" / "namespaces" / orchestraConfig.namespace / "jobs") {
+      pathEndOrSingleSlash {
+        get {
+          complete(
+            OK, {
+              val jobList = JobList(runningKubeJobs)
+              jobList.asJson // For some reason we need to call .asJson twice
+              jobList.asJson.noSpaces
+            }
+          )
+        } ~
+          post {
+            entity(as[String]) { entity =>
+              complete {
+                runningKubeJobs :+= decode[Job](entity).fold(throw _, identity)
+                OK
+              }
+            }
           }
-        )
       } ~
-        post {
-          entity(as[String]) { entity =>
+        path(Segment) { jobName =>
+          delete {
             complete {
-              runningKubeJobs :+= decode[Job](entity).fold(throw _, identity)
+              runningKubeJobs = runningKubeJobs.filterNot(_.metadata.get.name.get == jobName)
               OK
             }
           }
