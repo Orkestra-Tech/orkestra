@@ -1,17 +1,13 @@
 package io.chumps.orchestra.utils
 
-import scala.concurrent.Future
 import scala.concurrent.duration._
 
 import com.sksamuel.elastic4s.Indexes
 import com.sksamuel.elastic4s.http.ElasticDsl._
-import com.sksamuel.elastic4s.http.index.admin.RefreshIndexResponse
-import com.sksamuel.elastic4s.http.{RequestFailure, RequestSuccess}
 import com.sksamuel.elastic4s.testkit.AlwaysNewLocalNodeProvider
 import org.scalatest.concurrent.{Eventually, ScalaFutures}
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, Suite}
 
-import io.chumps.orchestra.model.Indexed
 import io.chumps.orchestra.utils.AkkaImplicits._
 
 trait ElasticsearchTest
@@ -26,8 +22,8 @@ trait ElasticsearchTest
   System.setProperty("es.set.netty.runtime.available.processors", false.toString)
   implicit val elasticsearchClient: _root_.com.sksamuel.elastic4s.http.HttpClient = http
 
-  override def beforeAll(): Unit = {
-    super.beforeAll()
+  override def beforeEach(): Unit = {
+    super.beforeEach()
     (for {
       _ <- elasticsearchClient.execute(deleteIndex(Indexes.All.values))
       _ <- Elasticsearch.init()
@@ -38,17 +34,4 @@ trait ElasticsearchTest
     super.afterAll()
     http.close()
   }
-
-  override def beforeEach(): Unit = {
-    super.beforeEach()
-    (for {
-      _ <- Future.traverse(Indexed.indices) { indexDef =>
-        elasticsearchClient.execute(deleteByQuery(indexDef.index, indexDef.`type`, matchAllQuery()).refreshImmediately)
-      }
-      _ <- refreshIndices()
-    } yield ()).futureValue
-  }
-
-  def refreshIndices(): Future[Either[RequestFailure, RequestSuccess[RefreshIndexResponse]]] =
-    elasticsearchClient.execute(refreshIndex(Indexes.All))
 }

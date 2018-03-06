@@ -35,9 +35,9 @@ case class JobRunner[ParamValues <: HList: Encoder: Decoder, Result: Encoder: De
   func: ParamValues => Result
 ) {
 
-  private[orchestra] def run(runInfo: RunInfo)(implicit orchestraConfig: OrchestraConfig,
-                                               kubernetesClient: KubernetesClient,
-                                               elasticsearchClient: HttpClient): Future[Result] = {
+  private[orchestra] def start(runInfo: RunInfo)(implicit orchestraConfig: OrchestraConfig,
+                                                 kubernetesClient: KubernetesClient,
+                                                 elasticsearchClient: HttpClient): Future[Result] = {
     val runningPong = system.scheduler.schedule(0.second, 1.second)(JobRunners.pong(runInfo))
 
     (for {

@@ -5,7 +5,6 @@ import com.sksamuel.elastic4s.indexes.CreateIndexDefinition
 
 trait IndexDefinition {
   val index: Index
-  val `type`: String
   val createDefinition: CreateIndexDefinition
 }
 

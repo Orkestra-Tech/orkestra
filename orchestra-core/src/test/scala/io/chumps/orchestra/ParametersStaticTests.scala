@@ -10,15 +10,7 @@ import io.chumps.orchestra.parameter.{Checkbox, Input}
 
 object ParametersStaticTests {
 
-  object `Define job without parameter` {
-    lazy val job = Job[() => Unit](JobId("someJob"), "Some Job")()
-
-    lazy val jobRunner = JobRunner(job) { implicit workDir => () =>
-      println("Done")
-    }
-  }
-
-  object `Define job only with RunId` {
+  object `Define a job only with RunId` {
     lazy val job = Job[RunId => Unit](JobId("someJob"), "Some Job")()
 
     lazy val jobRunner = JobRunner(job) { implicit workDir => runId =>
@@ -26,15 +18,7 @@ object ParametersStaticTests {
     }
   }
 
-  object `Define job with one parameter` {
-    lazy val job = Job[String => Unit](JobId("someJob"), "Some Job")(Input[String]("Some string"))
-
-    lazy val jobRunner = JobRunner(job) { implicit workDir => s =>
-      println(s"Some string: $s")
-    }
-  }
-
-  object `Define job with one parameter and RunId` {
+  object `Define a job with one parameter and RunId` {
     lazy val job = Job[(String, RunId) => Unit](JobId("someJob"), "Some Job")(Input[String]("Some string"))
 
     lazy val jobRunner = JobRunner(job) { implicit workDir => (s, runId) =>
@@ -43,7 +27,7 @@ object ParametersStaticTests {
     }
   }
 
-  object `Define job with RunId and one parameter` {
+  object `Define a job with RunId and one parameter` {
     lazy val job = Job[(RunId, String) => Unit](JobId("someJob"), "Some Job")(Input[String]("Some string"))
 
     lazy val jobRunner = JobRunner(job) { implicit workDir => (runId, s) =>
@@ -52,18 +36,7 @@ object ParametersStaticTests {
     }
   }
 
-  object `Define job with multiple parameters` {
-    lazy val job =
-      Job[(Boolean, String) => Unit](JobId("someJob"), "Some Job")(Checkbox("Some string"),
-                                                                   Input[String]("Some string"))
-
-    lazy val jobRunner = JobRunner(job) { implicit workDir => (someBoolean, someString) =>
-      println(s"Some boolean: $someBoolean")
-      println(s"Some string: $someString")
-    }
-  }
-
-  object `Define job with multiple parameters and RunId` {
+  object `Define a job with multiple parameters and RunId` {
     lazy val job =
       Job[(Boolean, String, RunId) => Unit](JobId("someJob"), "Some Job")(Checkbox("Some string"),
                                                                           Input[String]("Some string"))
@@ -76,9 +49,9 @@ object ParametersStaticTests {
   }
 
   object `Should not compile if 1 UI parameter is not given` {
-    illTyped(
-      """lazy val job = Job[(Boolean, String) => Unit](JobId("someJob"), "Some Job")(Checkbox("Some string"))"""
-    )
+    illTyped("""
+      lazy val job = Job[(Boolean, String) => Unit](JobId("someJob"), "Some Job")(Checkbox("Some string"))
+    """)
   }
 
   object `Should not compile if 1 parameter value is not given` {
@@ -94,12 +67,11 @@ object ParametersStaticTests {
   }
 
   object `Should not compile if 1 UI parameter is not of the same type` {
-    illTyped(
-      """
+    illTyped("""
       lazy val job =
-        Job[(Boolean, String) => Unit](JobId("someJob"), "Some Job")(Checkbox("Some string"), Checkbox("Some string"))
-    """
-    )
+        Job[(Boolean, String) => Unit](JobId("someJob"), "Some Job")(Checkbox("Some string"),
+                                                                     Checkbox("Some string"))
+    """)
   }
 
   object `Should not compile if 1 parameter value is not of the same type` {

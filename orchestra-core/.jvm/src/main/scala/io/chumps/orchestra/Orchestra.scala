@@ -60,7 +60,7 @@ trait Orchestra extends BackendRoutes with OrchestraPlugin {
           _ <- jobRunners
             .find(_.job.id == runInfo.jobId)
             .getOrElse(throw new IllegalArgumentException(s"No job found for id ${runInfo.jobId}"))
-            .run(runInfo)
+            .start(runInfo)
         } yield ()
       },
       Duration.Inf

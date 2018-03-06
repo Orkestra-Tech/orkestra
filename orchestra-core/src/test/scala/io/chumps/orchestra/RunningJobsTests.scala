@@ -11,8 +11,10 @@ class RunningJobsTests extends OrchestraSpec with OrchestraConfigTest with Kuber
 
   scenario("Trigger a job") {
     emptyJobRunner.ApiServer().trigger(RunId.random(), HNil).futureValue
-    val runningJobs = CommonApiServer().runningJobs().futureValue
-    runningJobs should have size 1
+    eventually {
+      val runningJobs = CommonApiServer().runningJobs().futureValue
+      runningJobs should have size 1
+    }
   }
 
   scenario("No running job") {
