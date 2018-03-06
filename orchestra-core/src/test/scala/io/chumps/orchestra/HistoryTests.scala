@@ -2,8 +2,6 @@ package io.chumps.orchestra
 
 import java.io.PrintStream
 
-import scala.concurrent.duration._
-
 import org.scalatest.Matchers._
 import org.scalatest.OptionValues._
 import shapeless.HNil
@@ -38,7 +36,6 @@ class HistoryTests
 
   scenario("Job running") {
     emptyJobRunner.ApiServer().trigger(orchestraConfig.runInfo.runId, HNil).futureValue
-    Thread.sleep(1.second.toMillis)
     JobRunners.pong(orchestraConfig.runInfo)
 
     eventually {
