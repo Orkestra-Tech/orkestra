@@ -60,7 +60,7 @@ case class JobRunner[ParamValues <: HList: Encoder: Decoder, Result: Encoder: De
       }
 
       result = JobRunners.withOutErr(
-        new PrintStream(new ElasticsearchOutputStream(Elasticsearch.client, runInfo.runId))
+        new PrintStream(new ElasticsearchOutputStream(Elasticsearch.client, runInfo.runId), true)
       ) {
         println(s"Running job ${job.name}")
         val result =

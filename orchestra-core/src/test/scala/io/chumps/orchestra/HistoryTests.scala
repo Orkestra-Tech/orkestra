@@ -88,7 +88,7 @@ class HistoryTests
 
     val stageName = "Testing"
     JobRunners.withOutErr(
-      new PrintStream(new ElasticsearchOutputStream(elasticsearchClient, orchestraConfig.runInfo.runId))
+      new PrintStream(new ElasticsearchOutputStream(elasticsearchClient, orchestraConfig.runInfo.runId), true)
     ) {
       stage(stageName) {
         println("Hello")

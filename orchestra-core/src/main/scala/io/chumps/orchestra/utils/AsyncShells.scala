@@ -33,24 +33,20 @@ trait AsyncShells {
 
   def sh(script: String, container: Container)(implicit workDir: Directory): Future[String] = {
     runningMessage(script)
-    val stageId = ElasticsearchOutputStream.stageVar.value
-
     val sink = Sink.fold[String, Either[Status, String]]("") { (acc, data) =>
-      ElasticsearchOutputStream.stageVar.withValue(stageId) {
-        data match {
-          case Left(Status(_, _, _, _, _, _, _, Some("Success"))) =>
-            println()
-            acc
-          case Left(Status(_, _, _, _, Some(message), _, Some(reason), _)) =>
-            throw new IOException(s"$reason: $message; Container: ${container.name}; Script: $script")
-          case Left(status) =>
-            throw new IOException(
-              s"Non success container termination: $status; Container: ${container.name}; Script: $script"
-            )
-          case Right(log) =>
-            print(log)
-            acc + log
-        }
+      data match {
+        case Left(Status(_, _, _, _, _, _, _, Some("Success"))) =>
+          println()
+          acc
+        case Left(Status(_, _, _, _, Some(message), _, Some(reason), _)) =>
+          throw new IOException(s"$reason: $message; Container: ${container.name}; Script: $script")
+        case Left(status) =>
+          throw new IOException(
+            s"Non success container termination: $status; Container: ${container.name}; Script: $script"
+          )
+        case Right(log) =>
+          print(log)
+          acc + log
       }
     }
     val flow = Flow.fromSinkAndSourceMat(sink, Source.maybe[Message])(Keep.left)

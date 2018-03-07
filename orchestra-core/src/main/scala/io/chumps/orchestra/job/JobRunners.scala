@@ -51,22 +51,28 @@ object JobRunners {
     * This is not Thread safe!
     */
   def withOutErr[Result](stream: PrintStream)(f: => Result): Result = {
-    val stdOut = System.out
-    val stdErr = System.err
-    val field = Console.getClass.getDeclaredField("outVar")
-    field.setAccessible(true)
-    val consoleStdOut = Console.out
+    val systemOut = System.out
+    val systemErr = System.err
+    val outVarField = Console.getClass.getDeclaredField("outVar")
+    outVarField.setAccessible(true)
+    val consoleOut = Console.out
+    val errVarField = Console.getClass.getDeclaredField("errVar")
+    errVarField.setAccessible(true)
+    val consoleErr = Console.err
+
     try {
       System.setOut(stream)
       System.setErr(stream)
-      field.set(Console, new DynamicVariable(stream))
+      outVarField.set(Console, new DynamicVariable(stream))
+      errVarField.set(Console, new DynamicVariable(stream))
       Console.withOut(stream)(Console.withErr(stream)(f))
     } finally {
-      field.set(Console, new DynamicVariable(consoleStdOut))
       stream.flush()
       stream.close()
-      System.setOut(stdOut)
-      System.setErr(stdErr)
+      System.setOut(systemOut)
+      System.setErr(systemErr)
+      outVarField.set(Console, new DynamicVariable(consoleOut))
+      errVarField.set(Console, new DynamicVariable(consoleErr))
     }
   }
 }
