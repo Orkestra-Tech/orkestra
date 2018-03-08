@@ -4,14 +4,14 @@ import java.util.concurrent.ForkJoinPool
 
 class DynamicVariableForkJoinPool() extends ForkJoinPool {
   override def execute(task: Runnable): Unit = {
-    val outValue = Console.out
-    val errValue = Console.err
-    val stageValue = ElasticsearchOutputStream.stageVar.value
+    val out = Console.out
+    val err = Console.err
+    val stage = ElasticsearchOutputStream.stageVar.value
 
     super.execute { () =>
-      Console.withOut(outValue) {
-        Console.withErr(errValue) {
-          ElasticsearchOutputStream.stageVar.withValue(stageValue) {
+      Console.withOut(out) {
+        Console.withErr(err) {
+          ElasticsearchOutputStream.stageVar.withValue(stage) {
             task.run()
           }
         }

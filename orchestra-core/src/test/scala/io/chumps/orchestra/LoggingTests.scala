@@ -1,8 +1,9 @@
 package io.chumps.orchestra
 
-import java.io.PrintStream
+import java.io.{FileDescriptor, FileOutputStream, PrintStream}
 
-import scala.concurrent.Future
+import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, Future}
 
 import io.k8s.api.core.v1.Container
 import org.scalatest.Matchers._

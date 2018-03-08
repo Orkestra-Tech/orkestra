@@ -27,7 +27,9 @@ trait Stages {
   case class StageBuilder(name: String) {
     def apply[Result](func: => Result): Result = Await.result(apply(Future(func)), Duration.Inf)
 
-    def apply[Result](func: => Future[Result]): Future[Result] =
+    def apply[Result](func: => Future[Result]): Future[Result] = {
+      val out = Console.out
+      val err = Console.err
       for {
         run <- elasticsearchClient
           .execute(get(HistoryIndex.index, HistoryIndex.`type`, HistoryIndex.formatId(orchestraConfig.runInfo)))
@@ -47,15 +49,22 @@ trait Stages {
             .map(_.fold(failure => throw new IOException(failure.error.reason), identity))
         }
 
-        oldValue = ElasticsearchOutputStream.stageVar.value
+        oldStage = ElasticsearchOutputStream.stageVar.value
         _ = ElasticsearchOutputStream.stageVar.value = Option(name)
-        _ = println(s"Stage: $name")
-        result <- func.transformWith { triedResult =>
-          runningPong.cancel()
-          Future.fromTry(triedResult)
+
+        result <- Console.withOut(out) {
+          Console.withErr(err) {
+            println(s"Stage: $name")
+            func.transformWith { triedResult =>
+              runningPong.cancel()
+              Future.fromTry(triedResult)
+            }
+          }
         }
-        _ = ElasticsearchOutputStream.stageVar.value = oldValue
+
+        _ = ElasticsearchOutputStream.stageVar.value = oldStage
       } yield result
+    }
   }
 }
 
