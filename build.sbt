@@ -168,7 +168,7 @@ lazy val circe = Def.setting {
 }
 
 lazy val elastic4s = Def.setting {
-  val elastic4sVersion = "6.1.4"
+  val elastic4sVersion = "6.2.3"
   Seq(
     "com.sksamuel.elastic4s" %% "elastic4s-http" % elastic4sVersion,
     "com.sksamuel.elastic4s" %% "elastic4s-http-streams" % elastic4sVersion,
