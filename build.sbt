@@ -141,7 +141,7 @@ lazy val scalaCss = Def.setting {
 }
 
 lazy val scalaJsReact = Def.setting {
-  val scalaJsReactVersion = "1.1.1"
+  val scalaJsReactVersion = "1.2.0"
   Seq(
     "com.github.japgolly.scalajs-react" %%%! "core" % scalaJsReactVersion,
     "com.github.japgolly.scalajs-react" %%%! "extra" % scalaJsReactVersion
@@ -149,10 +149,11 @@ lazy val scalaJsReact = Def.setting {
 }
 
 lazy val react = Def.setting {
-  val reactVersion = "15.6.1"
+  val reactVersion = "16.2.0"
   Seq(
-    "org.webjars.bower" % "react" % reactVersion / "react-with-addons.js" minified "react-with-addons.min.js" commonJSName "React",
-    "org.webjars.bower" % "react" % reactVersion / "react-dom.js" minified "react-dom.min.js" dependsOn "react-with-addons.js" commonJSName "ReactDOM"
+    "org.webjars.npm" % "react" % reactVersion / "umd/react.development.js" minified "umd/react.production.min.js" commonJSName "React",
+    "org.webjars.npm" % "react-dom" % reactVersion / "umd/react-dom.development.js" minified "umd/react-dom.production.min.js" dependsOn "umd/react.development.js" commonJSName "ReactDOM",
+    "org.webjars.npm" % "react-dom" % reactVersion / "umd/react-dom-server.browser.development.js" minified "umd/react-dom-server.browser.production.min.js" dependsOn "umd/react-dom.development.js" commonJSName "ReactDOMServer"
   )
 }
 
