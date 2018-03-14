@@ -20,7 +20,7 @@ import io.chumps.orchestra.model.{Page, RunId, RunInfo}
 import io.chumps.orchestra.utils.AutowireClient
 
 trait CommonApi {
-  def logs(runId: RunId, page: Page[Instant]): Future[Seq[LogLine]]
+  def logs(runId: RunId, page: Page[(Instant, Int)]): Future[Seq[LogLine]]
   def runningJobs(): Future[Seq[Run[HNil, Unit]]]
 }
 
@@ -34,7 +34,7 @@ case class CommonApiServer()(implicit orchestraConfig: OrchestraConfig,
     extends CommonApi {
   import io.chumps.orchestra.utils.AkkaImplicits._
 
-  override def logs(runId: RunId, page: Page[Instant]): Future[Seq[LogLine]] =
+  override def logs(runId: RunId, page: Page[(Instant, Int)]): Future[Seq[LogLine]] =
     elasticsearchClient
       .execute(
         search(LogsIndex.index)
@@ -44,9 +44,9 @@ case class CommonApiServer()(implicit orchestraConfig: OrchestraConfig,
           .searchAfter(
             Seq(
               page.after
-                .getOrElse(if (page.size < 0) Instant.now() else Instant.EPOCH)
+                .fold(if (page.size < 0) Instant.now() else Instant.EPOCH)(_._1)
                 .toEpochMilli: java.lang.Long,
-              0l: java.lang.Long
+              page.after.fold(0)(_._2): java.lang.Integer
             )
           )
           .size(math.abs(page.size))
