@@ -147,8 +147,8 @@ case class JobRunner[ParamValues <: HList: Encoder: Decoder, Result: Encoder: De
           elasticsearchClient
             .execute(
               search(StagesIndex.index)
-                .query(boolQuery.filter(termsQuery("runInfo.runId", runs.map(_.runInfo.runId.value))))
-                .sortBy(fieldSort("startedOn").asc())
+                .query(boolQuery.filter(termsQuery("runInfo.runId", runs.map(_.runInfo.runId.value.toString).toSeq))) // TODO remove .toSeq when fixed in elastic4s
+                .sortBy(fieldSort("startedOn").asc(), fieldSort("_id").desc())
                 .size(1000)
             )
             .map(_.fold(failure => throw new IOException(failure.error.reason), identity).result.to[Stage])
