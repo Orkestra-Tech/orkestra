@@ -40,13 +40,15 @@ case class CommonApiServer()(implicit orchestraConfig: OrchestraConfig,
         search(LogsIndex.index)
           .query(boolQuery.filter(termQuery("runId", runId.value.toString)))
           .sortBy(fieldSort("loggedOn").order(if (page.size < 0) SortOrder.Desc else SortOrder.Asc),
-                  fieldSort("position").asc())
+                  fieldSort("position").asc(),
+                  fieldSort("_id").desc())
           .searchAfter(
             Seq(
               page.after
                 .fold(if (page.size < 0) Instant.now() else Instant.EPOCH)(_._1)
                 .toEpochMilli: java.lang.Long,
-              page.after.fold(0)(_._2): java.lang.Integer
+              page.after.fold(0)(_._2): java.lang.Integer,
+              ""
             )
           )
           .size(math.abs(page.size))
@@ -68,7 +70,7 @@ case class CommonApiServer()(implicit orchestraConfig: OrchestraConfig,
                 boolQuery.filter(termsQuery("runInfo.runId", runInfos.map(_.runId.value)),
                                  termsQuery("runInfo.jobId", runInfos.map(_.jobId.value)))
               )
-              .sortBy(fieldSort("triggeredOn").desc())
+              .sortBy(fieldSort("triggeredOn").desc(), fieldSort("_id").desc())
               .size(1000)
           )
           .map(_.fold(failure => throw new IOException(failure.error.reason), identity).result.to[Run[HNil, Unit]])
