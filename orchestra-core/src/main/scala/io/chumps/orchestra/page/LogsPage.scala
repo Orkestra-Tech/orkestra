@@ -19,7 +19,6 @@ import org.scalajs.dom.{document, window}
 
 import io.chumps.orchestra.model.Page
 import io.chumps.orchestra.model.Indexed.LogLine
-import io.chumps.orchestra.utils.Colours
 
 object LogsPage {
   case class Props(page: LogsPageRoute)
@@ -30,25 +29,11 @@ object LogsPage {
       .initialState[(Option[Seq[LogLine]], SetIntervalHandle)]((None, null))
       .render { $ =>
         def format(log: String) = newInstance(global.AnsiUp)().ansi_to_html(log).asInstanceOf[String]
-        val PrettyDisplayMaxLines = 10000
 
         val logs = $.state._1 match {
-          case Some(log) if log.nonEmpty && log.size <= PrettyDisplayMaxLines =>
-            log.zipWithIndex.toTagMod {
-              case (logLine, lineNumber) =>
-                <.tr(^.backgroundColor :=? logLine.stageName.map(name => Colours.generate(name)))(
-                  <.td(^.width := "50px", ^.verticalAlign.`text-top`, ^.textAlign.right, ^.paddingRight := "5px")(
-                    lineNumber + 1
-                  ),
-                  <.td(^.width.auto)(
-                    <.pre(^.margin := "0", ^.whiteSpace.`pre-wrap`, ^.dangerouslySetInnerHtml := format(logLine.line))
-                  )
-                )
-            }
-          case Some(log) if log.nonEmpty && log.size > PrettyDisplayMaxLines =>
+          case Some(log) if log.nonEmpty =>
             <.tr(
               <.td(
-                <.div(s"Pretty display disabled as the log is over $PrettyDisplayMaxLines lines"),
                 <.pre(^.whiteSpace.`pre-wrap`, ^.dangerouslySetInnerHtml := format(log.map(_.line).mkString("\n")))
               )
             )

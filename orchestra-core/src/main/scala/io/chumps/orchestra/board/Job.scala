@@ -9,7 +9,6 @@ import io.circe.generic.auto._
 import io.circe.java8.time._
 import io.k8s.api.core.v1.PodSpec
 
-import io.chumps.orchestra.utils.BaseEncoders._
 import shapeless.ops.function.FnToProduct
 import shapeless.{::, _}
 

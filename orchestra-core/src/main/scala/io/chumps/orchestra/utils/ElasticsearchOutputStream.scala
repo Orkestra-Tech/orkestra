@@ -31,6 +31,7 @@ class ElasticsearchOutputStream(client: HttpClient, runId: RunId) extends Output
       client.subscriber[LogLine](batchSize = bufferSize, concurrentRequests = 1, flushInterval = Option(1.second))
     )
   private val linesStream = Source.queue(bufferSize, OverflowStrategy.backpressure).to(elasticsearchSink).run()
+  private val position = Iterator.from(0)
 
   override def write(byte: Int): Unit =
     lineBuffer.value.appendCodePoint(byte)
@@ -43,15 +44,11 @@ class ElasticsearchOutputStream(client: HttpClient, runId: RunId) extends Output
     while (lineBuffer.value.toString.contains(newLineChar)) {
       val newLineIndex = lineBuffer.value.indexOf(newLineChar)
       val line = lineBuffer.value.substring(0, newLineIndex)
-      val logline = LogLine(runId, Instant.now(), line, ElasticsearchOutputStream.stageVar.value)
+      val logline = LogLine(runId, Instant.now(), position.next(), line)
       Await.result(linesStream.offer(logline), 1.minute)
       lineBuffer.value.delete(0, newLineIndex + 1)
     }
   }
 
   override def close(): Unit = flush()
-}
-
-object ElasticsearchOutputStream {
-  private[orchestra] val stageVar = new DynamicVariable[Option[String]](None)
 }

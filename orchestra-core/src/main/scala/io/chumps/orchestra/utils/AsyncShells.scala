@@ -33,6 +33,7 @@ trait AsyncShells {
 
   def sh(script: String, container: Container)(implicit workDir: Directory): Future[String] = {
     runningMessage(script)
+
     val sink = Sink.fold[String, Either[Status, String]]("") { (acc, data) =>
       data match {
         case Left(Status(_, _, _, _, _, _, _, Some("Success"))) =>

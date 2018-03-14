@@ -1,9 +1,8 @@
 package io.chumps.orchestra
 
-import java.io.{FileDescriptor, FileOutputStream, PrintStream}
+import java.io.PrintStream
 
-import scala.concurrent.duration.Duration
-import scala.concurrent.{Await, Future}
+import scala.concurrent.Future
 
 import io.k8s.api.core.v1.Container
 import org.scalatest.Matchers._
@@ -62,9 +61,7 @@ class LoggingTests
       logs should have size 2
 
       logs.headOption.value.line should ===(s"Stage: $stageName")
-      logs.headOption.value.stageName should ===(Some(stageName))
       logs(1).line should ===(message)
-      logs(1).stageName should ===(Some(stageName))
     }
   }
 
@@ -100,11 +97,6 @@ class LoggingTests
       logs.map(_.line) should contain(message1)
       logs.map(_.line) should contain(s"Stage: $stage2Name")
       logs.map(_.line) should contain(message2)
-
-      val stage1Log = logs.filter(_.stageName == Option(stage1Name))
-      stage1Log should have size 2
-      val stage2Log = logs.filter(_.stageName == Option(stage2Name))
-      stage2Log should have size 2
     }
   }
 
@@ -123,8 +115,7 @@ class LoggingTests
     eventually {
       val logs = CommonApiServer().logs(orchestraConfig.runInfo.runId, Page(None, 10000)).futureValue
       logs.headOption.value.line should ===(s"Stage: $stageName")
-      logs.headOption.value.stageName should ===(Some(stageName))
-      logs(1).stageName should ===(Some(stageName))
+      logs(1).line should ===("Running: echo Hello")
     }
   }
 }

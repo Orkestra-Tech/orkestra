@@ -20,6 +20,7 @@ import io.chumps.orchestra.utils.AkkaImplicits._
 
 trait Stages {
   protected def orchestraConfig: OrchestraConfig
+
   protected def elasticsearchClient: HttpClient
 
   def stage[Result](name: String) = StageBuilder(name)
@@ -27,9 +28,7 @@ trait Stages {
   case class StageBuilder(name: String) {
     def apply[Result](func: => Result): Result = Await.result(apply(Future(func)), Duration.Inf)
 
-    def apply[Result](func: => Future[Result]): Future[Result] = {
-      val out = Console.out
-      val err = Console.err
+    def apply[Result](func: => Future[Result]): Future[Result] =
       for {
         run <- elasticsearchClient
           .execute(get(HistoryIndex.index, HistoryIndex.`type`, HistoryIndex.formatId(orchestraConfig.runInfo)))
@@ -43,28 +42,18 @@ trait Stages {
         runningPong = system.scheduler.schedule(1.second, 1.second) {
           elasticsearchClient
             .execute(
-              updateById(StagesIndex.index.name, StagesIndex.`type`, stageIndexResponse.result.id)
+              updateById(StagesIndex.index, StagesIndex.`type`, stageIndexResponse.result.id)
                 .source(stageStart.copy(latestUpdateOn = Instant.now()))
             )
             .map(_.fold(failure => throw new IOException(failure.error.reason), identity))
         }
 
-        oldStage = ElasticsearchOutputStream.stageVar.value
-        _ = ElasticsearchOutputStream.stageVar.value = Option(name)
-
-        result <- Console.withOut(out) {
-          Console.withErr(err) {
-            println(s"Stage: $name")
-            func.transformWith { triedResult =>
-              runningPong.cancel()
-              Future.fromTry(triedResult)
-            }
-          }
+        _ = println(s"Stage: $name")
+        result <- func.transformWith { triedResult =>
+          runningPong.cancel()
+          Future.fromTry(triedResult)
         }
-
-        _ = ElasticsearchOutputStream.stageVar.value = oldStage
       } yield result
-    }
   }
 }
 

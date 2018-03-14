@@ -4,6 +4,7 @@ import java.io.{IOException, PrintStream}
 import java.time.Instant
 
 import scala.concurrent.Future
+import scala.util.DynamicVariable
 
 import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.circe._
@@ -52,16 +53,26 @@ object JobRunners {
   def withOutErr[Result](stream: PrintStream)(f: => Result): Result = {
     val systemOut = System.out
     val systemErr = System.err
+    val outVarField = Console.getClass.getDeclaredField("outVar")
+    outVarField.setAccessible(true)
+    val consoleOut = Console.out
+    val errVarField = Console.getClass.getDeclaredField("errVar")
+    errVarField.setAccessible(true)
+    val consoleErr = Console.err
 
     try {
       System.setOut(stream)
       System.setErr(stream)
+      outVarField.set(Console, new DynamicVariable(stream))
+      errVarField.set(Console, new DynamicVariable(stream))
       Console.withOut(stream)(Console.withErr(stream)(f))
     } finally {
       stream.flush()
       stream.close()
       System.setOut(systemOut)
       System.setErr(systemErr)
+      outVarField.set(Console, new DynamicVariable(consoleOut))
+      errVarField.set(Console, new DynamicVariable(consoleErr))
     }
   }
 }

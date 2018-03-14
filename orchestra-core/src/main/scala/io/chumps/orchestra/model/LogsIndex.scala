@@ -6,7 +6,7 @@ import com.sksamuel.elastic4s.Index
 import com.sksamuel.elastic4s.http.ElasticDsl._
 
 trait LogsIndex extends Indexed {
-  case class LogLine(runId: RunId, loggedOn: Instant, line: String, stageName: Option[String])
+  case class LogLine(runId: RunId, loggedOn: Instant, position: Int, line: String)
 
   override def indices: Set[IndexDefinition] = super.indices + LogsIndex
 
@@ -19,8 +19,8 @@ trait LogsIndex extends Indexed {
         mapping(`type`).fields(
           keywordField("runId"),
           dateField("loggedOn"),
-          textField("line"),
-          textField("stageName")
+          intField("position"),
+          textField("line")
         )
       )
   }
