@@ -33,10 +33,11 @@ private[lock] object Locks {
       createLock <- elasticsearchClient.execute(indexLockDoc(id).createOnly(true).refreshImmediately)
     } yield createLock
 
-  def runLocked[Result](id: String)(f: => Result)(implicit elasticsearchClient: HttpClient): Future[Result] = {
+  def runLocked[Result](id: String,
+                        func: => Future[Result])(implicit elasticsearchClient: HttpClient): Future[Result] = {
     val keepLock =
       system.scheduler.schedule(30.seconds, 30.seconds)(elasticsearchClient.execute(indexLockDoc(id)))
-    Future(f).transformWith { triedResult =>
+    func.transformWith { triedResult =>
       keepLock.cancel()
       elasticsearchClient
         .execute(deleteById(index, `type`, id).refreshImmediately)

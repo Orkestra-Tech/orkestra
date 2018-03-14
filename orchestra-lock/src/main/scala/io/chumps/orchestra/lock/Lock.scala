@@ -13,11 +13,13 @@ sealed trait ElasticsearchLock {
   protected implicit val elasticsearchClient: HttpClient
   val id: String
 
-  def orElse[Result](f: => Result)(orElse: => Result): Future[Result] =
-    Locks.trylock(id).flatMap(_.fold(_ => Future(orElse), _ => Locks.runLocked(id)(f)))
+  def orElse[Result](func: => Result)(or: => Result): Future[Result] = orElse(Future(func))(Future(or))
+  def orElse[Result](func: => Future[Result])(or: => Future[Result])(implicit dummy: DummyImplicit): Future[Result] =
+    Locks.trylock(id).flatMap(_.fold(_ => or, _ => Locks.runLocked(id, func)))
 
-  def orWait[Result](f: => Result): Future[Result] = {
-    def retry(f: => Result, timeElapsed: FiniteDuration = 0.second): Future[Result] =
+  def orWait[Result](func: => Result): Future[Result] = orWait(Future(func))
+  def orWait[Result](func: => Future[Result])(implicit dummy: DummyImplicit): Future[Result] = {
+    def retry(func: => Future[Result], timeElapsed: FiniteDuration = 0.second): Future[Result] =
       Locks
         .trylock(id)
         .flatMap(
@@ -26,13 +28,13 @@ sealed trait ElasticsearchLock {
               val interval = 1.second
               if (timeElapsed.toSeconds % 1.minute.toSeconds == 1) println(s"Waiting for lock $id to be released")
               Thread.sleep(interval.toMillis)
-              retry(f, timeElapsed + interval)
+              retry(func, timeElapsed + interval)
             },
-            _ => Locks.runLocked(id)(f)
+            _ => Locks.runLocked(id, func)
           )
         )
 
-    retry(f)
+    retry(func)
   }
 }
 
