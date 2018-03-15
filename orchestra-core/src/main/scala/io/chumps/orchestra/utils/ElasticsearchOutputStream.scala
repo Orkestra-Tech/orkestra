@@ -25,12 +25,12 @@ import io.chumps.orchestra.utils.AkkaImplicits._
 class ElasticsearchOutputStream(client: HttpClient, runId: RunId) extends OutputStream {
   private val lineBuffer = new DynamicVariable(new StringBuffer())
   private implicit val requestBuilder: RequestBuilder[LogLine] = indexInto(LogsIndex.index, LogsIndex.`type`).source(_)
-  private val bufferSize = 100
+  private val batchSize = 50
   private val elasticsearchSink =
     Sink.fromSubscriber(
-      client.subscriber[LogLine](batchSize = bufferSize, concurrentRequests = 1, flushInterval = Option(1.second))
+      client.subscriber[LogLine](batchSize = batchSize, concurrentRequests = 1, flushInterval = Option(1.second))
     )
-  private val linesStream = Source.queue(bufferSize, OverflowStrategy.backpressure).to(elasticsearchSink).run()
+  private val linesStream = Source.queue(batchSize * 2, OverflowStrategy.backpressure).to(elasticsearchSink).run()
   private val position = Iterator.from(0)
 
   override def write(byte: Int): Unit =

@@ -29,11 +29,14 @@ class LoggingTests
       new PrintStream(new ElasticsearchOutputStream(elasticsearchClient, orchestraConfig.runInfo.runId), true)
     ) {
       println(message)
+      println(
+        "A\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA\nA"
+      )
     }
 
     eventually {
       val logs = CommonApiServer().logs(orchestraConfig.runInfo.runId, Page(None, 10000)).futureValue
-      logs should have size 1
+      logs should have size 104
       logs.headOption.value.line should ===(message)
     }
   }
