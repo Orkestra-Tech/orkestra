@@ -27,7 +27,8 @@ lazy val orchestra = project
       "-Ywarn-dead-code"
     ),
     ThisBuild / publishTo := Option(
-      "DriveTribe Private" at "s3://drivetribe-repositories.s3-eu-west-1.amazonaws.com/maven"
+      if (isSnapshot.value) Opts.resolver.sonatypeSnapshots
+      else Opts.resolver.sonatypeStaging
     ),
     publishArtifact := false,
     publishLocal := {}
