@@ -1,6 +1,8 @@
 Orchestra
 =========
 
+[![Latest version](https://index.scala-lang.org/drivetribe/orchestra/orchestra/latest.svg?color=blue)](https://index.scala-lang.org/drivetribe/orchestra/orchestra)
+
 Orchestra is an Open Source Continuous Integration / Continuous Deployment server as a library running on Kubernetes.  
 It leverages Kubernetes concepts such as Jobs or Secrets, and configuration as code in Scala to take the most of compile time type safety and compatibility with Scala or Java libraries.
 

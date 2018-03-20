@@ -7,6 +7,13 @@ lazy val orchestra = project
     name := "Orchestra",
     ThisBuild / organization := "com.drivetribe",
     ThisBuild / licenses := Seq("APL2" -> url("http://www.apache.org/licenses/LICENSE-2.0")),
+    homepage := Option(url("https://github.com/drivetribe/orchestra")),
+    scmInfo := Option(
+      ScmInfo(url("https://github.com/drivetribe/orchestra"), "https://github.com/drivetribe/orchestra.git")
+    ),
+    developers := List(
+      Developer(id = "joan38", name = "Joan Goyeau", email = "joan@goyeau.com", url = url("http://goyeau.com"))
+    ),
     ThisBuild / scalaVersion := "2.12.4",
     ThisBuild / version := {
       val ver = (ThisBuild / version).value
@@ -45,11 +52,8 @@ lazy val core = CrossProject("orchestra-core", file("orchestra-core"), CrossType
   .settings(
     name := "Orchestra Core",
     buildInfoPackage := s"${organization.value}.orchestra",
-    buildInfoKeys ++= Seq("projectName" -> "Orchestra"),
-    resolvers ++= Seq(
-      Opts.resolver.sonatypeSnapshots,
-      "btomala at bintray" at "https://dl.bintray.com/btomala/maven/"
-    ),
+    buildInfoKeys += "projectName" -> "Orchestra",
+    resolvers += Opts.resolver.sonatypeSnapshots,
     libraryDependencies ++= Seq(
       "com.chuusai" %%% "shapeless" % "2.3.3",
       "com.vmunier" %% "scalajs-scripts" % "1.1.1",
