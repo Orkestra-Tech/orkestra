@@ -1,4 +1,4 @@
-package io.chumps.orchestra.component
+package com.drivetribe.orchestra.component
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.Reusability
@@ -8,9 +8,9 @@ import scalacss.ScalaCssReact._
 
 import shapeless.HList
 
-import io.chumps.orchestra.board.Job
-import io.chumps.orchestra.css.Global
-import io.chumps.orchestra.route.WebRouter.{BoardPageRoute, PageRoute, StatusPageRoute}
+import com.drivetribe.orchestra.board.Job
+import com.drivetribe.orchestra.css.Global
+import com.drivetribe.orchestra.route.WebRouter.{BoardPageRoute, PageRoute, StatusPageRoute}
 
 object TopNav {
   val CssSettings = scalacss.devOrProdDefaults; import CssSettings._

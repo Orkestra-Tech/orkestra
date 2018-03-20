@@ -1,4 +1,4 @@
-package io.chumps.orchestra.utils
+package com.drivetribe.orchestra.utils
 
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
@@ -8,7 +8,7 @@ import io.circe.parser._
 import io.circe.syntax._
 import org.scalajs.dom.ext.Ajax
 
-import io.chumps.orchestra.OrchestraConfig
+import com.drivetribe.orchestra.OrchestraConfig
 
 object AutowireClient {
 

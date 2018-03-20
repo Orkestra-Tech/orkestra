@@ -1,11 +1,11 @@
-package io.chumps.orchestra.integration.tests.utils
+package com.drivetribe.orchestra.integration.tests.utils
 
 import com.goyeau.kubernetesclient.{IntValue, KubernetesClient}
 import io.k8s.api.apps.v1beta2.{StatefulSet, StatefulSetSpec}
 import io.k8s.api.core.v1._
 import io.k8s.apimachinery.pkg.apis.meta.v1.{LabelSelector, ObjectMeta}
 
-import io.chumps.orchestra.utils.AkkaImplicits._
+import com.drivetribe.orchestra.utils.AkkaImplicits._
 
 object DeployElasticsearch {
   val advertisedHostName = "elasticsearch"

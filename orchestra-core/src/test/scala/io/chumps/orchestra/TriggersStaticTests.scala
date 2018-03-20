@@ -1,9 +1,9 @@
-package io.chumps.orchestra
+package com.drivetribe.orchestra
 
 import shapeless.test.illTyped
 
-import io.chumps.orchestra.Dsl._
-import io.chumps.orchestra.utils.DummyJobs._
+import com.drivetribe.orchestra.Dsl._
+import com.drivetribe.orchestra.utils.DummyJobs._
 
 object TriggersStaticTests {
 

@@ -5,7 +5,7 @@ lazy val orchestra = project
   .aggregate(coreJVM, coreJS, githubJVM, githubJS, cronJVM, cronJS, lock, plugin)
   .settings(
     name := "Orchestra",
-    ThisBuild / organization := "io.chumps",
+    ThisBuild / organization := "com.drivetribe",
     ThisBuild / licenses := Seq("APL2" -> url("http://www.apache.org/licenses/LICENSE-2.0")),
     ThisBuild / scalaVersion := "2.12.4",
     ThisBuild / version := {

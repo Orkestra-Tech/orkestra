@@ -1,4 +1,4 @@
-package io.chumps.orchestra.page
+package com.drivetribe.orchestra.page
 
 import java.time.temporal.ChronoUnit
 
@@ -9,10 +9,10 @@ import scala.scalajs.js
 
 import autowire._
 
-import io.chumps.orchestra.utils.BaseEncoders._
-import io.chumps.orchestra.parameter.State
-import io.chumps.orchestra.parameter.ParameterOperations
-import io.chumps.orchestra.route.WebRouter.{BoardPageRoute, LogsPageRoute, PageRoute}
+import com.drivetribe.orchestra.utils.BaseEncoders._
+import com.drivetribe.orchestra.parameter.State
+import com.drivetribe.orchestra.parameter.ParameterOperations
+import com.drivetribe.orchestra.route.WebRouter.{BoardPageRoute, LogsPageRoute, PageRoute}
 import io.circe._
 import io.circe.generic.auto._
 import io.circe.java8.time._
@@ -23,11 +23,11 @@ import japgolly.scalajs.react.vdom.html_<^._
 import shapeless.HList
 import scalacss.ScalaCssReact._
 
-import io.chumps.orchestra.css.Global
-import io.chumps.orchestra.board.Job
-import io.chumps.orchestra.component.StopButton
-import io.chumps.orchestra.model.{Page, RunId}
-import io.chumps.orchestra.utils.{Colours, RunIdOperation}
+import com.drivetribe.orchestra.css.Global
+import com.drivetribe.orchestra.board.Job
+import com.drivetribe.orchestra.component.StopButton
+import com.drivetribe.orchestra.model.{Page, RunId}
+import com.drivetribe.orchestra.utils.{Colours, RunIdOperation}
 
 object JobPage {
 

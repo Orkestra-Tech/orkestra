@@ -1,4 +1,4 @@
-package io.chumps.orchestra.component
+package com.drivetribe.orchestra.component
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
@@ -9,9 +9,9 @@ import scalacss.ScalaCssReact._
 
 import shapeless.HList
 
-import io.chumps.orchestra.board.Job
-import io.chumps.orchestra.css.Global
-import io.chumps.orchestra.model.RunId
+import com.drivetribe.orchestra.board.Job
+import com.drivetribe.orchestra.css.Global
+import com.drivetribe.orchestra.model.RunId
 
 object StopButton {
   val CssSettings = scalacss.devOrProdDefaults; import CssSettings._

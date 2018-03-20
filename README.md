@@ -16,16 +16,16 @@ Key features:
 
 *project/plugins.sbt*:
 ```scala
-addSbtPlugin("io.chumps" % "sbt-orchestra" % "<latest version>")
+addSbtPlugin("com.drivetribe" % "sbt-orchestra" % "<latest version>")
 ```
 *build.sbt*:
 ```scala
 lazy val orchestration = OrchestraProject("orchestration", file("orchestration"))
   .settings(
     libraryDependencies ++= Seq(
-      "io.chumps" %%% "orchestra-github" % orchestraVersion, // Optional Github plugin
-      "io.chumps" %%% "orchestra-cron" % orchestraVersion, // Optional Cron plugin
-      "io.chumps" %% "orchestra-lock" % orchestraVersion // Optional Lock plugin
+      "com.drivetribe" %%% "orchestra-github" % orchestraVersion, // Optional Github plugin
+      "com.drivetribe" %%% "orchestra-cron" % orchestraVersion, // Optional Cron plugin
+      "com.drivetribe" %% "orchestra-lock" % orchestraVersion // Optional Lock plugin
     )
   )
 lazy val orchestrationJVM = orchestration.jvm
@@ -41,11 +41,11 @@ Given the above [installation](#installation), here is a minimal project with on
 
 *orchestration/src/main/scala/Orchestration.scala*:
 ```scala
-import io.chumps.orchestra.AsyncDsl._
-import io.chumps.orchestra.{Orchestra, UI}
-import io.chumps.orchestra.board.{Folder, Job}
-import io.chumps.orchestra.job.JobRunner
-import io.chumps.orchestra.model.JobId
+import com.drivetribe.orchestra.AsyncDsl._
+import com.drivetribe.orchestra.{Orchestra, UI}
+import com.drivetribe.orchestra.board.{Folder, Job}
+import com.drivetribe.orchestra.job.JobRunner
+import com.drivetribe.orchestra.model.JobId
 
 object Orchestration extends Orchestra with UI {
   lazy val board = Folder("My amazing company")(helloJob)

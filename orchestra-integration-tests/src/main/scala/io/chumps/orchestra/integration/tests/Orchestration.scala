@@ -1,14 +1,14 @@
-package io.chumps.orchestra.integration.tests
+package com.drivetribe.orchestra.integration.tests
 
 import scala.concurrent.duration._
 
-import io.chumps.orchestra.AsyncDsl._
-import io.chumps.orchestra.{Orchestra, UI}
-import io.chumps.orchestra.board.{Folder, Job}
-import io.chumps.orchestra.cron.CronTriggers
-import io.chumps.orchestra.github.GithubHooks
-import io.chumps.orchestra.job.JobRunner
-import io.chumps.orchestra.model.JobId
+import com.drivetribe.orchestra.AsyncDsl._
+import com.drivetribe.orchestra.{Orchestra, UI}
+import com.drivetribe.orchestra.board.{Folder, Job}
+import com.drivetribe.orchestra.cron.CronTriggers
+import com.drivetribe.orchestra.github.GithubHooks
+import com.drivetribe.orchestra.job.JobRunner
+import com.drivetribe.orchestra.model.JobId
 
 object Orchestration extends Orchestra with UI with GithubHooks with CronTriggers {
   lazy val board = Folder("Integration Test")()

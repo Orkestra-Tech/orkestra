@@ -1,4 +1,4 @@
-package io.chumps.orchestra.integration.tests.utils
+package com.drivetribe.orchestra.integration.tests.utils
 
 import java.io.File
 import java.util.UUID
@@ -7,8 +7,8 @@ import com.goyeau.kubernetesclient.{KubeConfig, KubernetesClient}
 import io.k8s.api.core.v1.Namespace
 import io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta
 
-import io.chumps.orchestra.{kubernetes, OrchestraConfig}
-import io.chumps.orchestra.utils.AkkaImplicits._
+import com.drivetribe.orchestra.{kubernetes, OrchestraConfig}
+import com.drivetribe.orchestra.utils.AkkaImplicits._
 
 object Kubernetes {
   val namespace = Namespace(

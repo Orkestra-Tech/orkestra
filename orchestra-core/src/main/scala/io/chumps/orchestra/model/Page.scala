@@ -1,3 +1,3 @@
-package io.chumps.orchestra.model
+package com.drivetribe.orchestra.model
 
 case class Page[T](after: Option[T], size: Int)

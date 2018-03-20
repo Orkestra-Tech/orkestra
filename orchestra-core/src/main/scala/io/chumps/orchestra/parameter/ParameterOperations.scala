@@ -1,4 +1,4 @@
-package io.chumps.orchestra.parameter
+package com.drivetribe.orchestra.parameter
 
 import japgolly.scalajs.react.vdom.TagMod
 import shapeless._

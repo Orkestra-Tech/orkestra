@@ -1,6 +1,6 @@
-package io.chumps.orchestra.kubernetes
+package com.drivetribe.orchestra.kubernetes
 
-import io.chumps.orchestra.OrchestraConfig
+import com.drivetribe.orchestra.OrchestraConfig
 import scala.language.reflectiveCalls
 
 import io.circe.generic.auto._
@@ -8,7 +8,7 @@ import io.circe.syntax._
 import io.k8s.api.batch.v1.JobSpec
 import io.k8s.api.core.v1._
 
-import io.chumps.orchestra.model.EnvRunInfo
+import com.drivetribe.orchestra.model.EnvRunInfo
 
 object JobSpecs {
   private val home = "home"

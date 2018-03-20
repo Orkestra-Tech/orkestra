@@ -1,4 +1,4 @@
-package io.chumps.orchestra
+package com.drivetribe.orchestra
 
 import java.io.IOException
 import java.nio.file.Paths
@@ -9,7 +9,7 @@ import com.sksamuel.elastic4s.ElasticsearchClientUri
 import io.circe.generic.auto._
 import io.circe.parser._
 
-import io.chumps.orchestra.model.{EnvRunInfo, RunId, RunInfo}
+import com.drivetribe.orchestra.model.{EnvRunInfo, RunId, RunInfo}
 
 case class OrchestraConfig(elasticsearchUri: ElasticsearchClientUri,
                            workspace: String = OrchestraConfig.defaultWorkspace,

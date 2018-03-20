@@ -1,4 +1,4 @@
-package io.chumps.orchestra.utils
+package com.drivetribe.orchestra.utils
 
 import java.io.IOException
 
@@ -15,13 +15,13 @@ import io.circe.shapes._
 import shapeless._
 import shapeless.ops.hlist.Tupler
 
-import io.chumps.orchestra.job.JobRunner
-import io.chumps.orchestra.model.Indexed.{HistoryIndex, Run}
-import io.chumps.orchestra.model.{RunId, RunInfo}
-import io.chumps.orchestra.utils.BaseEncoders._
-import io.chumps.orchestra.utils.AkkaImplicits._
-import io.chumps.orchestra.OrchestraConfig
-import io.chumps.orchestra.kubernetes.Kubernetes
+import com.drivetribe.orchestra.job.JobRunner
+import com.drivetribe.orchestra.model.Indexed.{HistoryIndex, Run}
+import com.drivetribe.orchestra.model.{RunId, RunInfo}
+import com.drivetribe.orchestra.utils.BaseEncoders._
+import com.drivetribe.orchestra.utils.AkkaImplicits._
+import com.drivetribe.orchestra.OrchestraConfig
+import com.drivetribe.orchestra.kubernetes.Kubernetes
 
 trait Triggers {
   protected implicit def orchestraConfig: OrchestraConfig

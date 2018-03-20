@@ -1,12 +1,12 @@
-package io.chumps.orchestra
+package com.drivetribe.orchestra
 
 import shapeless.test.illTyped
 
-import io.chumps.orchestra.Dsl._
-import io.chumps.orchestra.board.Job
-import io.chumps.orchestra.job.JobRunner
-import io.chumps.orchestra.model.{JobId, RunId}
-import io.chumps.orchestra.parameter.{Checkbox, Input}
+import com.drivetribe.orchestra.Dsl._
+import com.drivetribe.orchestra.board.Job
+import com.drivetribe.orchestra.job.JobRunner
+import com.drivetribe.orchestra.model.{JobId, RunId}
+import com.drivetribe.orchestra.parameter.{Checkbox, Input}
 
 object ParametersStaticTests {
 

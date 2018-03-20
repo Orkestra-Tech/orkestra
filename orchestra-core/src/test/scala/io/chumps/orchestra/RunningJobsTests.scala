@@ -1,11 +1,11 @@
-package io.chumps.orchestra
+package com.drivetribe.orchestra
 
 import org.scalatest.Matchers._
 import shapeless.HNil
 
-import io.chumps.orchestra.utils.DummyJobs._
-import io.chumps.orchestra.model.RunId
-import io.chumps.orchestra.utils._
+import com.drivetribe.orchestra.utils.DummyJobs._
+import com.drivetribe.orchestra.model.RunId
+import com.drivetribe.orchestra.utils._
 
 class RunningJobsTests extends OrchestraSpec with OrchestraConfigTest with KubernetesTest with ElasticsearchTest {
 

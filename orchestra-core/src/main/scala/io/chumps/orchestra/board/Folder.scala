@@ -1,10 +1,10 @@
-package io.chumps.orchestra.board
+package com.drivetribe.orchestra.board
 
 import japgolly.scalajs.react.extra.router.RouterConfigDsl
 import japgolly.scalajs.react.vdom.html_<^._
 
-import io.chumps.orchestra.page.FolderPage
-import io.chumps.orchestra.route.WebRouter.{BoardPageRoute, PageRoute}
+import com.drivetribe.orchestra.page.FolderPage
+import com.drivetribe.orchestra.route.WebRouter.{BoardPageRoute, PageRoute}
 
 case class Folder(name: String, childBoards: Seq[Board]) extends Board {
 

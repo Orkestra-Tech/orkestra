@@ -1,9 +1,9 @@
-package io.chumps.orchestra.integration.tests.utils
+package com.drivetribe.orchestra.integration.tests.utils
 
 import shapeless.HList
 
-import io.chumps.orchestra.{CommonApi, OrchestraConfig}
-import io.chumps.orchestra.board.Job
+import com.drivetribe.orchestra.{CommonApi, OrchestraConfig}
+import com.drivetribe.orchestra.board.Job
 
 object Api {
   def jobClient[ParamValues <: HList, Result](job: Job[ParamValues, Result, _, _]) =

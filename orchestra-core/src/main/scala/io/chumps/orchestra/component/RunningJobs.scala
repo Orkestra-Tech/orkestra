@@ -1,4 +1,4 @@
-package io.chumps.orchestra.component
+package com.drivetribe.orchestra.component
 
 import java.time.temporal.ChronoUnit
 
@@ -19,11 +19,11 @@ import japgolly.scalajs.react.extra.router.RouterCtl
 import japgolly.scalajs.react.vdom.Style
 import shapeless.HList
 
-import io.chumps.orchestra.CommonApi
-import io.chumps.orchestra.board.Job
-import io.chumps.orchestra.css.Global
-import io.chumps.orchestra.model.Indexed._
-import io.chumps.orchestra.route.WebRouter.{BoardPageRoute, LogsPageRoute, PageRoute}
+import com.drivetribe.orchestra.CommonApi
+import com.drivetribe.orchestra.board.Job
+import com.drivetribe.orchestra.css.Global
+import com.drivetribe.orchestra.model.Indexed._
+import com.drivetribe.orchestra.route.WebRouter.{BoardPageRoute, LogsPageRoute, PageRoute}
 
 object RunningJobs {
 

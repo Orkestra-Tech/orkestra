@@ -1,4 +1,4 @@
-package io.chumps.orchestra.utils
+package com.drivetribe.orchestra.utils
 
 import java.io.IOException
 
@@ -12,10 +12,10 @@ import com.goyeau.kubernetesclient.{KubernetesClient, KubernetesException}
 import io.k8s.api.core.v1.Container
 import io.k8s.apimachinery.pkg.apis.meta.v1.Status
 
-import io.chumps.orchestra.OrchestraConfig
-import io.chumps.orchestra.filesystem.Directory
-import io.chumps.orchestra.kubernetes.Kubernetes
-import io.chumps.orchestra.utils.AkkaImplicits._
+import com.drivetribe.orchestra.OrchestraConfig
+import com.drivetribe.orchestra.filesystem.Directory
+import com.drivetribe.orchestra.kubernetes.Kubernetes
+import com.drivetribe.orchestra.utils.AkkaImplicits._
 
 trait AsyncShells {
   protected def orchestraConfig: OrchestraConfig

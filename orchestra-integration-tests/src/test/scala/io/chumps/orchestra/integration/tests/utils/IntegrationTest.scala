@@ -1,4 +1,4 @@
-package io.chumps.orchestra.integration.tests.utils
+package com.drivetribe.orchestra.integration.tests.utils
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -9,8 +9,8 @@ import io.k8s.apimachinery.pkg.apis.meta.v1.DeleteOptions
 import org.scalatest._
 import org.scalatest.concurrent.{Eventually, ScalaFutures}
 
-import io.chumps.orchestra.model.Indexed
-import io.chumps.orchestra.utils.AkkaImplicits._
+import com.drivetribe.orchestra.model.Indexed
+import com.drivetribe.orchestra.utils.AkkaImplicits._
 
 trait IntegrationTest extends BeforeAndAfter with BeforeAndAfterAll with ScalaFutures with Eventually { this: Suite =>
   override implicit val patienceConfig = PatienceConfig(timeout = 1.minute, interval = 500.millis)

@@ -1,11 +1,11 @@
-package io.chumps.orchestra
+package com.drivetribe.orchestra
 
 import scalajs.html.scripts
 
 import akka.http.scaladsl.model.{ContentTypes, HttpEntity}
 import akka.http.scaladsl.server.Directives._
 
-import io.chumps.orchestra.route.BackendRoutes
+import com.drivetribe.orchestra.route.BackendRoutes
 
 trait UI extends BackendRoutes {
   protected implicit val orchestraConfig: OrchestraConfig

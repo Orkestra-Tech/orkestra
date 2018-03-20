@@ -1,4 +1,4 @@
-package io.chumps.orchestra.github
+package com.drivetribe.orchestra.github
 
 import scala.concurrent.Future
 
@@ -7,12 +7,12 @@ import com.sksamuel.elastic4s.http.HttpClient
 import io.circe.Json
 import shapeless._
 
-import io.chumps.orchestra.OrchestraConfig
-import io.chumps.orchestra.job.JobRunner
-import io.chumps.orchestra.kubernetes.Kubernetes
-import io.chumps.orchestra.model.RunId
-import io.chumps.orchestra.utils.{Elasticsearch, RunIdOperation}
-import io.chumps.orchestra.utils.AkkaImplicits._
+import com.drivetribe.orchestra.OrchestraConfig
+import com.drivetribe.orchestra.job.JobRunner
+import com.drivetribe.orchestra.kubernetes.Kubernetes
+import com.drivetribe.orchestra.model.RunId
+import com.drivetribe.orchestra.utils.{Elasticsearch, RunIdOperation}
+import com.drivetribe.orchestra.utils.AkkaImplicits._
 
 sealed trait GithubTrigger {
   private[github] def trigger(eventType: String, json: Json): Future[Boolean]

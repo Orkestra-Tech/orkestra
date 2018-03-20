@@ -1,4 +1,4 @@
-package io.chumps.orchestra.css
+package com.drivetribe.orchestra.css
 
 object Global {
   val CssSettings = scalacss.devOrProdDefaults; import CssSettings._

@@ -1,4 +1,4 @@
-package io.chumps.orchestra.board
+package com.drivetribe.orchestra.board
 
 import java.time.Instant
 
@@ -12,11 +12,11 @@ import io.k8s.api.core.v1.PodSpec
 import shapeless.ops.function.FnToProduct
 import shapeless.{::, _}
 
-import io.chumps.orchestra.job.SimpleJob
-import io.chumps.orchestra.model._
-import io.chumps.orchestra.parameter.{Parameter, ParameterOperations}
-import io.chumps.orchestra.utils.{AutowireClient, AutowireServer, RunIdOperation}
-import io.chumps.orchestra.OrchestraConfig
+import com.drivetribe.orchestra.job.SimpleJob
+import com.drivetribe.orchestra.model._
+import com.drivetribe.orchestra.parameter.{Parameter, ParameterOperations}
+import com.drivetribe.orchestra.utils.{AutowireClient, AutowireServer, RunIdOperation}
+import com.drivetribe.orchestra.OrchestraConfig
 
 trait Job[ParamValues <: HList, Result, Func, PodSpecFunc] extends Board {
   val id: JobId

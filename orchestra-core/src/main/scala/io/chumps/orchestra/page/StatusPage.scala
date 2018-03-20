@@ -1,4 +1,4 @@
-package io.chumps.orchestra.page
+package com.drivetribe.orchestra.page
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._

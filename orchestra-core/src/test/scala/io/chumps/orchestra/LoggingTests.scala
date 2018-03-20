@@ -1,4 +1,4 @@
-package io.chumps.orchestra
+package com.drivetribe.orchestra
 
 import java.io.PrintStream
 
@@ -9,11 +9,11 @@ import org.scalatest.Matchers._
 import org.scalatest.OptionValues._
 import shapeless.HNil
 
-import io.chumps.orchestra.filesystem.Implicits.workDir
-import io.chumps.orchestra.job.JobRunners
-import io.chumps.orchestra.model.{Page, RunId}
-import io.chumps.orchestra.utils._
-import io.chumps.orchestra.utils.AkkaImplicits._
+import com.drivetribe.orchestra.filesystem.Implicits.workDir
+import com.drivetribe.orchestra.job.JobRunners
+import com.drivetribe.orchestra.model.{Page, RunId}
+import com.drivetribe.orchestra.utils._
+import com.drivetribe.orchestra.utils.AkkaImplicits._
 
 class LoggingTests
     extends OrchestraSpec

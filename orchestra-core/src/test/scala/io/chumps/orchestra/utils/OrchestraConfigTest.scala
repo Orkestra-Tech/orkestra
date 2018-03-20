@@ -1,11 +1,11 @@
-package io.chumps.orchestra.utils
+package com.drivetribe.orchestra.utils
 
 import java.net.ServerSocket
 
 import com.sksamuel.elastic4s.ElasticsearchClientUri
 
-import io.chumps.orchestra.OrchestraConfig
-import io.chumps.orchestra.model.{JobId, RunId, RunInfo}
+import com.drivetribe.orchestra.OrchestraConfig
+import com.drivetribe.orchestra.model.{JobId, RunId, RunInfo}
 
 trait OrchestraConfigTest {
   val kubernetesApiPort = {

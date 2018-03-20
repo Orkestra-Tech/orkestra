@@ -1,4 +1,4 @@
-package io.chumps.orchestra.utils
+package com.drivetribe.orchestra.utils
 
 import java.io.OutputStream
 import java.time.Instant
@@ -17,10 +17,10 @@ import com.sksamuel.elastic4s.streams.RequestBuilder
 import io.circe.generic.auto._
 import io.circe.java8.time._
 
-import io.chumps.orchestra.model.Indexed.LogLine
-import io.chumps.orchestra.model.Indexed.LogsIndex
-import io.chumps.orchestra.model.RunId
-import io.chumps.orchestra.utils.AkkaImplicits._
+import com.drivetribe.orchestra.model.Indexed.LogLine
+import com.drivetribe.orchestra.model.Indexed.LogsIndex
+import com.drivetribe.orchestra.model.RunId
+import com.drivetribe.orchestra.utils.AkkaImplicits._
 
 class ElasticsearchOutputStream(client: HttpClient, runId: RunId) extends OutputStream {
   private val lineBuffer = new DynamicVariable(new StringBuffer())

@@ -1,4 +1,4 @@
-package io.chumps.orchestra.cron
+package com.drivetribe.orchestra.cron
 
 import scala.concurrent.Future
 
@@ -8,10 +8,10 @@ import com.typesafe.scalalogging.Logger
 import shapeless._
 import io.circe.shapes._
 
-import io.chumps.orchestra.model.RunInfo
-import io.chumps.orchestra.utils.AkkaImplicits._
-import io.chumps.orchestra.utils.Elasticsearch
-import io.chumps.orchestra.OrchestraPlugin
+import com.drivetribe.orchestra.model.RunInfo
+import com.drivetribe.orchestra.utils.AkkaImplicits._
+import com.drivetribe.orchestra.utils.Elasticsearch
+import com.drivetribe.orchestra.OrchestraPlugin
 
 trait CronTriggers extends OrchestraPlugin {
   private lazy val logger = Logger(getClass)

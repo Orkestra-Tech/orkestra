@@ -1,8 +1,8 @@
-package io.chumps.orchestra.github
+package com.drivetribe.orchestra.github
 
 import akka.http.scaladsl.model.Uri
 
-import io.chumps.orchestra.OrchestraConfig
+import com.drivetribe.orchestra.OrchestraConfig
 
 case class GithubConfig(uri: Uri, port: Int, token: String)
 

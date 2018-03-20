@@ -1,9 +1,9 @@
-package io.chumps.orchestra.kubernetes
+package com.drivetribe.orchestra.kubernetes
 
 import com.goyeau.kubernetesclient.KubernetesClient
 
-import io.chumps.orchestra.OrchestraConfig
-import io.chumps.orchestra.utils.AkkaImplicits._
+import com.drivetribe.orchestra.OrchestraConfig
+import com.drivetribe.orchestra.utils.AkkaImplicits._
 
 object MasterPod {
 

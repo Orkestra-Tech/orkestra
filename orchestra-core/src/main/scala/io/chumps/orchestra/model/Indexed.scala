@@ -1,4 +1,4 @@
-package io.chumps.orchestra.model
+package com.drivetribe.orchestra.model
 
 import com.sksamuel.elastic4s.Index
 import com.sksamuel.elastic4s.indexes.CreateIndexDefinition

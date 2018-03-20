@@ -1,4 +1,4 @@
-package io.chumps.orchestra.utils
+package com.drivetribe.orchestra.utils
 
 import scala.concurrent.duration._
 
@@ -17,7 +17,7 @@ import io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, Suite}
 
-import io.chumps.orchestra.utils.AkkaImplicits._
+import com.drivetribe.orchestra.utils.AkkaImplicits._
 
 trait KubernetesTest extends BeforeAndAfterEach with BeforeAndAfterAll with ScalaFutures {
   self: Suite with OrchestraConfigTest =>

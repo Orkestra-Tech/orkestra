@@ -1,16 +1,16 @@
-package io.chumps.orchestra.kubernetes
+package com.drivetribe.orchestra.kubernetes
 
 import scala.concurrent.Future
 
 import com.goyeau.kubernetesclient.KubernetesClient
 
-import io.chumps.orchestra.OrchestraConfig
-import io.chumps.orchestra.utils.AkkaImplicits._
+import com.drivetribe.orchestra.OrchestraConfig
+import com.drivetribe.orchestra.utils.AkkaImplicits._
 import io.k8s.api.batch.v1.{Job => KubeJob}
 import io.k8s.api.core.v1.PodSpec
 import io.k8s.apimachinery.pkg.apis.meta.v1.{DeleteOptions, ObjectMeta}
 
-import io.chumps.orchestra.model.{EnvRunInfo, RunInfo}
+import com.drivetribe.orchestra.model.{EnvRunInfo, RunInfo}
 
 object Jobs {
 

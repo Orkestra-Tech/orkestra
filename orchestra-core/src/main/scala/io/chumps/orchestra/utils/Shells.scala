@@ -1,4 +1,4 @@
-package io.chumps.orchestra.utils
+package com.drivetribe.orchestra.utils
 
 import scala.concurrent.duration._
 import scala.concurrent.Await
@@ -6,9 +6,9 @@ import scala.concurrent.Await
 import com.goyeau.kubernetesclient.KubernetesClient
 import io.k8s.api.core.v1.Container
 
-import io.chumps.orchestra.OrchestraConfig
-import io.chumps.orchestra.filesystem.Directory
-import io.chumps.orchestra.kubernetes.Kubernetes
+import com.drivetribe.orchestra.OrchestraConfig
+import com.drivetribe.orchestra.filesystem.Directory
+import com.drivetribe.orchestra.kubernetes.Kubernetes
 
 trait Shells {
   protected def kubernetesClient: KubernetesClient

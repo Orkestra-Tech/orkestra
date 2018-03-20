@@ -1,7 +1,7 @@
-package io.chumps.orchestra.cron
+package com.drivetribe.orchestra.cron
 
 import shapeless.HNil
 
-import io.chumps.orchestra.job.JobRunner
+import com.drivetribe.orchestra.job.JobRunner
 
 case class CronTrigger(schedule: String, jobRunner: JobRunner[HNil, _])

@@ -1,8 +1,8 @@
-package io.chumps.orchestra.board
+package com.drivetribe.orchestra.board
 
 import japgolly.scalajs.react.extra.router.StaticDsl
 
-import io.chumps.orchestra.route.WebRouter.PageRoute
+import com.drivetribe.orchestra.route.WebRouter.PageRoute
 
 trait Board {
   val segment: String

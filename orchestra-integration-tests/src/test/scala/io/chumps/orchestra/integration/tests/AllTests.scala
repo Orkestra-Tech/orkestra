@@ -1,4 +1,4 @@
-package io.chumps.orchestra.integration.tests
+package com.drivetribe.orchestra.integration.tests
 
 import java.time.Instant
 
@@ -11,9 +11,9 @@ import org.scalatest.Matchers._
 import org.scalatest.OptionValues._
 import shapeless._
 
-import io.chumps.orchestra.integration.tests.utils._
-import io.chumps.orchestra.model.{Page, RunId}
-import io.chumps.orchestra.utils.AkkaImplicits._
+import com.drivetribe.orchestra.integration.tests.utils._
+import com.drivetribe.orchestra.model.{Page, RunId}
+import com.drivetribe.orchestra.utils.AkkaImplicits._
 
 class AllTests extends FeatureSpec with IntegrationTest {
 

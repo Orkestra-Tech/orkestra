@@ -1,12 +1,12 @@
-package io.chumps.orchestra.page
+package com.drivetribe.orchestra.page
 
-import io.chumps.orchestra.route.WebRouter.{BoardPageRoute, PageRoute}
+import com.drivetribe.orchestra.route.WebRouter.{BoardPageRoute, PageRoute}
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.router.RouterCtl
 import japgolly.scalajs.react.vdom.html_<^._
 
-import io.chumps.orchestra.board.Board
-import io.chumps.orchestra.css.Global
+import com.drivetribe.orchestra.board.Board
+import com.drivetribe.orchestra.css.Global
 import scalacss.ScalaCssReact._
 
 object FolderPage {

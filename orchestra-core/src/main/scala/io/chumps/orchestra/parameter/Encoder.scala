@@ -1,4 +1,4 @@
-package io.chumps.orchestra.parameter
+package com.drivetribe.orchestra.parameter
 
 import shapeless._
 

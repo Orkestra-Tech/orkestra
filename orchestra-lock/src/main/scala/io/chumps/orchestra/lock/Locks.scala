@@ -1,4 +1,4 @@
-package io.chumps.orchestra.lock
+package com.drivetribe.orchestra.lock
 
 import java.time.Instant
 
@@ -13,7 +13,7 @@ import com.sksamuel.elastic4s.{ElasticDate, Index, Minutes}
 import io.circe.generic.auto._
 import io.circe.java8.time._
 
-import io.chumps.orchestra.utils.AkkaImplicits._
+import com.drivetribe.orchestra.utils.AkkaImplicits._
 
 private[lock] object Locks {
   case class Lock(updatedOn: Instant)

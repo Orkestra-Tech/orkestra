@@ -1,4 +1,4 @@
-package io.chumps.orchestra.github
+package com.drivetribe.orchestra.github
 
 import shapeless._
 

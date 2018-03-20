@@ -1,6 +1,6 @@
-package io.chumps.orchestra.component
+package com.drivetribe.orchestra.component
 
-import io.chumps.orchestra.BuildInfo
+import com.drivetribe.orchestra.BuildInfo
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 

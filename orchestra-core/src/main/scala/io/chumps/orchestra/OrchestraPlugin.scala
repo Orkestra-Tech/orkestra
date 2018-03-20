@@ -1,11 +1,11 @@
-package io.chumps.orchestra
+package com.drivetribe.orchestra
 
 import scala.concurrent.Future
 
 import com.goyeau.kubernetesclient.KubernetesClient
 import com.sksamuel.elastic4s.http.HttpClient
 
-import io.chumps.orchestra.model.RunInfo
+import com.drivetribe.orchestra.model.RunInfo
 
 trait OrchestraPlugin {
   protected implicit def orchestraConfig: OrchestraConfig

@@ -1,4 +1,4 @@
-package io.chumps.orchestra.job
+package com.drivetribe.orchestra.job
 
 import java.io.{IOException, PrintStream}
 import java.time.Instant
@@ -14,10 +14,10 @@ import io.circe.syntax._
 import io.circe.generic.auto._
 import io.circe.java8.time._
 
-import io.chumps.orchestra.model.Indexed._
-import io.chumps.orchestra.model.RunInfo
-import io.chumps.orchestra.utils.AkkaImplicits._
-import io.chumps.orchestra.utils.BaseEncoders._
+import com.drivetribe.orchestra.model.Indexed._
+import com.drivetribe.orchestra.model.RunInfo
+import com.drivetribe.orchestra.utils.AkkaImplicits._
+import com.drivetribe.orchestra.utils.BaseEncoders._
 
 object JobRunners {
 

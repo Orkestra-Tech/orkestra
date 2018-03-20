@@ -1,11 +1,11 @@
-package io.chumps.orchestra.utils
+package com.drivetribe.orchestra.utils
 
 import io.circe.shapes._
 
-import io.chumps.orchestra.{board, OrchestraConfig}
-import io.chumps.orchestra.job.JobRunner
-import io.chumps.orchestra.model.RunId
-import io.chumps.orchestra.parameter.{Checkbox, Input}
+import com.drivetribe.orchestra.{board, OrchestraConfig}
+import com.drivetribe.orchestra.job.JobRunner
+import com.drivetribe.orchestra.model.RunId
+import com.drivetribe.orchestra.parameter.{Checkbox, Input}
 
 object DummyJobs {
   def emptyJob(implicit orchestraConfig: OrchestraConfig) =

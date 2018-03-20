@@ -1,13 +1,13 @@
-package io.chumps.orchestra.lock
+package com.drivetribe.orchestra.lock
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
 import com.sksamuel.elastic4s.http.HttpClient
 
-import io.chumps.orchestra.OrchestraConfig
-import io.chumps.orchestra.utils.AkkaImplicits._
-import io.chumps.orchestra.utils.Elasticsearch
+import com.drivetribe.orchestra.OrchestraConfig
+import com.drivetribe.orchestra.utils.AkkaImplicits._
+import com.drivetribe.orchestra.utils.Elasticsearch
 
 sealed trait ElasticsearchLock {
   protected implicit val elasticsearchClient: HttpClient

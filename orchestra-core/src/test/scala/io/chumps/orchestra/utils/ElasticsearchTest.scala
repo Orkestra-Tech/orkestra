@@ -1,4 +1,4 @@
-package io.chumps.orchestra.utils
+package com.drivetribe.orchestra.utils
 
 import scala.concurrent.duration._
 
@@ -9,7 +9,7 @@ import com.sksamuel.elastic4s.testkit.AlwaysNewLocalNodeProvider
 import org.scalatest.concurrent.{Eventually, ScalaFutures}
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, Suite}
 
-import io.chumps.orchestra.utils.AkkaImplicits._
+import com.drivetribe.orchestra.utils.AkkaImplicits._
 
 trait ElasticsearchTest
     extends AlwaysNewLocalNodeProvider

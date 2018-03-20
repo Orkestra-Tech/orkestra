@@ -1,4 +1,4 @@
-package io.chumps.orchestra
+package com.drivetribe.orchestra
 
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
@@ -15,11 +15,11 @@ import io.circe.generic.auto._
 import io.circe.shapes._
 import io.circe.java8.time._
 
-import io.chumps.orchestra.utils.AkkaImplicits._
-import io.chumps.orchestra.job.JobRunner
-import io.chumps.orchestra.kubernetes.Kubernetes
-import io.chumps.orchestra.route.BackendRoutes
-import io.chumps.orchestra.utils.{AutowireServer, Elasticsearch}
+import com.drivetribe.orchestra.utils.AkkaImplicits._
+import com.drivetribe.orchestra.job.JobRunner
+import com.drivetribe.orchestra.kubernetes.Kubernetes
+import com.drivetribe.orchestra.route.BackendRoutes
+import com.drivetribe.orchestra.utils.{AutowireServer, Elasticsearch}
 
 trait Orchestra extends BackendRoutes with OrchestraPlugin {
   private lazy val logger = Logger(getClass)

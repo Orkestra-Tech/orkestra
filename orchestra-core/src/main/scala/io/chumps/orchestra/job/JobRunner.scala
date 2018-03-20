@@ -1,4 +1,4 @@
-package io.chumps.orchestra.job
+package com.drivetribe.orchestra.job
 
 import java.io.{IOException, PrintStream}
 import java.time.Instant
@@ -20,14 +20,14 @@ import io.circe.generic.auto._
 import io.circe.java8.time._
 import io.circe.parser._
 
-import io.chumps.orchestra.board.Job
-import io.chumps.orchestra.filesystem.Directory
-import io.chumps.orchestra.kubernetes.Jobs
-import io.chumps.orchestra.model._
-import io.chumps.orchestra.model.Indexed._
-import io.chumps.orchestra.utils.{AutowireServer, Elasticsearch, ElasticsearchOutputStream}
-import io.chumps.orchestra.utils.AkkaImplicits._
-import io.chumps.orchestra.{CommonApiServer, OrchestraConfig}
+import com.drivetribe.orchestra.board.Job
+import com.drivetribe.orchestra.filesystem.Directory
+import com.drivetribe.orchestra.kubernetes.Jobs
+import com.drivetribe.orchestra.model._
+import com.drivetribe.orchestra.model.Indexed._
+import com.drivetribe.orchestra.utils.{AutowireServer, Elasticsearch, ElasticsearchOutputStream}
+import com.drivetribe.orchestra.utils.AkkaImplicits._
+import com.drivetribe.orchestra.{CommonApiServer, OrchestraConfig}
 
 case class JobRunner[ParamValues <: HList: Encoder: Decoder, Result: Encoder: Decoder](
   job: Job[ParamValues, Result, _, _],

@@ -1,4 +1,4 @@
-package io.chumps.orchestra.model
+package com.drivetribe.orchestra.model
 
 import java.time.Instant
 
@@ -13,7 +13,7 @@ import cats.implicits._
 import io.circe.CursorOp.DownField
 import shapeless.HList
 
-import io.chumps.orchestra.utils.BaseEncoders._
+import com.drivetribe.orchestra.utils.BaseEncoders._
 
 trait HistoryIndex extends Indexed {
   case class Run[ParamValues <: HList, Result](runInfo: RunInfo,

@@ -1,10 +1,10 @@
-package io.chumps.orchestra
+package com.drivetribe.orchestra
 
 import io.k8s.api.core.v1.Container
 import org.scalatest.Matchers._
 
-import io.chumps.orchestra.filesystem.Implicits.workDir
-import io.chumps.orchestra.utils._
+import com.drivetribe.orchestra.filesystem.Implicits.workDir
+import com.drivetribe.orchestra.utils._
 
 class ShellsTests
     extends OrchestraSpec

@@ -1,4 +1,4 @@
-package io.chumps.orchestra
+package com.drivetribe.orchestra
 
 import java.io.IOException
 import java.time.Instant
@@ -15,9 +15,9 @@ import io.circe.java8.time._
 import io.circe.shapes._
 import shapeless.HNil
 
-import io.chumps.orchestra.model.Indexed._
-import io.chumps.orchestra.model.{Page, RunId, RunInfo}
-import io.chumps.orchestra.utils.AutowireClient
+import com.drivetribe.orchestra.model.Indexed._
+import com.drivetribe.orchestra.model.{Page, RunId, RunInfo}
+import com.drivetribe.orchestra.utils.AutowireClient
 
 trait CommonApi {
   def logs(runId: RunId, page: Page[(Instant, Int)]): Future[Seq[LogLine]]
@@ -32,7 +32,7 @@ case class CommonApiServer()(implicit orchestraConfig: OrchestraConfig,
                              kubernetesClient: KubernetesClient,
                              elasticsearchClient: HttpClient)
     extends CommonApi {
-  import io.chumps.orchestra.utils.AkkaImplicits._
+  import com.drivetribe.orchestra.utils.AkkaImplicits._
 
   override def logs(runId: RunId, page: Page[(Instant, Int)]): Future[Seq[LogLine]] =
     elasticsearchClient

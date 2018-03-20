@@ -1,17 +1,17 @@
-package io.chumps.orchestra.job
+package com.drivetribe.orchestra.job
 
 import io.circe.{Decoder, Encoder}
 import japgolly.scalajs.react.extra.router.RouterConfigDsl
 import japgolly.scalajs.react.vdom.html_<^._
 import shapeless._
 
-import io.chumps.orchestra.board.Job
-import io.chumps.orchestra.model.{JobId, RunId}
-import io.chumps.orchestra.page.JobPage
-import io.chumps.orchestra.parameter.ParameterOperations
-import io.chumps.orchestra.route.LogsRoute
-import io.chumps.orchestra.route.WebRouter.{BoardPageRoute, PageRoute}
-import io.chumps.orchestra.utils.RunIdOperation
+import com.drivetribe.orchestra.board.Job
+import com.drivetribe.orchestra.model.{JobId, RunId}
+import com.drivetribe.orchestra.page.JobPage
+import com.drivetribe.orchestra.parameter.ParameterOperations
+import com.drivetribe.orchestra.route.LogsRoute
+import com.drivetribe.orchestra.route.WebRouter.{BoardPageRoute, PageRoute}
+import com.drivetribe.orchestra.utils.RunIdOperation
 
 case class SimpleJob[ParamValuesNoRunId <: HList,
                      ParamValues <: HList: Encoder: Decoder,

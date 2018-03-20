@@ -1,4 +1,4 @@
-package io.chumps.orchestra.utils
+package com.drivetribe.orchestra.utils
 
 import org.scalactic.TypeCheckedTripleEquals
 import org.scalatest.FeatureSpec

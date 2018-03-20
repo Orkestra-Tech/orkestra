@@ -1,4 +1,4 @@
-package io.chumps.orchestra.page
+package com.drivetribe.orchestra.page
 
 import scala.concurrent.duration._
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
@@ -10,15 +10,15 @@ import autowire._
 import io.circe.generic.auto._
 import io.circe.java8.time._
 
-import io.chumps.orchestra.CommonApi
-import io.chumps.orchestra.route.WebRouter.LogsPageRoute
+import com.drivetribe.orchestra.CommonApi
+import com.drivetribe.orchestra.route.WebRouter.LogsPageRoute
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.component.builder.Lifecycle.ComponentDidMount
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.{document, window}
 
-import io.chumps.orchestra.model.Page
-import io.chumps.orchestra.model.Indexed.LogLine
+import com.drivetribe.orchestra.model.Page
+import com.drivetribe.orchestra.model.Indexed.LogLine
 
 object LogsPage {
   case class Props(page: LogsPageRoute)

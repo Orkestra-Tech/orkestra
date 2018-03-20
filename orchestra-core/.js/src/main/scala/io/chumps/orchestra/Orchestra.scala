@@ -1,4 +1,4 @@
-package io.chumps.orchestra
+package com.drivetribe.orchestra
 
 import com.goyeau.kubernetesclient.KubernetesClient
 import com.sksamuel.elastic4s.http.HttpClient

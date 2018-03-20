@@ -1,12 +1,12 @@
-package io.chumps.orchestra
+package com.drivetribe.orchestra
 
 import org.scalatest.Matchers._
 
-import io.chumps.orchestra.Dsl._
-import io.chumps.orchestra.job.JobRunners
-import io.chumps.orchestra.kubernetes.Jobs
-import io.chumps.orchestra.utils.DummyJobs._
-import io.chumps.orchestra.utils._
+import com.drivetribe.orchestra.Dsl._
+import com.drivetribe.orchestra.job.JobRunners
+import com.drivetribe.orchestra.kubernetes.Jobs
+import com.drivetribe.orchestra.utils.DummyJobs._
+import com.drivetribe.orchestra.utils._
 
 class TriggersTests
     extends OrchestraSpec

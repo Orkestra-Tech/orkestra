@@ -1,4 +1,4 @@
-package io.chumps.orchestra.integration.tests.utils
+package com.drivetribe.orchestra.integration.tests.utils
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -9,8 +9,8 @@ import io.k8s.api.apps.v1beta2.{Deployment, DeploymentSpec}
 import io.k8s.api.core.v1._
 import io.k8s.apimachinery.pkg.apis.meta.v1.{LabelSelector, ObjectMeta}
 
-import io.chumps.orchestra.integration.tests.BuildInfo
-import io.chumps.orchestra.utils.AkkaImplicits._
+import com.drivetribe.orchestra.integration.tests.BuildInfo
+import com.drivetribe.orchestra.utils.AkkaImplicits._
 
 object DeployOrchestration {
   val appOrchestrationLabel = Option(Map("app" -> "orchestration"))

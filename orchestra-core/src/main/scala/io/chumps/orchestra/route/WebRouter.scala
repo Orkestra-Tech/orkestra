@@ -1,14 +1,14 @@
-package io.chumps.orchestra.route
+package com.drivetribe.orchestra.route
 
 import japgolly.scalajs.react.extra.router.{Resolution, RouterConfigDsl, RouterCtl, _}
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom
 import shapeless.HList
 
-import io.chumps.orchestra.component.{Footer, TopNav}
-import io.chumps.orchestra.board.{Board, Folder, Job}
-import io.chumps.orchestra.model.RunId
-import io.chumps.orchestra.page.StatusPage
+import com.drivetribe.orchestra.component.{Footer, TopNav}
+import com.drivetribe.orchestra.board.{Board, Folder, Job}
+import com.drivetribe.orchestra.model.RunId
+import com.drivetribe.orchestra.page.StatusPage
 
 object WebRouter {
 

@@ -1,4 +1,4 @@
-package io.chumps.orchestra
+package com.drivetribe.orchestra
 
 import java.io.File
 
@@ -37,7 +37,7 @@ object OrchestraPlugin extends AutoPlugin {
           )
           .jsConfigure(_.enablePlugins(ScalaJSPlugin, ScalaJSWeb))
           .jsSettings(scalaJSUseMainModuleInitializer := true, moduleName := "web")
-          .settings(libraryDependencies += "io.chumps" %%% "orchestra-core" % orchestraVersion)
+          .settings(libraryDependencies += "com.drivetribe" %%% "orchestra-core" % orchestraVersion)
       }
     }
   }

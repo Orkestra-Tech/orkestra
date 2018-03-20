@@ -1,4 +1,4 @@
-package io.chumps.orchestra.github
+package com.drivetribe.orchestra.github
 
 import java.io.{IOException, PrintWriter, StringWriter}
 
@@ -13,16 +13,16 @@ import akka.http.scaladsl.server.Directives.{entity, _}
 import akka.util.ByteString
 import com.typesafe.scalalogging.{LazyLogging, Logger}
 
-import io.chumps.orchestra.{BuildInfo, OrchestraConfig, OrchestraPlugin}
-import io.chumps.orchestra.utils.AkkaImplicits._
-import io.chumps.orchestra.github.State._
+import com.drivetribe.orchestra.{BuildInfo, OrchestraConfig, OrchestraPlugin}
+import com.drivetribe.orchestra.utils.AkkaImplicits._
+import com.drivetribe.orchestra.github.State._
 import io.circe.parser._
 import io.circe.syntax._
 import io.circe.generic.auto._
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider
 
-import io.chumps.orchestra.filesystem.{Directory, LocalFile}
+import com.drivetribe.orchestra.filesystem.{Directory, LocalFile}
 
 trait GithubHooks extends OrchestraPlugin {
   private lazy val logger = Logger(getClass)

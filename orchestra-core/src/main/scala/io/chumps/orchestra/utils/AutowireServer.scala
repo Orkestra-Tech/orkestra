@@ -1,4 +1,4 @@
-package io.chumps.orchestra.utils
+package com.drivetribe.orchestra.utils
 
 import io.circe.syntax._
 import io.circe.{Decoder, Encoder, Json}

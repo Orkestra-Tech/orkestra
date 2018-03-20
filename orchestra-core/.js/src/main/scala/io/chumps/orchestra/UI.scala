@@ -1,10 +1,10 @@
-package io.chumps.orchestra
+package com.drivetribe.orchestra
 
-import io.chumps.orchestra.css.AppCss
-import io.chumps.orchestra.route.WebRouter
+import com.drivetribe.orchestra.css.AppCss
+import com.drivetribe.orchestra.route.WebRouter
 import org.scalajs.dom
 
-import io.chumps.orchestra.board.Board
+import com.drivetribe.orchestra.board.Board
 
 trait UI {
   def board: Board

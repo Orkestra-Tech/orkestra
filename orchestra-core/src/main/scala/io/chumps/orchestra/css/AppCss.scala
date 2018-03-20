@@ -1,6 +1,6 @@
-package io.chumps.orchestra.css
+package com.drivetribe.orchestra.css
 
-import io.chumps.orchestra.component.{StopButton, TopNav}
+import com.drivetribe.orchestra.component.{StopButton, TopNav}
 import scalacss.internal.mutable.GlobalRegistry
 
 object AppCss {

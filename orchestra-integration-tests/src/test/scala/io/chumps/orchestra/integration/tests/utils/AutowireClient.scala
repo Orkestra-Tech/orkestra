@@ -1,4 +1,4 @@
-package io.chumps.orchestra.integration.tests.utils
+package com.drivetribe.orchestra.integration.tests.utils
 
 import scala.concurrent.Future
 
@@ -8,8 +8,8 @@ import io.circe.{Decoder, Encoder, Json}
 import io.circe.parser._
 import io.circe.syntax._
 
-import io.chumps.orchestra.OrchestraConfig
-import io.chumps.orchestra.utils.AkkaImplicits._
+import com.drivetribe.orchestra.OrchestraConfig
+import com.drivetribe.orchestra.utils.AkkaImplicits._
 
 object AutowireClient {
 

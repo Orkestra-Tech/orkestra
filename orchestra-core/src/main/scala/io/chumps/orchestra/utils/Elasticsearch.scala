@@ -1,4 +1,4 @@
-package io.chumps.orchestra.utils
+package com.drivetribe.orchestra.utils
 
 import java.time.Instant
 
@@ -11,10 +11,10 @@ import com.sksamuel.elastic4s.http.{HttpClient, JavaClientExceptionWrapper}
 import io.circe.Encoder
 import shapeless._
 
-import io.chumps.orchestra.OrchestraConfig
-import io.chumps.orchestra.model.Indexed._
-import io.chumps.orchestra.model.RunInfo
-import io.chumps.orchestra.utils.AkkaImplicits._
+import com.drivetribe.orchestra.OrchestraConfig
+import com.drivetribe.orchestra.model.Indexed._
+import com.drivetribe.orchestra.model.RunInfo
+import com.drivetribe.orchestra.utils.AkkaImplicits._
 
 object Elasticsearch {
   def client(implicit orchestraConfig: OrchestraConfig) = HttpClient(orchestraConfig.elasticsearchUri)

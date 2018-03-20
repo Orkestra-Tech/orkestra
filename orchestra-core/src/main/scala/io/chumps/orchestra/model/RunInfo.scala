@@ -1,4 +1,4 @@
-package io.chumps.orchestra.model
+package com.drivetribe.orchestra.model
 
 import com.sksamuel.elastic4s.http.ElasticDsl.keywordField
 import io.circe.parser._
