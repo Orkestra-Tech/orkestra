@@ -6,6 +6,7 @@ lazy val orchestra = project
   .settings(
     name := "Orchestra",
     ThisBuild / organization := "io.chumps",
+    ThisBuild / licenses := Seq("APL2" -> url("http://www.apache.org/licenses/LICENSE-2.0")),
     ThisBuild / scalaVersion := "2.12.4",
     ThisBuild / version := {
       val ver = (ThisBuild / version).value
