@@ -9,7 +9,6 @@ import scala.scalajs.js
 
 import autowire._
 
-import com.drivetribe.orchestra.utils.BaseEncoders._
 import com.drivetribe.orchestra.parameter.State
 import com.drivetribe.orchestra.parameter.ParameterOperations
 import com.drivetribe.orchestra.route.WebRouter.{BoardPageRoute, LogsPageRoute, PageRoute}
