@@ -6,14 +6,15 @@ lazy val orchestra = project
   .settings(
     name := "Orchestra",
     ThisBuild / organization := "com.drivetribe",
-    ThisBuild / licenses := Seq("APL2" -> url("http://www.apache.org/licenses/LICENSE-2.0")),
+    ThisBuild / licenses += "APL2" -> url("http://www.apache.org/licenses/LICENSE-2.0"),
     ThisBuild / homepage := Option(url("https://github.com/drivetribe/orchestra")),
     ThisBuild / scmInfo := Option(
       ScmInfo(url("https://github.com/drivetribe/orchestra"), "https://github.com/drivetribe/orchestra.git")
     ),
-    ThisBuild / developers := List(
-      Developer(id = "joan38", name = "Joan Goyeau", email = "joan@goyeau.com", url = url("http://goyeau.com"))
-    ),
+    ThisBuild / developers += Developer(id = "joan38",
+                                        name = "Joan Goyeau",
+                                        email = "joan@goyeau.com",
+                                        url = url("http://goyeau.com")),
     ThisBuild / scalaVersion := "2.12.4",
     ThisBuild / version := {
       val ver = (ThisBuild / version).value
