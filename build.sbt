@@ -165,7 +165,7 @@ lazy val react = Def.setting {
 }
 
 lazy val circe = Def.setting {
-  val version = "0.9.1"
+  val version = "0.9.2"
   Seq(
     "io.circe" %%% "circe-core" % version,
     "io.circe" %%% "circe-generic" % version,
