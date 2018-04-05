@@ -4,24 +4,22 @@ import java.io.{IOException, PrintWriter, StringWriter}
 
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
+import scala.util.{Failure, Success}
 
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.{HttpEntity, HttpMethods, HttpRequest}
-import akka.http.scaladsl.model.StatusCodes._
+import akka.http.scaladsl.model.StatusCodes.{Accepted, OK}
 import akka.http.scaladsl.model.headers.{Authorization, OAuth2BearerToken}
 import akka.http.scaladsl.server.Directives.{entity, _}
 import akka.util.ByteString
 import com.typesafe.scalalogging.{LazyLogging, Logger}
-
 import com.drivetribe.orchestra.{BuildInfo, OrchestraConfig, OrchestraPlugin}
 import com.drivetribe.orchestra.utils.AkkaImplicits._
-import com.drivetribe.orchestra.github.State._
 import io.circe.parser._
 import io.circe.syntax._
 import io.circe.generic.auto._
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider
-
 import com.drivetribe.orchestra.filesystem.{Directory, LocalFile}
 
 trait GithubHooks extends OrchestraPlugin {
@@ -60,20 +58,22 @@ trait Github extends LazyLogging {
   def pullRequest[Result](repository: Repository, ref: Branch) = PullRequestBuilder(repository, ref)
 
   case class PullRequestBuilder(repository: Repository, ref: Branch) {
-    def apply[Result](body: Directory => Result)(implicit workDir: Directory): Result =
-      Await.result(apply((workDir: Directory) => Future(body(workDir))), Duration.Inf)
+    def apply[Result](func: Directory => Result)(implicit workDir: Directory): Result =
+      Await.result(apply((workDir: Directory) => Future(func(workDir))), Duration.Inf)
 
-    def apply[Result](body: Directory => Future[Result])(implicit workDir: Directory): Future[Result] =
-      (for {
+    def apply[Result](func: Directory => Future[Result])(implicit workDir: Directory): Future[Result] =
+      for {
         _ <- pushStatus(repository, ref, State.Pending)
         _ <- cloneRepo(repository, ref)
-        result <- body(Directory(LocalFile(repository.name)))
-        _ <- pushStatus(repository, ref, State.Success)
-      } yield result).recoverWith {
-        case throwable: Throwable =>
-          pushStatus(repository, ref, State.Failure)
-          Future.failed(throwable)
-      }
+        result <- func(Directory(LocalFile(repository.name))).transformWith {
+          case Success(result) =>
+            println("Notifying Github check succeeded")
+            pushStatus(repository, ref, State.Success).map(_ => result)
+          case Failure(throwable: Throwable) =>
+            println("Notifying Github check failed")
+            pushStatus(repository, ref, State.Failure).flatMap(_ => Future.failed(throwable))
+        }
+      } yield result
   }
 
   private def cloneRepo(repository: Repository, ref: Branch)(implicit workDir: Directory) = Future {
