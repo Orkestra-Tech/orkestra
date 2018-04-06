@@ -50,5 +50,9 @@ class ElasticsearchOutputStream(client: HttpClient, runId: RunId) extends Output
     }
   }
 
-  override def close(): Unit = flush()
+  override def close(): Unit = {
+    flush()
+    linesStream.complete()
+    Await.result(linesStream.watchCompletion(), 1.minute)
+  }
 }
