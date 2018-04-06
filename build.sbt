@@ -16,11 +16,7 @@ lazy val orchestra = project
                                         email = "joan@goyeau.com",
                                         url = url("http://goyeau.com")),
     ThisBuild / scalaVersion := "2.12.4",
-    ThisBuild / version := {
-      val ver = (ThisBuild / version).value
-      if (ver.contains("+")) ver + "-SNAPSHOT"
-      else ver
-    },
+    ThisBuild / dynverSonatypeSnapshots := true,
     ThisBuild / scalacOptions ++= Seq(
       "-deprecation",
       "-feature",
@@ -57,8 +53,8 @@ lazy val core = CrossProject("orchestra-core", file("orchestra-core"), CrossType
     resolvers += Opts.resolver.sonatypeSnapshots,
     libraryDependencies ++= Seq(
       "com.chuusai" %%% "shapeless" % "2.3.3",
-      "com.vmunier" %% "scalajs-scripts" % "1.1.1",
-      "com.beachape" %%% "enumeratum" % "1.5.12" % Provided,
+      "com.vmunier" %% "scalajs-scripts" % "1.1.2",
+      "com.beachape" %%% "enumeratum" % "1.5.13" % Provided,
       "com.lihaoyi" %%% "autowire" % "0.2.6",
       "com.goyeau" %% "kubernetes-client" % "0.0.4"
     ) ++ scalaJsReact.value ++ akkaHttp.value ++ scalaCss.value ++ logging.value ++ circe.value ++ elastic4s.value ++ scalaTest.value
@@ -92,8 +88,8 @@ lazy val plugin = Project("orchestra-plugin", file("orchestra-plugin"))
     moduleName := "sbt-orchestra",
     sbtPlugin := true,
     buildInfoPackage := s"${organization.value}.orchestra",
-    addSbtPlugin("org.scala-js" %% "sbt-scalajs" % "0.6.21"),
-    addSbtPlugin("com.vmunier" %% "sbt-web-scalajs" % "1.0.6"),
+    addSbtPlugin("org.scala-js" %% "sbt-scalajs" % "0.6.22"),
+    addSbtPlugin("com.vmunier" %% "sbt-web-scalajs" % "1.0.7"),
     addSbtPlugin("com.typesafe.sbt" %% "sbt-native-packager" % "1.3.3")
   )
 
@@ -106,7 +102,7 @@ lazy val integrationTests =
       name := "Orchestra Integration Tests",
       version ~= (_.replace('+', '-')),
       buildInfoPackage := s"${organization.value}.orchestra.integration.tests",
-      buildInfoKeys ++= Seq("artifactName" -> artifact.value.name),
+      buildInfoKeys += "artifactName" -> artifact.value.name,
       libraryDependencies ++= scalaTest.value
     )
 lazy val integrationTestsJVM = integrationTests.jvm
@@ -125,16 +121,17 @@ lazy val integrationTestsJS = integrationTests.js
 
 /*************** Dependencies ***************/
 lazy val akkaHttp = Def.setting {
-  val akkaHttpVersion = "10.0.11"
+  val akkaHttpVersion = "10.1.1"
   Seq(
     "com.typesafe.akka" %% "akka-http" % akkaHttpVersion,
+    "com.typesafe.akka" %% "akka-stream" % "2.5.11",
     "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpVersion % Test
   )
 }
 
 lazy val logging = Def.setting {
   Seq(
-    "com.typesafe.scala-logging" %% "scala-logging" % "3.7.2",
+    "com.typesafe.scala-logging" %% "scala-logging" % "3.8.0",
     "ch.qos.logback" % "logback-classic" % "1.2.3"
   )
 }
@@ -165,7 +162,7 @@ lazy val react = Def.setting {
 }
 
 lazy val circe = Def.setting {
-  val version = "0.9.2"
+  val version = "0.9.3"
   Seq(
     "io.circe" %%% "circe-core" % version,
     "io.circe" %%% "circe-generic" % version,
@@ -186,5 +183,5 @@ lazy val elastic4s = Def.setting {
 }
 
 lazy val scalaTest = Def.setting {
-  Seq("org.scalatest" %% "scalatest" % "3.0.4" % Test)
+  Seq("org.scalatest" %% "scalatest" % "3.0.5" % Test)
 }
