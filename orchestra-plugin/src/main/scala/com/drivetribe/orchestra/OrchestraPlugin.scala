@@ -29,11 +29,7 @@ object OrchestraPlugin extends AutoPlugin {
             Assets / WebKeys.packagePrefix := "public/",
             Runtime / managedClasspath += (Assets / packageBin).value,
             Assets / pipelineStages := Seq(scalaJSPipeline),
-            scalaJSProjects := Seq(cross.js),
-            // Workaround the fact that ENTRYPOINT is not absolute, so when we change the WORKDIR it won't start
-            dockerEntrypoint := Seq(
-              s"${(Docker / defaultLinuxInstallLocation).value}/bin/${executableScriptName.value}"
-            )
+            scalaJSProjects := Seq(cross.js)
           )
           .jsConfigure(_.enablePlugins(ScalaJSPlugin, ScalaJSWeb))
           .jsSettings(scalaJSUseMainModuleInitializer := true, moduleName := "web")
