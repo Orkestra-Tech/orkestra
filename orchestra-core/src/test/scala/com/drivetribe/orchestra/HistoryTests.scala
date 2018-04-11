@@ -5,19 +5,20 @@ import java.io.PrintStream
 import org.scalatest.Matchers._
 import org.scalatest.OptionValues._
 import shapeless.HNil
-
 import com.drivetribe.orchestra.job.JobRunners
 import com.drivetribe.orchestra.model.Page
 import com.drivetribe.orchestra.utils._
 import com.drivetribe.orchestra.utils.AkkaImplicits._
 import com.drivetribe.orchestra.utils.DummyJobs._
+import org.scalatest.concurrent.Eventually
 
 class HistoryTests
     extends OrchestraSpec
     with OrchestraConfigTest
     with KubernetesTest
     with ElasticsearchTest
-    with Stages {
+    with Stages
+    with Eventually {
 
   scenario("Job triggered") {
     val tags = Seq("firstTag", "secondTag")
@@ -48,7 +49,7 @@ class HistoryTests
     }
   }
 
-  scenario("Job succeded") {
+  scenario("Job succeeded") {
     emptyJobRunner.ApiServer().trigger(orchestraConfig.runInfo.runId, HNil).futureValue
     JobRunners.succeedJob(orchestraConfig.runInfo, ()).futureValue
 

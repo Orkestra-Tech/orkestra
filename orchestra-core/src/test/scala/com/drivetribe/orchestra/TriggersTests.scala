@@ -1,19 +1,20 @@
 package com.drivetribe.orchestra
 
 import org.scalatest.Matchers._
-
 import com.drivetribe.orchestra.Dsl._
 import com.drivetribe.orchestra.job.JobRunners
 import com.drivetribe.orchestra.kubernetes.Jobs
 import com.drivetribe.orchestra.utils.DummyJobs._
 import com.drivetribe.orchestra.utils._
+import org.scalatest.concurrent.Eventually
 
 class TriggersTests
     extends OrchestraSpec
     with OrchestraConfigTest
     with KubernetesTest
     with ElasticsearchTest
-    with Triggers {
+    with Triggers
+    with Eventually {
 
   scenario("Trigger a job with empty parameter") {
     emptyJobRunner.trigger().futureValue

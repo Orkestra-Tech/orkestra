@@ -8,12 +8,12 @@ import io.k8s.api.core.v1.Container
 import org.scalatest.Matchers._
 import org.scalatest.OptionValues._
 import shapeless.HNil
-
 import com.drivetribe.orchestra.filesystem.Implicits.workDir
 import com.drivetribe.orchestra.job.JobRunners
 import com.drivetribe.orchestra.model.{Page, RunId}
 import com.drivetribe.orchestra.utils._
 import com.drivetribe.orchestra.utils.AkkaImplicits._
+import org.scalatest.concurrent.Eventually
 
 class LoggingTests
     extends OrchestraSpec
@@ -21,7 +21,8 @@ class LoggingTests
     with KubernetesTest
     with ElasticsearchTest
     with AsyncShells
-    with Stages {
+    with Stages
+    with Eventually {
 
   scenario("Log stuff and get it back") {
     val message = "Log stuff and get it back"
