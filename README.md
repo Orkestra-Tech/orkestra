@@ -68,7 +68,7 @@ object Orchestration extends Orchestra with UI {
 Assuming that you are in one of the [example projects](examples) (or in your own project), here is how to deploy on Kubernetes with Minikube:
 ```
 minikube start                            # Start Minikube
-eval `minikube docker-env`                # Make docker use the docker engin of Minikube
+eval `minikube docker-env`                # Make docker use the docker engine of Minikube
 sbt orchestrationJVM/Docker/publishLocal  # Publish the docker artifact
 kubectl apply -f ../kubernetes-dev        # Apply the deployement to Kubernetes
 kubectl proxy                             # Proxy the Kubernetes api
