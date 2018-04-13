@@ -7,7 +7,10 @@ import akka.http.scaladsl.server.Directives._
 
 import com.drivetribe.orchestra.route.BackendRoutes
 
-trait UI extends BackendRoutes {
+/**
+  * Mix in this trait to add a web UI to Orchestra
+  */
+trait UI extends BackendRoutes { self: Orchestra =>
   protected implicit val orchestraConfig: OrchestraConfig
 
   override lazy val routes = super.routes ~

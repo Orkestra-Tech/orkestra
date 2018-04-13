@@ -18,9 +18,17 @@ trait Shells {
     override lazy val kubernetesClient = Shells.kubernetesClient
   }
 
+  /**
+    * Run a shell script in the work directory passed in the implicit workDir.
+    * This is a blocking call.
+    */
   def sh(script: String)(implicit workDir: Directory): String =
     Await.result(asyncShellUtils.sh(script), Duration.Inf)
 
+  /**
+    * Run a shell script in the given container and in the work directory passed in the implicit workDir.
+    * This is a blocking call.
+    */
   def sh(script: String, container: Container)(implicit workDir: Directory): String =
     Await.result(asyncShellUtils.sh(script, container), Duration.Inf)
 }

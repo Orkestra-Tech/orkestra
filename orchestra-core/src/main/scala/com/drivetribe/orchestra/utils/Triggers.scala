@@ -29,9 +29,21 @@ trait Triggers {
   protected implicit def elasticsearchClient: HttpClient
 
   implicit class TriggerableNoParamJob[Result: Decoder](jobRunner: JobRunner[HNil, Result]) {
+
+    /**
+      * Trigger the job with the same run id as the current job. This means the triggered job will output in the same
+      * log as the triggering job.
+      * This is a fire and forget action. If you want the result of the job or await the completion of the job see
+      * run().
+      */
     def trigger(): Future[Unit] =
       jobRunner.ApiServer().trigger(orchestraConfig.runInfo.runId, HNil)
 
+    /**
+      * Run the job with the same run id as the current job. This means the triggered job will output in the same
+      * log as the triggering job.
+      * It returns a Future with the result of the job ran.
+      */
     def run(): Future[Result] =
       for {
         _ <- jobRunner
@@ -42,9 +54,21 @@ trait Triggers {
   }
 
   implicit class TriggerableRunIdJob[Result: Decoder](jobRunner: JobRunner[RunId :: HNil, Result]) {
+
+    /**
+      * Trigger the job with the same run id as the current job. This means the triggered job will output in the same
+      * log as the triggering job.
+      * This is a fire and forget action. If you want the result of the job or await the completion of the job see
+      * run().
+      */
     def trigger(): Future[Unit] =
       jobRunner.ApiServer().trigger(orchestraConfig.runInfo.runId, orchestraConfig.runInfo.runId :: HNil)
 
+    /**
+      * Run the job with the same run id as the current job. This means the triggered job will output in the same
+      * log as the triggering job.
+      * It returns a Future with the result of the job ran.
+      */
     def run(): Future[Result] =
       for {
         _ <- jobRunner
@@ -66,12 +90,24 @@ trait Triggers {
     tupler: Tupler.Aux[ParamValuesNoRunId, TupledValues],
     tupleToHList: Generic.Aux[TupledValues, ParamValuesNoRunId]
   ) {
+
+    /**
+      * Trigger the job with the same run id as the current job. This means the triggered job will output in the same
+      * log as the triggering job.
+      * This is a fire and forget action. If you want the result of the job or await the completion of the job see
+      * run().
+      */
     def trigger(values: TupledValues): Future[Unit] =
       jobRunner
         .ApiServer()
         .trigger(orchestraConfig.runInfo.runId,
                  runIdOperation.inject(tupleToHList.to(values), orchestraConfig.runInfo.runId))
 
+    /**
+      * Run the job with the same run id as the current job. This means the triggered job will output in the same
+      * log as the triggering job.
+      * It returns a Future with the result of the job ran.
+      */
     def run(values: TupledValues): Future[Result] =
       for {
         _ <- jobRunner

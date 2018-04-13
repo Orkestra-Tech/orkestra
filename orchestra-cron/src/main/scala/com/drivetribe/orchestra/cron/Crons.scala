@@ -13,7 +13,7 @@ import com.drivetribe.orchestra.kubernetes.{JobSpecs, MasterPod}
 import com.drivetribe.orchestra.model.{EnvRunInfo, JobId}
 import com.drivetribe.orchestra.utils.AkkaImplicits._
 
-object Crons {
+private[cron] object Crons {
   private lazy val logger = Logger(getClass)
 
   def deleteStaleCronJobs(cronTriggers: Set[CronTrigger])(implicit orchestraConfig: OrchestraConfig,

@@ -1,0 +1,24 @@
+options:
+  - title: Parameters
+    url: parameters.html
+
+  - title: Stages
+    url: stages.html
+
+  - title: Triggering jobs
+    url: triggering.html
+
+  - title: RunId
+    url: runid.html
+
+  - title: Directories
+    url: directories.html
+
+  - title: Github Integration
+    url: github.html
+
+  - title: Cron jobs
+    url: cron.html
+
+  - title: Locking
+    url: locking.html

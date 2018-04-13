@@ -3,6 +3,9 @@ package com.drivetribe.orchestra.model
 import io.circe._
 import io.circe.syntax._
 
+/**
+  * The id of a job.
+  */
 case class JobId(value: String) extends AnyVal
 
 object JobId {

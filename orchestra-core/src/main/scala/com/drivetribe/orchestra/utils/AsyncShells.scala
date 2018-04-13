@@ -23,6 +23,9 @@ trait AsyncShells {
 
   private def runningMessage(script: String) = println(s"Running: $script")
 
+  /**
+    * Run a shell script in the work directory passed in the implicit workDir.
+    */
   def sh(script: String)(implicit workDir: Directory): Future[String] = Future {
     runningMessage(script)
     Process(Seq("sh", "-c", script), workDir.file).lineStream.fold("") { (acc, line) =>
@@ -31,6 +34,9 @@ trait AsyncShells {
     }
   }
 
+  /**
+    * Run a shell script in the given container and in the work directory passed in the implicit workDir.
+    */
   def sh(script: String, container: Container)(implicit workDir: Directory): Future[String] = {
     runningMessage(script)
 

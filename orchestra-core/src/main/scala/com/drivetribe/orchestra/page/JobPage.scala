@@ -124,7 +124,7 @@ object JobPage {
                       ^.backgroundColor := Colours.generate(stage.name),
                       ^.opacity := (if (stage.runInfo.jobId == job.id ||
                                         stage.parentJob.exists(_.jobId == job.id)) "1"
-                                    else "0.6")
+                                    else "0.5")
                     )(s"${stage.name} ${stage.startedOn.until(stage.latestUpdateOn, ChronoUnit.SECONDS)}s")
                   }
                 )

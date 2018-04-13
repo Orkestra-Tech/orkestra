@@ -6,6 +6,9 @@ import org.scalajs.dom
 
 import com.drivetribe.orchestra.board.Board
 
+/**
+  * Mix in this trait to add a web UI to Orchestra
+  */
 trait UI {
   def board: Board
 

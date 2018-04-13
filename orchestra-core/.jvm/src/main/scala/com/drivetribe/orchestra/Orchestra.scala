@@ -21,6 +21,9 @@ import com.drivetribe.orchestra.kubernetes.Kubernetes
 import com.drivetribe.orchestra.route.BackendRoutes
 import com.drivetribe.orchestra.utils.{AutowireServer, Elasticsearch}
 
+/**
+  * Mix in this trait to create the Orchestra job server.
+  */
 trait Orchestra extends BackendRoutes with OrchestraPlugin {
   private lazy val logger = Logger(getClass)
   override implicit lazy val orchestraConfig: OrchestraConfig = OrchestraConfig.fromEnvVars()

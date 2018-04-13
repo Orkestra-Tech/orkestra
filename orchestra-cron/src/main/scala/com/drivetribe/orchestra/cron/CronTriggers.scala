@@ -13,6 +13,9 @@ import com.drivetribe.orchestra.utils.AkkaImplicits._
 import com.drivetribe.orchestra.utils.Elasticsearch
 import com.drivetribe.orchestra.OrchestraPlugin
 
+/**
+  * Mix in this trait to get support for cron triggered jobs.
+  */
 trait CronTriggers extends OrchestraPlugin {
   private lazy val logger = Logger(getClass)
 

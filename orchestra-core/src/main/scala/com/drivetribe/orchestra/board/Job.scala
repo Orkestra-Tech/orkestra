@@ -47,6 +47,14 @@ trait Job[ParamValues <: HList, Result, Func, PodSpecFunc] extends Board {
 
 object Job {
 
+  /**
+    * Create a Job definition.
+    * A Job is mostly compiled to JS. It defines the type of the function it runs, a unique id and a pretty name for the
+    * UI.
+    *
+    * @param id A unique JobId
+    * @param name A pretty name for the display
+    */
   def apply[Func](id: JobId, name: String) = new JobBuilder[Func](id, name)
 
   class JobBuilder[Func](id: JobId, name: String) {

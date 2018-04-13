@@ -5,6 +5,9 @@ import japgolly.scalajs.react.vdom.TagMod
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{Callback, ReactEventFromInput}
 
+/**
+  * A parameter is a UI element for user to parametrise the run of a job.
+  */
 trait Parameter[T] {
   lazy val id: Symbol = Symbol(name.toLowerCase.replaceAll("\\s", ""))
   def name: String
@@ -23,6 +26,9 @@ case class State(updated: ((Symbol, Any)) => Callback, get: Symbol => Option[Any
   def +(kv: (Symbol, Any)) = updated(kv)
 }
 
+/**
+  * An input field where the user can enter data.
+  */
 case class Input[T: Encoder: Decoder](name: String, defaultValue: Option[T] = None) extends Parameter[T] {
   override def display(state: State) = {
     def modValue(event: ReactEventFromInput) = {
@@ -41,6 +47,9 @@ case class Input[T: Encoder: Decoder](name: String, defaultValue: Option[T] = No
   }
 }
 
+/**
+  * A checkbox.
+  */
 case class Checkbox(name: String, checked: Boolean = false) extends Parameter[Boolean] {
   def defaultValue = Option(checked)
 
@@ -61,6 +70,9 @@ case class Checkbox(name: String, checked: Boolean = false) extends Parameter[Bo
   }
 }
 
+/**
+  * A drop-down list.
+  */
 case class Select[Entry <: EnumEntry](name: String, enum: Enum[Entry], defaultValue: Option[Entry] = None)
     extends Parameter[Entry] {
   override def display(state: State) = {

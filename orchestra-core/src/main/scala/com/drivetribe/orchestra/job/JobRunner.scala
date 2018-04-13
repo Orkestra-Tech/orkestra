@@ -174,6 +174,12 @@ case class JobRunner[ParamValues <: HList: Encoder: Decoder, Result: Encoder: De
 
 object JobRunner {
 
+  /**
+    * Create a JobRunner.
+    * A JobRunner is compiled to JS. It attaches a function to a Job
+    *
+    * @param job The Job we are attaching this runner to
+    */
   def apply[ParamValues <: HList, Result, Func, PodSpecFunc](job: Job[ParamValues, Result, Func, PodSpecFunc]) =
     new JobRunnerBuilder(job)
 

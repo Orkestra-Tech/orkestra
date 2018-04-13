@@ -2,10 +2,7 @@ package com.drivetribe.orchestra
 
 import java.io.File
 
-import com.typesafe.sbt.SbtNativePackager.autoImport._
 import com.typesafe.sbt.packager.archetypes.JavaAppPackaging
-import com.typesafe.sbt.packager.docker.DockerPlugin.autoImport._
-import com.typesafe.sbt.packager.linux.LinuxPlugin.autoImport._
 import com.typesafe.sbt.web.Import._
 import com.typesafe.sbt.web.SbtWeb
 import org.scalajs.sbtplugin.ScalaJSPlugin

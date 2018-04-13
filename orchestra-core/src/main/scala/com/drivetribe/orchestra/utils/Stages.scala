@@ -23,7 +23,13 @@ trait Stages {
 
   protected def elasticsearchClient: HttpClient
 
-  def stage[Result](name: String) = StageBuilder(name)
+  /**
+    * Create a stage.
+    * Name the execution of a part of the code and time it.
+    *
+    * @param name The name of the stage
+    */
+  def stage(name: String) = StageBuilder(name)
 
   case class StageBuilder(name: String) {
     def apply[Result](func: => Result): Result = Await.result(apply(Future(func)), Duration.Inf)

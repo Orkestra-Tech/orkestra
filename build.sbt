@@ -1,3 +1,4 @@
+import microsites.ExtraMdFileConfig
 import org.scalajs.sbtplugin.cross.CrossProject
 
 lazy val orchestra = project
@@ -7,7 +8,7 @@ lazy val orchestra = project
     name := "Orchestra",
     ThisBuild / organization := "com.drivetribe",
     ThisBuild / licenses += "APL2" -> url("http://www.apache.org/licenses/LICENSE-2.0"),
-    ThisBuild / homepage := Option(url("https://github.com/drivetribe/orchestra")),
+    ThisBuild / homepage := Option(url("https://drivetribe.github.io/orchestra/")),
     ThisBuild / scmInfo := Option(
       ScmInfo(url("https://github.com/drivetribe/orchestra"), "https://github.com/drivetribe/orchestra.git")
     ),
@@ -54,10 +55,17 @@ lazy val core = CrossProject("orchestra-core", file("orchestra-core"), CrossType
     libraryDependencies ++= Seq(
       "com.chuusai" %%% "shapeless" % "2.3.3",
       "com.vmunier" %% "scalajs-scripts" % "1.1.2",
-      "com.beachape" %%% "enumeratum" % "1.5.13" % Provided,
       "com.lihaoyi" %%% "autowire" % "0.2.6",
       "com.goyeau" %% "kubernetes-client" % "0.0.4"
-    ) ++ scalaJsReact.value ++ akkaHttp.value ++ scalaCss.value ++ logging.value ++ circe.value ++ elastic4s.value ++ scalaTest.value
+    ) ++
+      scalaJsReact.value ++
+      akkaHttp.value ++
+      scalaCss.value ++
+      logging.value ++
+      circe.value ++
+      elastic4s.value ++
+      scalaTest.value ++
+      enumeratum.value.map(_ % Provided)
   )
 lazy val coreJVM = core.jvm
 lazy val coreJS = core.js
@@ -91,6 +99,26 @@ lazy val plugin = Project("orchestra-plugin", file("orchestra-plugin"))
     addSbtPlugin("org.scala-js" %% "sbt-scalajs" % "0.6.22"),
     addSbtPlugin("com.vmunier" %% "sbt-web-scalajs" % "1.0.7"),
     addSbtPlugin("com.typesafe.sbt" %% "sbt-native-packager" % "1.3.4")
+  )
+
+lazy val docs = project
+  .in(file("docs"))
+  .dependsOn(coreJVM, githubJVM, cronJVM, lock)
+  .enablePlugins(MicrositesPlugin)
+  .settings(
+    name := "Orchestra",
+    description := "DevOps with Scala and Kubernetes",
+    micrositeGithubOwner := "drivetribe",
+    micrositeGithubRepo := "orchestra",
+    micrositeBaseUrl := micrositeGithubRepo.value,
+    micrositeHighlightTheme := "atom-one-light",
+    micrositePalette ++= Map(
+      "brand-primary" -> "#3570E5",
+      "brand-secondary" -> "#3570E5",
+      "brand-tertiary" -> "#3570E5"
+    ),
+    micrositeExtraMdFiles += file("README.md") -> ExtraMdFileConfig("index.md", "home"),
+    libraryDependencies ++= enumeratum.value
   )
 
 lazy val TestCi = config("testci").extend(Test)
@@ -184,4 +212,8 @@ lazy val elastic4s = Def.setting {
 
 lazy val scalaTest = Def.setting {
   Seq("org.scalatest" %% "scalatest" % "3.0.5" % Test)
+}
+
+lazy val enumeratum = Def.setting {
+  Seq("com.beachape" %%% "enumeratum" % "1.5.13")
 }

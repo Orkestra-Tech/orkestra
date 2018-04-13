@@ -5,6 +5,9 @@ import java.util.UUID
 import io.circe._
 import io.circe.syntax._
 
+/**
+  * The id of a run.
+  */
 case class RunId(value: UUID) extends AnyVal
 
 object RunId {
