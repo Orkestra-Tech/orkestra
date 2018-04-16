@@ -2,7 +2,7 @@ package com.drivetribe.orchestra.integration.tests
 
 import scala.concurrent.duration._
 
-import com.drivetribe.orchestra.AsyncDsl._
+import com.drivetribe.orchestra.Dsl._
 import com.drivetribe.orchestra.{Orchestra, UI}
 import com.drivetribe.orchestra.board.{Folder, Job}
 import com.drivetribe.orchestra.cron.CronTriggers

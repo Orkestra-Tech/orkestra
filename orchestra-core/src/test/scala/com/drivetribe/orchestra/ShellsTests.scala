@@ -11,7 +11,7 @@ class ShellsTests
     with OrchestraConfigTest
     with KubernetesTest
     with ElasticsearchTest
-    with AsyncShells {
+    with Shells {
 
   scenario("Run shell command") {
     val log = sh("echo Hello").futureValue

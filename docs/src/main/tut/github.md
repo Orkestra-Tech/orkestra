@@ -1,7 +1,7 @@
 ---
 layout: docs
 title:  "Github Integration"
-position: 6
+position: 7
 ---
 
 # Github Integration
@@ -19,7 +19,7 @@ implement `githubTriggers: Set[GithubTrigger]`. There is two implementation of `
 Let's have a look first to `BranchTrigger`:
 ```tut:silent
 import com.drivetribe.orchestra._
-import com.drivetribe.orchestra.AsyncDsl._
+import com.drivetribe.orchestra.Dsl._
 import com.drivetribe.orchestra.board._
 import com.drivetribe.orchestra.github._
 import com.drivetribe.orchestra.job.JobRunner
@@ -46,7 +46,7 @@ checkout the Git ref and run the code updating the status on Github for the Git 
 according to if an exception has been thrown in the code:
 ```tut:silent
 import com.drivetribe.orchestra._
-import com.drivetribe.orchestra.AsyncDsl._
+import com.drivetribe.orchestra.Dsl._
 import com.drivetribe.orchestra.board._
 import com.drivetribe.orchestra.github._
 import com.drivetribe.orchestra.job.JobRunner

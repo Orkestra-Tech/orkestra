@@ -1,7 +1,7 @@
 ---
 layout: docs
 title:  "RunId"
-position: 4
+position: 6
 ---
 
 # RunId
@@ -10,7 +10,7 @@ It is possible to pass the run id of the job to the function for example if you 
 link to the job:
 ```tut:silent
 import com.drivetribe.orchestra._
-import com.drivetribe.orchestra.AsyncDsl._
+import com.drivetribe.orchestra.Dsl._
 import com.drivetribe.orchestra.board._
 import com.drivetribe.orchestra.job.JobRunner
 import com.drivetribe.orchestra.model._
@@ -23,10 +23,12 @@ lazy val runIdJobRunner = JobRunner(runIdJob) { implicit workDir => runId =>
 
 The RunId is an automatically generated UUID, unless we specify it as a UI parameter like this:  
 `http://<url to your job>?runId=<some UUID>`  
-So we can for exemple send a Slack message to ask the trigger of another once the first one is done:
+So in the following example we will display in the logs a link to trigger another job that will have the same RunId.
+We usually do this when we'd like the approval of a user to continue the process and keep the run of the 2 jobs like one
+continuous run:
 ```tut:silent
 import com.drivetribe.orchestra._
-import com.drivetribe.orchestra.AsyncDsl._
+import com.drivetribe.orchestra.Dsl._
 import com.drivetribe.orchestra.board._
 import com.drivetribe.orchestra.job.JobRunner
 import com.drivetribe.orchestra.model._

@@ -1,5 +1,5 @@
 import com.drivetribe.orchestra._
-import com.drivetribe.orchestra.AsyncDsl._
+import com.drivetribe.orchestra.Dsl._
 import com.drivetribe.orchestra.board._
 import com.drivetribe.orchestra.job.JobRunner
 import com.drivetribe.orchestra.model._

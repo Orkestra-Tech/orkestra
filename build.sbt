@@ -113,7 +113,7 @@ lazy val docs = project
     micrositeBaseUrl := micrositeGithubRepo.value,
     micrositeHighlightTheme := "atom-one-light",
     micrositePalette ++= Map(
-      "brand-primary" -> "#3570E5",
+      "brand-primary" -> "#DA3435",
       "brand-secondary" -> "#3570E5",
       "brand-tertiary" -> "#3570E5"
     ),

@@ -2,7 +2,7 @@ package com.drivetribe.orchestra.filesystem
 
 import java.io.File
 
-trait DirectoryUtils {
+trait Directories {
 
   def dir[Result](path: String)(func: Directory => Result)(implicit parentDir: Directory): Result =
     dir(new File(path))(func)
@@ -14,4 +14,4 @@ trait DirectoryUtils {
     )
 }
 
-object DirectoryUtils extends DirectoryUtils
+object Directories extends Directories

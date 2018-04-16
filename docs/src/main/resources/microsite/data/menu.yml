@@ -8,11 +8,14 @@ options:
   - title: Triggering jobs
     url: triggering.html
 
-  - title: RunId
-    url: runid.html
+  - title: Shell
+    url: shell.html
 
   - title: Directories
     url: directories.html
+
+  - title: RunId
+    url: runid.html
 
   - title: Github Integration
     url: github.html

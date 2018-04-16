@@ -20,7 +20,7 @@ class LoggingTests
     with OrchestraConfigTest
     with KubernetesTest
     with ElasticsearchTest
-    with AsyncShells
+    with Shells
     with Stages
     with Eventually {
 

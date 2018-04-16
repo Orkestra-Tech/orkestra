@@ -9,7 +9,7 @@ position: 1
 If you'd like to pass parameters to a job you can add the corresponding UI elements, here is an example:
 ```tut:silent
 import com.drivetribe.orchestra._
-import com.drivetribe.orchestra.AsyncDsl._
+import com.drivetribe.orchestra.Dsl._
 import com.drivetribe.orchestra.board._
 import com.drivetribe.orchestra.job.JobRunner
 import com.drivetribe.orchestra.model.JobId
@@ -30,7 +30,7 @@ As you can see on the screenshot it also supports drop-down lists via [Enumeratu
 so let's refine the previous code to include the drop-down:
 ```tut:silent
 import com.drivetribe.orchestra._
-import com.drivetribe.orchestra.AsyncDsl._
+import com.drivetribe.orchestra.Dsl._
 import com.drivetribe.orchestra.board._
 import com.drivetribe.orchestra.job.JobRunner
 import com.drivetribe.orchestra.model.JobId
