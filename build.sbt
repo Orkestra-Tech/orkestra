@@ -118,7 +118,11 @@ lazy val docs = project
       "brand-tertiary" -> "#3570E5"
     ),
     micrositeExtraMdFiles += file("README.md") -> ExtraMdFileConfig("index.md", "home"),
-    libraryDependencies ++= enumeratum.value
+    libraryDependencies ++= Seq(
+      "com.amazonaws" % "aws-java-sdk" % "1.11.310",
+      "com.github.gilbertw1" %% "slack-scala-client" % "0.2.3",
+      "org.zeroturnaround" % "zt-zip" % "1.12"
+    ) ++ enumeratum.value
   )
 
 lazy val TestCi = config("testci").extend(Test)

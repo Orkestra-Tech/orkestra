@@ -1,7 +1,7 @@
 ---
 layout: docs
 title:  "Triggering jobs"
-position: 3
+position: 6
 ---
 
 # Triggering jobs
@@ -30,7 +30,7 @@ lazy val triggerJobRunner = JobRunner(triggerJob) { implicit workDir => () =>
 }
 ```
 
-If you'd like to run a job and therefore await the result of it call `.run()`. This will return the result in a Future:
+If you'd like to run a job and therefore await the result of it call `.run()`. This will return the result in a `Future`:
 ```tut:silent
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
@@ -39,6 +39,7 @@ import com.drivetribe.orchestra.Dsl._
 import com.drivetribe.orchestra.board._
 import com.drivetribe.orchestra.job.JobRunner
 import com.drivetribe.orchestra.model._
+// We import the triggers DSL
 import com.drivetribe.orchestra.utils.Triggers._
 
 lazy val runJob = Job[() => Unit](JobId("run"), "Run")()

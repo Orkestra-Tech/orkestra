@@ -1,12 +1,13 @@
 ---
 layout: docs
-title:  "Github Integration"
-position: 7
+title:  "Github"
+position: 10
 ---
 
 # Github Integration
 
-Orchestra has a Github integration via the `orchestra-github` library/plugin.
+Orchestra has a Github integration via the `orchestra-github` library/plugin. We can do so by adding the dependency in
+`build.sbt`:
 ```scala
 libraryDependencies += "com.drivetribe" %%% "orchestra-github" % orchestraVersion
 ```
@@ -40,8 +41,8 @@ object Orchestration extends Orchestra with UI with GithubHooks { // Note we mix
 }
 ```
 
-Before we jump into the `PullRequestTrigger` I'd like to introduce `Github.statusUpdated`, a little utility function that
-checkout the Git ref and run the code updating the status on Github for the Git ref
+Before we jump into the `PullRequestTrigger` I'd like to introduce `Github.statusUpdated`, a little utility function
+that checkouts the Git ref and run the code updating the status on Github for the Git ref
 (<img alt="Github pending" srcset="img/github-pending.png 2x"><img alt="Github success" srcset="img/github-success.png 2x"><img alt="Github failure" srcset="img/github-failure.png 2x">)
 according to if an exception has been thrown in the code:
 ```tut:silent

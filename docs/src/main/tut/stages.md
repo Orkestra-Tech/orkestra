@@ -29,5 +29,5 @@ lazy val stagesJobRunner = JobRunner(stagesJob) { implicit workDir => () =>
 ```
 
 Here is a more meaningful example of the UI with the stages:  
-<img alt="Stages" srcset="img/stages.png 2x">
+<img alt="Stages" srcset="img/stages.png 2x">  
 The stages in this screenshot are Checks, Publish and Deploy. The colour black, blue and green on them is generated.

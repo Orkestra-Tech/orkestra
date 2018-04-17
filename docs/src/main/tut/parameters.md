@@ -27,7 +27,14 @@ Here is an example of the UI with the parameters:
 <img alt="Parameters" srcset="img/parameters.png 2x">
 
 As you can see on the screenshot it also supports drop-down lists via [Enumeratum](https://github.com/lloydmeta/enumeratum),
-so let's refine the previous code to include the drop-down:
+so let's add this drop-down.  
+First of all we need to add the [Enumeratum](https://github.com/lloydmeta/enumeratum) dependency in `build.sbt`:
+```
+// Not the triple %%% to import the cross compiled JS/JVM version
+libraryDependencies += "com.beachape" %%% "enumeratum" % "Enumeratum version"
+```
+
+Then we can refine the previous code to include the drop-down:
 ```tut:silent
 import com.drivetribe.orchestra._
 import com.drivetribe.orchestra.Dsl._

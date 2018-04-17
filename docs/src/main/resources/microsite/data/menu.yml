@@ -5,19 +5,28 @@ options:
   - title: Stages
     url: stages.html
 
-  - title: Triggering jobs
-    url: triggering.html
-
-  - title: Shell
-    url: shell.html
+  - title: Shell scripts
+    url: shells.html
 
   - title: Directories
     url: directories.html
 
+  - title: Secrets
+    url: secrets.html
+
+  - title: Triggering jobs
+    url: triggers.html
+
   - title: RunId
     url: runid.html
 
-  - title: Github Integration
+  - title: Containers
+    url: containers.html
+
+  - title: Plugins
+    url: plugins.html
+
+  - title: Github
     url: github.html
 
   - title: Cron jobs

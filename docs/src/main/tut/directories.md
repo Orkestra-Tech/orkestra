@@ -1,12 +1,16 @@
 ---
 layout: docs
 title:  "Directories"
-position: 5
+position: 4
 ---
 
 # Directories
 
-When playing with files we often need to change directories:
+When playing with files we often need to change directories, so you might wonder can we do that in Orchestra!
+First of all this is now time to explain what the `implicit workDir`. This implicit is used for example by the function
+`sh()` as seen in [Shells](shells.html) to know where to run the shell script.  
+So if we'd like to changing directory we would use the function `dir` that changes the current directory only for the
+scope of the function passed to it:
 ```tut:silent
 import scala.concurrent.Await
 import scala.concurrent.duration._
@@ -32,3 +36,8 @@ lazy val directoryJobRunner = JobRunner(directoryJob) { implicit workDir => () =
   } yield (), 1.second)
 }
 ```
+Note that we need to take this `implicit workDir =>` again in the function passed to `dir`. 
+
+## LocalFile
+
+Documentation coming soon
