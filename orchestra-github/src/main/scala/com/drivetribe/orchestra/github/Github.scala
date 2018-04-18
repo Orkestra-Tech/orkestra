@@ -39,7 +39,7 @@ trait Github extends LazyLogging {
       for {
         _ <- pushStatus(repository, ref, State.Pending)
         _ <- cloneRepo(repository, ref)
-        result <- func(Directory(LocalFile(repository.name))).transformWith {
+        result <- func(Directory(repository.name)).transformWith {
           case Success(result) =>
             println("Notifying Github check succeeded")
             pushStatus(repository, ref, State.Success).map(_ => result)

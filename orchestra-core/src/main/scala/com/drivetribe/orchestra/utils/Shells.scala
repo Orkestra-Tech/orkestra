@@ -28,7 +28,7 @@ trait Shells {
     */
   def sh(script: String)(implicit workDir: Directory): Future[String] = Future {
     runningMessage(script)
-    Process(Seq("sh", "-c", script), workDir.file).lineStream.fold("") { (acc, line) =>
+    Process(Seq("sh", "-c", script), workDir.path.toFile).lineStream.fold("") { (acc, line) =>
       println(line)
       s"$acc\n$line"
     }
@@ -65,7 +65,7 @@ trait Shells {
           orchestraConfig.podName,
           flow,
           Option(container.name),
-          Seq("sh", "-c", s"cd ${workDir.file.getAbsolutePath} && $script"),
+          Seq("sh", "-c", s"cd ${workDir.path.toAbsolutePath} && $script"),
           stdin = true,
           tty = true
         )

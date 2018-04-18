@@ -39,5 +39,16 @@ lazy val directoryJobRunner = JobRunner(directoryJob) { implicit workDir => () =
 Note that we need to take this `implicit workDir =>` again in the function passed to `dir`. 
 
 ## LocalFile
+When dealing with files in Scala we usually use the `java.io.File`. In Orchestra as we can change the current working
+directory we need the relative `File` to be aware of it. This is why we have the `LocalFile` class that extends `File`
+so that you can use it in Scala or Java libraries.  
+Here is an example of how to use it:
+```tut:silent
+import com.drivetribe.orchestra.filesystem._
 
-Documentation coming soon
+def createFile()(implicit workDir: Directory): Unit = { 
+  dir("subDir") { implicit workDir =>
+    assert(LocalFile("myFile").createNewFile(), "File was not able to be created")
+  }
+}
+```

@@ -8,10 +8,7 @@ trait Directories {
     dir(new File(path))(func)
 
   def dir[Result](path: File)(func: Directory => Result)(implicit parentDir: Directory): Result =
-    func(
-      if (path.isAbsolute) Directory(path)
-      else parentDir / path
-    )
+    func(parentDir / path)
 }
 
 object Directories extends Directories

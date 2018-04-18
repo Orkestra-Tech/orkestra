@@ -1,13 +1,13 @@
 package com.drivetribe.orchestra.filesystem
 
 import java.io.File
+import java.nio.file.{Path, Paths}
 
-case class Directory(file: File) {
-  def /(subPath: String): Directory = Directory(new File(file, subPath))
-
-  def /(subPath: File): Directory = this / subPath.getPath
+case class Directory(path: Path) {
+  def /(subPath: Path): Directory = Directory(path.resolve(subPath))
+  def /(subPath: File): Directory = this / subPath.toPath
 }
 
 object Directory {
-  def apply(path: String): Directory = Directory(new File(path))
+  def apply(path: String): Directory = Directory(Paths.get(path))
 }
