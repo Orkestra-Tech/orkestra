@@ -44,7 +44,7 @@ class ElasticsearchOutputStream(client: HttpClient, runId: RunId) extends Output
     while (lineBuffer.value.toString.contains(newLineChar)) {
       val newLineIndex = lineBuffer.value.indexOf(newLineChar)
       val line = lineBuffer.value.substring(0, newLineIndex)
-      val logline = LogLine(runId, Instant.now(), position.next(), line)
+      val logline = LogLine(runId, Instant.now(), position.next(), Secrets.sanitize(line))
       Await.result(linesStream.offer(logline), 1.minute)
       lineBuffer.value.delete(0, newLineIndex + 1)
     }
