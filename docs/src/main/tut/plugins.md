@@ -6,11 +6,9 @@ position: 9
 
 # Plugins
 
-Documentation coming soon
-
-Orchestra doesn't have a plugins system like you can find in other CD tools with their own store of plugins.
-Instead it relies on the jar dependency and distribution system like Maven or Ivy 
-There is multiple advantages to this system:
+Orchestra doesn't have a plugins system like you can find in other CD tools with their own store of plugins. Instead it
+relies on the jar dependency and distribution system like Maven or Ivy.  
+There are multiple advantages to this system:
 - Since Scala is a JVM language we have access to all the libraries from the JVM community (Scala, Java or any other
 JVM compiler languages).
 - Installation of plugins becomes code too so it's very easy to code review and rollback changes
