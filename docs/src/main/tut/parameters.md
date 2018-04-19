@@ -23,7 +23,6 @@ lazy val parametersJobRunner = JobRunner(parametersJob) { implicit workDir => (g
 }
 ```
 
-Here is an example of the UI with the parameters:  
 <img alt="Parameters" srcset="img/parameters.png 2x">
 
 As you can see on the screenshot it also supports drop-down lists via [Enumeratum](https://github.com/lloydmeta/enumeratum),
@@ -60,5 +59,32 @@ lazy val parametersJob = Job[(String, Boolean, Environment) => Unit](JobId("para
 )
 lazy val parametersJobRunner = JobRunner(parametersJob) { implicit workDir => (gitRef, runTests, env) =>
   println(s"Building app from Git ref $gitRef${if (runTests) " and running tests" else ""} and deploying on $env")
+}
+```
+
+`Input`s are also used for other types like `Int` or `Double`, all you need to do is `Input[Int]("Some Int")`.  
+We can also define default value `Input[Double]("Some Double", default = Option(4.2))`.
+
+## Typed Input
+It is a good practice to type as much as possible and therefore avoid generic types like `String`s. Orchestra is able to
+handle any case class of one argument:
+```tut:silent
+import com.drivetribe.orchestra._
+import com.drivetribe.orchestra.Dsl._
+import com.drivetribe.orchestra.board._
+import com.drivetribe.orchestra.job.JobRunner
+import com.drivetribe.orchestra.model.JobId
+import com.drivetribe.orchestra.parameter._
+
+// We create our better typed Git Ref
+case class Ref(value: String) extends AnyVal
+
+// Note that we use Ref instead of the generic String
+lazy val parametersJob = Job[(Ref, Boolean) => Unit](JobId("parameters"), "Parameters")(
+  Input[Ref]("Git ref"),
+  Checkbox("Run tests?")
+)
+lazy val parametersJobRunner = JobRunner(parametersJob) { implicit workDir => (gitRef, runTests) =>
+  println(s"Building app from Git ref ${gitRef.value}${if (runTests) " and running tests" else ""}")
 }
 ```
