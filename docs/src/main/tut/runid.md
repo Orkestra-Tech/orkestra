@@ -6,8 +6,7 @@ position: 7
 
 # RunId
 
-It is possible to pass the run id of the job to the function for example if you want to send a Slack message with a
-link to the job:
+It is possible to get the run id of the job, for example if you want to send a Slack message with a link to the job:
 ```tut:silent
 import com.drivetribe.orchestra._
 import com.drivetribe.orchestra.Dsl._

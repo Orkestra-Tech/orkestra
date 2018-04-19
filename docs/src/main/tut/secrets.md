@@ -23,7 +23,8 @@ println(s"Look at my secret Slack token: $slackToken!")
 ```
 This will print `Look at my secret Slack token: **********!` in the logs.
 
-Do not use the Scala `sys.env.get()` or the Java `System.getEnv()` as these will not prevent the secret to be logged.
+Attention: Do not use the Scala `sys.env.get()` or the Java `System.getEnv()` as these will not prevent the secret to be
+logged.
 
 ## Secrets as Files
 You might want to use for example an SSH key file as a Secret. We usually mount the secret in a file under

@@ -6,15 +6,15 @@ position: 9
 
 # Plugins
 
-Orchestra doesn't have a plugins system like you can find in other CD tools with their own store of plugins. Instead it
-relies on the jar dependency and distribution system like Maven or Ivy.  
+Orchestra doesn't have a plugins system like you can find in other CD tools with their own store. Instead it relies on
+jar dependencies and distribution systems like Maven or Ivy.  
 There are multiple advantages to this system:
 - Since Scala is a JVM language we have access to all the libraries from the JVM community (Scala, Java or any other
-JVM compiler languages).
-- Installation of plugins becomes code too so it's very easy to code review and rollback changes
+JVM compiled languages).
+- Installation of plugins becomes code too. So it's very easy to code review and rollback changes
 
 ## Talking to AWS
-In order to talk to AWS we can use the [official Java SDK](https://github.com/aws/aws-sdk-java). Lets add the dependency
+In order to talk to AWS we can use the [official Java SDK](https://github.com/aws/aws-sdk-java). Let's add the dependency
 to `build.sbt`:
 ```scala
 libraryDependencies += "com.amazonaws" % "aws-java-sdk" % "AWS SDK Version"
@@ -47,7 +47,7 @@ def uploadToS3()(implicit workDir: Directory) = {
 Let's try to integrate with Slack. If I Google "slack scala" and hit "I'm feeling lucky" I end up on this Slack client
 [https://github.com/gilbertw1/slack-scala-client](https://github.com/gilbertw1/slack-scala-client). So it seems that
 someone already wrote a Slack plugin for Orchestra even before Orchestra was born!  
-Lets add the dependency to `build.sbt`:
+Let's add the dependency to `build.sbt`:
 ```scala
 libraryDependencies += "com.github.gilbertw1" %% "slack-scala-client" % "Slack client version"
 ```
@@ -65,3 +65,6 @@ def sendSlackMessage() = {
 ```
 You will be able to get the token by creating a Slack app on https://api.slack.com/apps and then adding it to your
 workspace.
+
+Their are endless possibilities with the access to all the Java world and this is why Orchestra has been designed from
+the beginning as code first.

@@ -2,9 +2,10 @@
 
 [![Latest version](https://index.scala-lang.org/drivetribe/orchestra/orchestra-core/latest.svg?color=blue)](https://index.scala-lang.org/drivetribe/orchestra/orchestra-core)
 
-Orchestra is an Open Source Continuous Integration / Continuous Deployment server as a library running on Kubernetes.  
-It leverages Kubernetes concepts such as Jobs or Secrets, and configuration as code in Scala to take the most of compile
-time type safety and compatibility with Scala or Java libraries.
+Orchestra is an Open Source Continuous Integration / Continuous Deployment server as a library running on
+[Kubernetes](https://kubernetes.io).  
+It leverages Kubernetes concepts such as Jobs or Secrets, and configuration as code in [Scala](https://scala-lang.org)
+to take the most of compile time type safety and compatibility with Scala or Java libraries.
 
 Key features:
 * Configured completely via code which can be version controlled

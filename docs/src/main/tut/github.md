@@ -12,7 +12,7 @@ Orchestra has a Github integration via the `orchestra-github` library/plugin. We
 libraryDependencies += "com.drivetribe" %%% "orchestra-github" % orchestraVersion
 ```
 
-To add a webhook server so that Github can trigger jobs we mix in the trait `GithubHooks`, which requires us to
+To add a webhook server so that Github can trigger jobs, we mix in the trait `GithubHooks`, which requires us to
 implement `githubTriggers: Set[GithubTrigger]`. There is two implementation of `GithubTrigger`:
  - `BranchTrigger` which let's you trigger a job when a change is done on a branch.
  - `PullRequestTrigger` to listen on pull request changes.
@@ -22,12 +22,13 @@ Let's have a look first to `BranchTrigger`:
 import com.drivetribe.orchestra._
 import com.drivetribe.orchestra.Dsl._
 import com.drivetribe.orchestra.board._
+// We import the Github package
 import com.drivetribe.orchestra.github._
 import com.drivetribe.orchestra.job.JobRunner
 import com.drivetribe.orchestra.model._
 import com.drivetribe.orchestra.parameter._
 
-object Orchestration extends Orchestra with UI with GithubHooks { // Note we mix in GithubHooks
+object Orchestration extends Orchestra with UI with GithubHooks { // Note that we mix in GithubHooks
   lazy val board = Folder("Orchestra")(branchJob)
   lazy val jobRunners = Set(branchJobRunner) // We still need to add the job runners to the jobRunners
   
@@ -49,12 +50,13 @@ according to if an exception has been thrown in the code:
 import com.drivetribe.orchestra._
 import com.drivetribe.orchestra.Dsl._
 import com.drivetribe.orchestra.board._
+// We import the Github package
 import com.drivetribe.orchestra.github._
 import com.drivetribe.orchestra.job.JobRunner
 import com.drivetribe.orchestra.model._
 import com.drivetribe.orchestra.parameter._
 
-object Orchestration extends Orchestra with UI with GithubHooks { // Note we mix in GithubHooks
+object Orchestration extends Orchestra with UI with GithubHooks { // Note that we mix in GithubHooks
   lazy val board = Folder("Orchestra")(pullRequestJob)
   lazy val jobRunners = Set(pullRequestJobRunner) // We still need to add the job runners to the jobRunners
 

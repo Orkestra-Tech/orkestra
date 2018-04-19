@@ -8,7 +8,8 @@ position: 6
 
 Sometimes to achieve a goal we need multiple jobs to run. This is why we have the job triggers.
 
-We can trigger a job by calling `.trigger()` on the job we want to trigger. Note that this a fire and forget action:
+We can trigger a job by calling `.trigger()` on the `JobRunner` we want to trigger. Note that this a fire and forget
+action:
 ```tut:silent
 import com.drivetribe.orchestra._
 import com.drivetribe.orchestra.Dsl._
@@ -30,7 +31,8 @@ lazy val triggerJobRunner = JobRunner(triggerJob) { implicit workDir => () =>
 }
 ```
 
-If you'd like to run a job and therefore await the result of it call `.run()`. This will return the result in a `Future`:
+If you'd like to run a job and therefore await the result of it call `.run()`. This will return the result in a
+`Future`:
 ```tut:silent
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
@@ -58,5 +60,4 @@ lazy val helloJobRunner = JobRunner(helloJob) { implicit workDir => () =>
 ```
 
 `.trigger()` or `.run()` will trigger or run the job with the same RunId as the triggering job. That means they will
-share the same log history.
-You will also see the stages of the other job in the run history but they will be dimmed.
+share the same log history. You will also see the stages of the other job in the run history but they will be dimmed.
