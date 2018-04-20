@@ -1,7 +1,6 @@
 ---
 layout: docs
 title:  "Locking"
-position: 12
 ---
 
 # Locking

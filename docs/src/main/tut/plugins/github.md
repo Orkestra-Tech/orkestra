@@ -1,7 +1,6 @@
 ---
 layout: docs
 title:  "Github"
-position: 10
 ---
 
 # Github Integration
@@ -71,3 +70,17 @@ object Orchestration extends Orchestra with UI with GithubHooks { // Note that w
   }
 }
 ```
+
+## Config
+- `ORCHESTRA_GITHUB_URI`: The URI of the home page as Github displays links to it for PRs for example. Required.
+- `ORCHESTRA_GITHUB_TOKEN`: The token of the account that will be used to clone or to update commit statuses. Required.
+- `ORCHESTRA_GITHUB_PORT`: The separate port where to bind the Github Hooks server. Default `8081`.
+
+The reason why the Github hooks server is bound on separate port is so that you can make Orchestra accessible only
+internally but still expose the Github hooks server on the public network.  
+
+Once we have the hooks setup in Orchestra we need Github to call them. We can do so in the settings of the repository
+(`https://github.com/<org>/<repo>/settings/hooks`) where we will `Add webhook` as the following:
+- `Payload URL`: `http://<host>/webhooks`
+- `Content type`: `application/json`
+- `Send me everything.`

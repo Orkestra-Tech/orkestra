@@ -1,7 +1,7 @@
 ---
 layout: docs
 title:  "Directories"
-position: 4
+position: 6
 ---
 
 # Directories

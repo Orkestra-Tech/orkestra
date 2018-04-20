@@ -80,6 +80,8 @@ object Orchestration extends Orchestra with UI {
 
 ## Deployment on Kubernetes with Minikube
 
+We provide some basic Kubernetes Deployment in [kubernetes-dev](https://github.com/drivetribe/orchestra/tree/master/examples/kubernetes-dev)
+that you can use to deploy on a dev environment.  
 Assuming that you are in one of the [example projects](https://github.com/drivetribe/orchestra/tree/master/examples)
 (or in your own project), here is how to deploy on Kubernetes with Minikube:
 ```

@@ -1,4 +1,10 @@
 options:
+  - title: Jobs
+    url: jobs.html
+
+  - title: Config
+    url: config.html
+
   - title: Parameters
     url: parameters.html
 
@@ -24,13 +30,13 @@ options:
     url: containers.html
 
   - title: Plugins
-    url: plugins.html
+    url: plugins
+    nested_options:
+    - title: Github
+      url: plugins/github.html
 
-  - title: Github
-    url: github.html
+    - title: Cron jobs
+      url: plugins/cron.html
 
-  - title: Cron jobs
-    url: cron.html
-
-  - title: Locking
-    url: locking.html
+    - title: Locking
+      url: plugins/locking.html

@@ -1,7 +1,7 @@
 ---
 layout: docs
 title:  "Plugins"
-position: 9
+position: 11
 ---
 
 # Plugins
@@ -67,4 +67,5 @@ You will be able to get the token by creating a Slack app on https://api.slack.c
 workspace.
 
 Their are endless possibilities with the access to all the Java world and this is why Orchestra has been designed from
-the beginning as code first.
+the beginning as code first.  
+See also the [Github Integration](github.html), [Cron jobs](cron.html) and [Locking](github.html) documentation.

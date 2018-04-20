@@ -1,7 +1,7 @@
 ---
 layout: docs
 title:  "Stages"
-position: 2
+position: 4
 ---
 
 # Stages

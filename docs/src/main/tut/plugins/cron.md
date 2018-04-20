@@ -1,7 +1,6 @@
 ---
 layout: docs
 title:  "Cron jobs"
-position: 11
 ---
 
 # Cron jobs

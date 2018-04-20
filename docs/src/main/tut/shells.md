@@ -1,7 +1,7 @@
 ---
 layout: docs
 title:  "Shell scripts"
-position: 3
+position: 5
 ---
 
 # Shell scripts

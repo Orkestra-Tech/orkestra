@@ -1,7 +1,7 @@
 ---
 layout: docs
 title:  "Secrets"
-position: 5
+position: 7
 ---
 
 # Secrets

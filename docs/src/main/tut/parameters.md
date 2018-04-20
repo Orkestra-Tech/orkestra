@@ -1,7 +1,7 @@
 ---
 layout: docs
 title:  "Parameters"
-position: 1
+position: 3
 ---
 
 # Parameters
@@ -16,8 +16,10 @@ import com.drivetribe.orchestra.model.JobId
 import com.drivetribe.orchestra.parameter._
 
 // Note that the signature of the function now contains the types of the parameters
-lazy val parametersJob = Job[(String, Boolean) => Unit](JobId("parameters"), "Parameters")(Input[String]("Git ref"),
-                                                                                           Checkbox("Run tests?"))
+lazy val parametersJob = Job[(String, Boolean) => Unit](JobId("parameters"), "Parameters")(
+  Input[String]("Git ref"),
+  Checkbox("Run tests?")
+)
 lazy val parametersJobRunner = JobRunner(parametersJob) { implicit workDir => (gitRef, runTests) =>
   println(s"Building app for Git ref $gitRef${if (runTests) " and running tests" else ""}")
 }

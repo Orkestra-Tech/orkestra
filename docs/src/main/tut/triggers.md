@@ -1,7 +1,7 @@
 ---
 layout: docs
 title:  "Triggering jobs"
-position: 6
+position: 8
 ---
 
 # Triggering jobs
