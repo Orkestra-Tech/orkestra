@@ -112,6 +112,7 @@ lazy val docs = project
     micrositeGithubRepo := "orchestra",
     micrositeBaseUrl := micrositeGithubRepo.value,
     micrositeHighlightTheme := "atom-one-light",
+    micrositeGitterChannelUrl := "OrchestraCD/Orchestra",
     micrositePalette ++= Map(
       "brand-primary" -> "#DA3435",
       "brand-secondary" -> "#3570E5",
