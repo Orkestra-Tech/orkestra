@@ -92,13 +92,13 @@ object JobPage {
 
               val statusDisplay = run.result match {
                 case None if run.triggeredOn == run.latestUpdateOn =>
-                  TagMod(runIdDisplay("○", run.runInfo.runId, Global.Style.brandColor.value, "Triggered"),
+                  TagMod(runIdDisplay("○", run.runInfo.runId, Global.Style.brandKubernetesColor.value, "Triggered"),
                          datesDisplay,
                          stopButton)
                 case None if run.latestUpdateOn.isBefore(history.updatedOn.minus(10, ChronoUnit.SECONDS)) =>
                   TagMod(runIdDisplay("✗", run.runInfo.runId, "dimgrey", "Stopped"), datesDisplay, rerunButton)
                 case None =>
-                  TagMod(runIdDisplay("≻", run.runInfo.runId, Global.Style.brandColor.value, "Running"),
+                  TagMod(runIdDisplay("≻", run.runInfo.runId, Global.Style.brandKubernetesColor.value, "Running"),
                          datesDisplay,
                          stopButton)
                 case Some(Right(_)) =>
@@ -158,7 +158,7 @@ object JobPage {
         (runId, Map.empty, "Loading runs", null)
       }
       .renderP { ($, props) =>
-        <.main(
+        <.div(
           <.h1(props.job.name),
           <.form(^.onSubmit ==> props.runJob($))(
             props.displays($),

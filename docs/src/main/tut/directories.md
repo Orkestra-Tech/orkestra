@@ -18,7 +18,7 @@ import com.drivetribe.orchestra._
 import com.drivetribe.orchestra.Dsl._
 import com.drivetribe.orchestra.board._
 // We import the directories DSL
-import com.drivetribe.orchestra.filesystem.Directories._
+import com.drivetribe.orchestra.utils.Directories._
 import com.drivetribe.orchestra.job.JobRunner
 import com.drivetribe.orchestra.model._
 import com.drivetribe.orchestra.utils.Shells._

@@ -41,7 +41,7 @@ object LogsPage {
           case None                     => <.tr(<.td("Loading log"))
         }
 
-        <.main(
+        <.div(
           <.h1(s"Logs for run ${$.props.page.runId.value}"),
           <.table(^.borderSpacing := "0", ^.tableLayout.fixed, ^.width := "100%")(
             <.tbody(logs)

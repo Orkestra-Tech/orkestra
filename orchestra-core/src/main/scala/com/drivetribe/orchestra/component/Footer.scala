@@ -8,11 +8,7 @@ object Footer {
 
   val component = ScalaComponent.builder
     .static(getClass.getSimpleName)(
-      <.footer(
-        ^.textAlign.center,
-        <.div(^.borderBottom := "1px solid grey", ^.padding := "0px"),
-        <.p(^.padding := "5px", s"${BuildInfo.projectName} ${BuildInfo.version}")
-      )
+      <.p(s"${BuildInfo.projectName} ${BuildInfo.version}")
     )
     .build
 }

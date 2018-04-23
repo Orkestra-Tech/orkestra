@@ -6,7 +6,8 @@ object Global {
   object Style extends StyleSheet.Inline {
     import dsl._
 
-    val brandColor = c"#3570e5"
+    val brandKubernetesColor = c"#3570E5"
+    val brandScalaColor = c"#DA3435"
 
     val listItem = styleF.bool { pair =>
       styleS(
@@ -15,7 +16,7 @@ object Global {
       )
     }
 
-    val runId = style(width(280.px))
+    val runId = style(width(310.px))
 
     val cell = style(display.flex, alignItems.center, padding(4.px), height(22.px))
 
@@ -23,17 +24,42 @@ object Global {
 
     val brandColorButton = style(
       button,
-      &.hover(backgroundColor(Global.Style.brandColor))
+      &.hover(backgroundColor(Global.Style.brandKubernetesColor))
+    )
+
+    val header = style(
+      position.fixed,
+      top.`0`,
+      width(100.%%)
+    )
+
+    val main = style(
+      paddingTop(70.px),
+      paddingBottom(70.px)
+    )
+
+    val footer = style(
+      position.absolute,
+      backgroundColor(brandKubernetesColor),
+      bottom.`0`,
+      width(100.%%),
+      textAlign.center
     )
 
     style(
+      unsafeRoot("html")(
+        height(100.%%)
+      ),
       unsafeRoot("body")(
+        position.relative,
         backgroundColor(c"#2b2b2b"),
         color(c"#f4f4f4"),
+        fontFamily(fontFace("Roboto, sans-serif")(_.src(""))),
         margin.`0`,
-        padding.`0`,
-        fontSize(14.px),
-        fontFamily(fontFace("Roboto, sans-serif")(_.src("")))
+        minHeight(100.%%)
+      ),
+      unsafeRoot("::selection")(
+        backgroundColor(brandScalaColor)
       )
     )
   }

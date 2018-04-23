@@ -11,8 +11,4 @@ trait AutoTuple1 {
   implicit def autoTuple1[T](o: T): Tuple1[T] = Tuple1(o)
 }
 
-object Dsl
-    extends HListInstances
-    with AutoDerivation
-    with AutoTuple1
-    with AkkaImplicits
+object Dsl extends HListInstances with AutoDerivation with AutoTuple1 with AkkaImplicits

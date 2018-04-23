@@ -16,7 +16,7 @@ object FolderPage {
     ScalaComponent
       .builder[Props](getClass.getSimpleName)
       .render_P { props =>
-        <.main(
+        <.div(
           <.h1(props.name),
           <.div(
             props.childBoards.zipWithIndex.toTagMod {

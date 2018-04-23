@@ -68,8 +68,8 @@ object RunningJobs {
         Style("grid-template-columns") := "1fr 0fr 0fr 0fr",
         ^.position.absolute,
         ^.right := "0",
-        ^.width := "650px",
-        ^.backgroundColor := Global.Style.brandColor.value,
+        ^.width := "680px",
+        ^.backgroundColor := Global.Style.brandKubernetesColor.value,
         ^.boxShadow := "inset 0 0 10000px rgba(0, 0, 0, 0.06)"
       )(runs)
     }

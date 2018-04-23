@@ -27,6 +27,8 @@ trait UI extends BackendRoutes { self: Orchestra =>
              |<html>
              |<head>
              |    <title>${BuildInfo.projectName}</title>
+             |    <link rel="icon" type="image/svg+xml" href="assets/logo.svg">
+             |    <link rel="icon" type="image/png" href="assets/favicon.png">
              |    <meta name="basePath" content="${orchestraConfig.basePath}">
              |</head>
              |<body>

@@ -4,6 +4,7 @@ import shapeless.test.illTyped
 
 import com.drivetribe.orchestra.Dsl._
 import com.drivetribe.orchestra.utils.DummyJobs._
+import com.drivetribe.orchestra.utils.Triggers._
 
 object TriggersStaticTests {
 

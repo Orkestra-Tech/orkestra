@@ -1,6 +1,8 @@
-package com.drivetribe.orchestra.filesystem
+package com.drivetribe.orchestra.utils
 
 import java.io.File
+
+import com.drivetribe.orchestra.filesystem.Directory
 
 trait Directories {
 
