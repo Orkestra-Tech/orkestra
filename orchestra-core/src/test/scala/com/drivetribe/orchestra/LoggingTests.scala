@@ -9,7 +9,7 @@ import org.scalatest.Matchers._
 import org.scalatest.OptionValues._
 import shapeless.HNil
 import com.drivetribe.orchestra.filesystem.Implicits.workDir
-import com.drivetribe.orchestra.job.JobRunners
+import com.drivetribe.orchestra.job.Jobs
 import com.drivetribe.orchestra.model.{Page, RunId}
 import com.drivetribe.orchestra.utils._
 import com.drivetribe.orchestra.utils.AkkaImplicits._
@@ -26,7 +26,7 @@ class LoggingTests
 
   scenario("Log stuff and get it back") {
     val message = "Log stuff and get it back"
-    JobRunners.withOutErr(
+    Jobs.withOutErr(
       new PrintStream(new ElasticsearchOutputStream(elasticsearchClient, orchestraConfig.runInfo.runId), true)
     ) {
       println(message)
@@ -48,11 +48,11 @@ class LoggingTests
   }
 
   scenario("Log stuff in a stage and get it back") {
-    DummyJobs.emptyJobRunner.ApiServer().trigger(orchestraConfig.runInfo.runId, HNil).futureValue
+    DummyJobs.emptyJob.ApiServer().trigger(orchestraConfig.runInfo.runId, HNil).futureValue
 
     val stageName = "Log stuff in a stage and get it back"
     val message = "Log stuff in a stage and get it back"
-    JobRunners.withOutErr(
+    Jobs.withOutErr(
       new PrintStream(new ElasticsearchOutputStream(elasticsearchClient, orchestraConfig.runInfo.runId), true)
     ) {
       stage(stageName) {
@@ -70,13 +70,13 @@ class LoggingTests
   }
 
   scenario("Log stuff in parallel stages and get it back") {
-    DummyJobs.emptyJobRunner.ApiServer().trigger(orchestraConfig.runInfo.runId, HNil).futureValue
+    DummyJobs.emptyJob.ApiServer().trigger(orchestraConfig.runInfo.runId, HNil).futureValue
 
     val stage1Name = "Log stuff in parallel stages and get it back 1"
     val stage2Name = "Log stuff in parallel stages and get it back 2"
     val message1 = "Log stuff in parallel stages and get it back 1"
     val message2 = "Log stuff in parallel stages and get it back 2"
-    JobRunners.withOutErr(
+    Jobs.withOutErr(
       new PrintStream(new ElasticsearchOutputStream(elasticsearchClient, orchestraConfig.runInfo.runId), true)
     ) {
       Future
@@ -105,10 +105,10 @@ class LoggingTests
   }
 
   scenario("Log stuff with a shell command in a container and in a stage and it back") {
-    DummyJobs.emptyJobRunner.ApiServer().trigger(orchestraConfig.runInfo.runId, HNil).futureValue
+    DummyJobs.emptyJob.ApiServer().trigger(orchestraConfig.runInfo.runId, HNil).futureValue
 
     val stageName = "Log stuff with a shell command in a container and in a stage and it back"
-    JobRunners.withOutErr(
+    Jobs.withOutErr(
       new PrintStream(new ElasticsearchOutputStream(elasticsearchClient, orchestraConfig.runInfo.runId), true)
     ) {
       stage(stageName) {

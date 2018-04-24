@@ -15,7 +15,7 @@ class RunningJobsTests
     with Eventually {
 
   scenario("Trigger a job") {
-    emptyJobRunner.ApiServer().trigger(RunId.random(), HNil).futureValue
+    emptyJob.ApiServer().trigger(RunId.random(), HNil).futureValue
     eventually {
       val runningJobs = CommonApiServer().runningJobs().futureValue
       runningJobs should have size 1

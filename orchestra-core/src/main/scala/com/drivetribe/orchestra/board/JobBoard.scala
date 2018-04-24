@@ -4,21 +4,18 @@ import java.time.Instant
 
 import scala.concurrent.{ExecutionContext, Future}
 
+import com.drivetribe.orchestra.OrchestraConfig
+import com.drivetribe.orchestra.model._
+import com.drivetribe.orchestra.parameter.{Parameter, ParameterOperations}
+import com.drivetribe.orchestra.utils.{AutowireClient, AutowireServer, RunIdOperation}
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.auto._
 import io.circe.java8.time._
 import io.k8s.api.core.v1.PodSpec
-
 import shapeless.ops.function.FnToProduct
 import shapeless.{::, _}
 
-import com.drivetribe.orchestra.job.SimpleJob
-import com.drivetribe.orchestra.model._
-import com.drivetribe.orchestra.parameter.{Parameter, ParameterOperations}
-import com.drivetribe.orchestra.utils.{AutowireClient, AutowireServer, RunIdOperation}
-import com.drivetribe.orchestra.OrchestraConfig
-
-trait Job[ParamValues <: HList, Result, Func, PodSpecFunc] extends Board {
+trait JobBoard[ParamValues <: HList, Result, Func, PodSpecFunc] extends Board {
   val id: JobId
   val segment = id.value
   val name: String
@@ -45,12 +42,11 @@ trait Job[ParamValues <: HList, Result, Func, PodSpecFunc] extends Board {
   }
 }
 
-object Job {
+object JobBoard {
 
   /**
-    * Create a Job definition.
-    * A Job is mostly compiled to JS. It defines the type of the function it runs, a unique id and a pretty name for the
-    * UI.
+    * Create a JobBoard.
+    * A JobBoard defines the type of the function it runs, a unique id and a pretty name for the UI.
     *
     * @param id A unique JobId
     * @param name A pretty name for the display
@@ -67,7 +63,7 @@ object Job {
       encoderP: Encoder[ParamValues],
       decoderP: Decoder[ParamValues],
       decoderR: Decoder[Result]
-    ) = SimpleJob[ParamValuesNoRunId, ParamValues, HNil, Result, Func, PodSpecFunc](id, name, HNil)
+    ) = SimpleJobBoard[ParamValuesNoRunId, ParamValues, HNil, Result, Func, PodSpecFunc](id, name, HNil)
 
     // One param
     def apply[ParamValuesNoRunId <: HList, ParamValues <: HList, Param <: Parameter[_], Result, PodSpecFunc](
@@ -80,7 +76,8 @@ object Job {
       encoderP: Encoder[ParamValues],
       decoderP: Decoder[ParamValues],
       decoderR: Decoder[Result]
-    ) = SimpleJob[ParamValuesNoRunId, ParamValues, Param :: HNil, Result, Func, PodSpecFunc](id, name, param :: HNil)
+    ) =
+      SimpleJobBoard[ParamValuesNoRunId, ParamValues, Param :: HNil, Result, Func, PodSpecFunc](id, name, param :: HNil)
 
     // Multi params
     def apply[ParamValuesNoRunId <: HList, ParamValues <: HList, TupledParams, Params <: HList, Result, PodSpecFunc](
@@ -95,6 +92,8 @@ object Job {
       decoderP: Decoder[ParamValues],
       decoderR: Decoder[Result]
     ) =
-      SimpleJob[ParamValuesNoRunId, ParamValues, Params, Result, Func, PodSpecFunc](id, name, tupleToHList.to(params))
+      SimpleJobBoard[ParamValuesNoRunId, ParamValues, Params, Result, Func, PodSpecFunc](id,
+                                                                                         name,
+                                                                                         tupleToHList.to(params))
   }
 }

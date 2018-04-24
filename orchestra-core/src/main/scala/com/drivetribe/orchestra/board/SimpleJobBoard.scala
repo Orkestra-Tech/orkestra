@@ -1,27 +1,25 @@
-package com.drivetribe.orchestra.job
+package com.drivetribe.orchestra.board
 
-import io.circe.{Decoder, Encoder}
-import japgolly.scalajs.react.extra.router.RouterConfigDsl
-import japgolly.scalajs.react.vdom.html_<^._
-import shapeless._
-
-import com.drivetribe.orchestra.board.Job
 import com.drivetribe.orchestra.model.{JobId, RunId}
 import com.drivetribe.orchestra.page.JobPage
 import com.drivetribe.orchestra.parameter.ParameterOperations
 import com.drivetribe.orchestra.route.LogsRoute
 import com.drivetribe.orchestra.route.WebRouter.{BoardPageRoute, PageRoute}
 import com.drivetribe.orchestra.utils.RunIdOperation
+import io.circe.{Decoder, Encoder}
+import japgolly.scalajs.react.extra.router.RouterConfigDsl
+import japgolly.scalajs.react.vdom.html_<^._
+import shapeless._
 
-case class SimpleJob[ParamValuesNoRunId <: HList,
-                     ParamValues <: HList: Encoder: Decoder,
-                     Params <: HList,
-                     Result: Decoder,
-                     Func,
-                     PodSpecFunc](id: JobId, name: String, params: Params)(
+case class SimpleJobBoard[ParamValuesNoRunId <: HList,
+                          ParamValues <: HList: Encoder: Decoder,
+                          Params <: HList,
+                          Result: Decoder,
+                          Func,
+                          PodSpecFunc](id: JobId, name: String, params: Params)(
   implicit paramOperations: ParameterOperations[Params, ParamValuesNoRunId],
   runIdOperation: RunIdOperation[ParamValuesNoRunId, ParamValues]
-) extends Job[ParamValues, Result, Func, PodSpecFunc] {
+) extends JobBoard[ParamValues, Result, Func, PodSpecFunc] {
 
   def route(parentBreadcrumb: Seq[String]) = RouterConfigDsl[PageRoute].buildRule { dsl =>
     import dsl._

@@ -18,15 +18,15 @@ import com.drivetribe.orchestra.utils.AkkaImplicits._
 class AllTests extends FeatureSpec with IntegrationTest {
 
   scenario("Empty history") {
-    Api.jobClient(SomeJob.job).history(Page[Instant](None, -50)).call().futureValue.runs shouldBe empty
+    Api.jobClient(SomeJob.board).history(Page[Instant](None, -50)).call().futureValue.runs shouldBe empty
   }
 
   scenario("Run a job") {
-    Api.jobClient(SomeJob.job).trigger(RunId.random(), HNil: HNil).call().futureValue
+    Api.jobClient(SomeJob.board).trigger(RunId.random(), HNil: HNil).call().futureValue
 
     // Check triggered state
     eventually {
-      val response = Api.jobClient(SomeJob.job).history(Page[Instant](None, -50)).call().futureValue
+      val response = Api.jobClient(SomeJob.board).history(Page[Instant](None, -50)).call().futureValue
       response.runs should have size 1
       val run = response.runs.headOption.value._1
       run.triggeredOn should ===(run.latestUpdateOn)
@@ -35,7 +35,7 @@ class AllTests extends FeatureSpec with IntegrationTest {
 
     // Check running state
     eventually {
-      val response = Api.jobClient(SomeJob.job).history(Page[Instant](None, -50)).call().futureValue
+      val response = Api.jobClient(SomeJob.board).history(Page[Instant](None, -50)).call().futureValue
       response.runs should have size 1
       val run = response.runs.headOption.value._1
       run.triggeredOn should not be run.latestUpdateOn
@@ -44,7 +44,7 @@ class AllTests extends FeatureSpec with IntegrationTest {
 
     // Check success state
     eventually {
-      val response = Api.jobClient(SomeJob.job).history(Page[Instant](None, -50)).call().futureValue
+      val response = Api.jobClient(SomeJob.board).history(Page[Instant](None, -50)).call().futureValue
       response.runs should have size 1
       response.runs.headOption.value._1.result should ===(Some(Right(())))
     }

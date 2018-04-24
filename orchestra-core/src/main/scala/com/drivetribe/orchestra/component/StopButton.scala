@@ -3,13 +3,11 @@ package com.drivetribe.orchestra.component
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
 import autowire._
+import com.drivetribe.orchestra.board.JobBoard
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
-
 import shapeless.HList
-
-import com.drivetribe.orchestra.board.Job
 import com.drivetribe.orchestra.css.Global
 import com.drivetribe.orchestra.model.RunId
 
@@ -25,7 +23,7 @@ object StopButton {
     )
   }
 
-  case class Props(job: Job[_ <: HList, _, _, _], runId: RunId)
+  case class Props(job: JobBoard[_ <: HList, _, _, _], runId: RunId)
 
   val component = ScalaComponent
     .builder[Props](getClass.getSimpleName)
@@ -34,7 +32,7 @@ object StopButton {
     }
     .build
 
-  private def stop(job: Job[_, _, _, _], runId: RunId)(event: ReactEventFromInput) = Callback.future {
+  private def stop(job: JobBoard[_, _, _, _], runId: RunId)(event: ReactEventFromInput) = Callback.future {
     event.stopPropagation()
     job.Api.client.stop(runId).call().map(Callback(_))
   }

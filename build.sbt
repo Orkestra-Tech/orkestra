@@ -3,7 +3,7 @@ import org.scalajs.sbtplugin.cross.CrossProject
 
 lazy val orchestra = project
   .in(file("."))
-  .aggregate(coreJVM, coreJS, githubJVM, githubJS, cronJVM, cronJS, lock, plugin)
+  .aggregate(coreJVM, coreJS, githubJVM, githubJS, cronJVM, cronJS, lock, plugin, integrationTestsJVM, integrationTestsJS)
   .settings(
     name := "Orchestra",
     ThisBuild / organization := "com.drivetribe",
@@ -123,7 +123,9 @@ lazy val docs = project
       "com.amazonaws" % "aws-java-sdk" % "1.11.310",
       "com.github.gilbertw1" %% "slack-scala-client" % "0.2.3",
       "org.zeroturnaround" % "zt-zip" % "1.12"
-    ) ++ enumeratum.value
+    ) ++ enumeratum.value,
+    publishArtifact := false,
+    publishLocal := {}
   )
 
 lazy val TestCi = config("testci").extend(Test)
@@ -136,7 +138,9 @@ lazy val integrationTests =
       version ~= (_.replace('+', '-')),
       buildInfoPackage := s"${organization.value}.orchestra.integration.tests",
       buildInfoKeys += "artifactName" -> artifact.value.name,
-      libraryDependencies ++= scalaTest.value
+      libraryDependencies ++= scalaTest.value,
+      publishArtifact := false,
+      publishLocal := {}
     )
 lazy val integrationTestsJVM = integrationTests.jvm
   .dependsOn(lock)

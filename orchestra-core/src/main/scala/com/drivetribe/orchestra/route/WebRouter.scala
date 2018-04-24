@@ -1,12 +1,13 @@
 package com.drivetribe.orchestra.route
 
+import com.drivetribe.orchestra.board.{Board, Folder, JobBoard}
 import japgolly.scalajs.react.extra.router.{Resolution, RouterConfigDsl, RouterCtl, _}
 import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
 import org.scalajs.dom
 import shapeless.HList
 import com.drivetribe.orchestra.component.{Footer, TopNav}
-import com.drivetribe.orchestra.board.{Board, Folder, Job}
+import com.drivetribe.orchestra.board.{Board, Folder, JobBoard}
 import com.drivetribe.orchestra.css.Global
 import com.drivetribe.orchestra.model.RunId
 import com.drivetribe.orchestra.page.StatusPage
@@ -44,8 +45,8 @@ object WebRouter {
       }
   }
 
-  private def allJobs(board: Board): Seq[Job[_ <: HList, _, _, _]] = board match {
-    case folder: Folder       => folder.childBoards.flatMap(allJobs)
-    case job: Job[_, _, _, _] => Seq(job)
+  private def allJobs(board: Board): Seq[JobBoard[_ <: HList, _, _, _]] = board match {
+    case folder: Folder            => folder.childBoards.flatMap(allJobs)
+    case job: JobBoard[_, _, _, _] => Seq(job)
   }
 }

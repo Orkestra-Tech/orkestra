@@ -10,6 +10,7 @@ Secrets in Orchestra relies on the [Kubernetes Secrets](https://kubernetes.io/do
 this is already implemented we thought there is no need to add an Orchestra specific implementation.
 
 ## Secrets as Environment Variables
+
 On Kubernetes we most commonly use secrets as environment variables.  
 First we need to create the secret on Kubernetes, then pass the secret to the container, all of that is well explained
 in the documentation of [Kubernetes Secrets](https://kubernetes.io/docs/concepts/configuration/secret/).  
@@ -27,6 +28,7 @@ Attention: Do not use the Scala `sys.env.get()` or the Java `System.getEnv()` as
 logged.
 
 ## Secrets as Files
+
 You might want to use for example an SSH key file as a Secret. We usually mount the secret in a file under
 `/opt/docker/secrets/ssh` and then access it via this path:
 ```scala

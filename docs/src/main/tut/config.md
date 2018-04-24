@@ -34,6 +34,7 @@ position: 2
 - `ORCHESTRA_BASEPATH`: If the UI is accessed form a sub path we need to make Orchestra aware of it. Optional.
 
 ## Deployment config
+
 The deployment can be done via Kubernetes Deployments.
 
 First we create a namespace where we will be deploying everything:

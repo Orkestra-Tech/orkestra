@@ -16,13 +16,13 @@ class StopJobTests
 
   scenario("Stop a job") {
     val runId = RunId.random()
-    emptyJobRunner.ApiServer().trigger(runId, HNil).futureValue
+    emptyJob.ApiServer().trigger(runId, HNil).futureValue
     eventually {
       val runningJobs = CommonApiServer().runningJobs().futureValue
       runningJobs should have size 1
     }
 
-    emptyJobRunner.ApiServer().stop(runId).futureValue
+    emptyJob.ApiServer().stop(runId).futureValue
     eventually {
       val runningJobs = CommonApiServer().runningJobs().futureValue
       runningJobs should have size 0

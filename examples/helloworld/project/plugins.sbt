@@ -1,1 +1,0 @@
-addSbtPlugin("com.drivetribe" % "sbt-orchestra" % "0.6")

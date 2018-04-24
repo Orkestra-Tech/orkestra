@@ -8,6 +8,7 @@ import scala.concurrent.Future
 
 import akka.http.scaladsl.server.Route
 import autowire.Core
+import com.drivetribe.orchestra.board.JobBoard
 import com.goyeau.kubernetesclient.KubernetesClient
 import io.circe.{Decoder, Encoder, Json}
 import io.k8s.api.core.v1.PodSpec
@@ -19,18 +20,16 @@ import com.sksamuel.elastic4s.http.HttpClient
 import io.circe.generic.auto._
 import io.circe.java8.time._
 import io.circe.parser._
-
-import com.drivetribe.orchestra.board.Job
 import com.drivetribe.orchestra.filesystem.Directory
-import com.drivetribe.orchestra.kubernetes.Jobs
+import com.drivetribe.orchestra.kubernetes
 import com.drivetribe.orchestra.model._
 import com.drivetribe.orchestra.model.Indexed._
 import com.drivetribe.orchestra.utils.{AutowireServer, Elasticsearch, ElasticsearchOutputStream}
 import com.drivetribe.orchestra.utils.AkkaImplicits._
 import com.drivetribe.orchestra.{CommonApiServer, OrchestraConfig}
 
-case class JobRunner[ParamValues <: HList: Encoder: Decoder, Result: Encoder: Decoder](
-  job: Job[ParamValues, Result, _, _],
+case class Job[ParamValues <: HList: Encoder: Decoder, Result: Encoder: Decoder](
+  board: JobBoard[ParamValues, Result, _, _],
   podSpec: ParamValues => PodSpec,
   func: ParamValues => Result
 ) {
@@ -38,7 +37,7 @@ case class JobRunner[ParamValues <: HList: Encoder: Decoder, Result: Encoder: De
   private[orchestra] def start(runInfo: RunInfo)(implicit orchestraConfig: OrchestraConfig,
                                                  kubernetesClient: KubernetesClient,
                                                  elasticsearchClient: HttpClient): Future[Result] = {
-    val runningPong = system.scheduler.schedule(0.second, 1.second)(JobRunners.pong(runInfo))
+    val runningPong = system.scheduler.schedule(0.second, 1.second)(Jobs.pong(runInfo))
 
     (for {
       run <- elasticsearchClient
@@ -51,18 +50,18 @@ case class JobRunner[ParamValues <: HList: Encoder: Decoder, Result: Encoder: De
         system.scheduler.schedule(1.second, 1.second) {
           CommonApiServer().runningJobs().flatMap { runningJobs =>
             if (!runningJobs.exists(_.runInfo == parentJob))
-              JobRunners
+              Jobs
                 .failJob(runInfo, new InterruptedException(s"Parent job ${parentJob.jobId.value} stopped"))
-                .transformWith(_ => Jobs.delete(runInfo))
+                .transformWith(_ => kubernetes.Jobs.delete(runInfo))
             else Future.unit
           }
         }
       }
 
-      result = JobRunners.withOutErr(
+      result = Jobs.withOutErr(
         new PrintStream(new ElasticsearchOutputStream(Elasticsearch.client, runInfo.runId), true)
       ) {
-        println(s"Running job ${job.name}")
+        println(s"Running job ${board.name}")
         val result =
           try func(run.paramValues)
           catch {
@@ -70,17 +69,17 @@ case class JobRunner[ParamValues <: HList: Encoder: Decoder, Result: Encoder: De
               throwable.printStackTrace()
               throw throwable
           }
-        println(s"Job ${job.name} completed")
+        println(s"Job ${board.name} completed")
         result
       }
 
-      _ <- JobRunners.succeedJob(runInfo, result)
+      _ <- Jobs.succeedJob(runInfo, result)
     } yield result)
-      .recoverWith { case throwable => JobRunners.failJob(runInfo, throwable) }
+      .recoverWith { case throwable => Jobs.failJob(runInfo, throwable) }
       .transformWith { triedResult =>
         for {
           _ <- Future(runningPong.cancel())
-          _ <- Jobs.delete(runInfo)
+          _ <- kubernetes.Jobs.delete(runInfo)
           result <- Future.fromTry(triedResult)
         } yield result
       }
@@ -89,27 +88,27 @@ case class JobRunner[ParamValues <: HList: Encoder: Decoder, Result: Encoder: De
   private[orchestra] case class ApiServer()(implicit orchestraConfig: OrchestraConfig,
                                             kubernetesClient: KubernetesClient,
                                             elasticsearchClient: HttpClient)
-      extends job.Api {
+      extends board.Api {
     override def trigger(runId: RunId,
                          paramValues: ParamValues,
                          tags: Seq[String] = Seq.empty,
                          parent: Option[RunInfo] = None): Future[Unit] =
       for {
-        runInfo <- Future.successful(RunInfo(job.id, runId))
+        runInfo <- Future.successful(RunInfo(board.id, runId))
         _ <- elasticsearchClient
           .execute(Elasticsearch.indexRun(runInfo, paramValues, tags, parent))
           .map(_.fold(failure => throw new IOException(failure.error.reason), identity))
-        _ <- Jobs.create(runInfo, podSpec(paramValues))
+        _ <- kubernetes.Jobs.create(runInfo, podSpec(paramValues))
       } yield ()
 
-    override def stop(runId: RunId): Future[Unit] = Jobs.delete(RunInfo(job.id, runId))
+    override def stop(runId: RunId): Future[Unit] = kubernetes.Jobs.delete(RunInfo(board.id, runId))
 
     override def tags(): Future[Seq[String]] = {
       val aggregationName = "tagsForJob"
       elasticsearchClient
         .execute(
           search(HistoryIndex.index)
-            .query(boolQuery.filter(termQuery("runInfo.jobId", job.id.value)))
+            .query(boolQuery.filter(termQuery("runInfo.jobId", board.id.value)))
             .aggregations(termsAgg(aggregationName, "tags"))
             .size(1000)
         )
@@ -126,7 +125,7 @@ case class JobRunner[ParamValues <: HList: Encoder: Decoder, Result: Encoder: De
         runs <- elasticsearchClient
           .execute(
             search(HistoryIndex.index)
-              .query(boolQuery.filter(termQuery("runInfo.jobId", job.id.value)))
+              .query(boolQuery.filter(termQuery("runInfo.jobId", board.id.value)))
               .sortBy(fieldSort("triggeredOn").desc(), fieldSort("_id").desc())
               .searchAfter(
                 Seq(
@@ -162,36 +161,37 @@ case class JobRunner[ParamValues <: HList: Encoder: Decoder, Result: Encoder: De
                                   kubernetesClient: KubernetesClient,
                                   elasticsearchClient: HttpClient): Route = {
     import akka.http.scaladsl.server.Directives._
-    path(job.id.value / Segments) { segments =>
+    path(board.id.value / Segments) { segments =>
       entity(as[String]) { entity =>
         val body = AutowireServer.read[Map[String, Json]](parse(entity).fold(throw _, identity))
-        val request = job.Api.router(ApiServer()).apply(Core.Request(segments, body))
+        val request = board.Api.router(ApiServer()).apply(Core.Request(segments, body))
         onSuccess(request)(json => complete(json.noSpaces))
       }
     }
   }
 }
 
-object JobRunner {
+object Job {
 
   /**
-    * Create a JobRunner.
-    * A JobRunner is compiled to JS. It attaches a function to a Job
+    * Create a Job.
     *
-    * @param job The Job we are attaching this runner to
+    * @param board The board that will represent this job on the UI
     */
-  def apply[ParamValues <: HList, Result, Func, PodSpecFunc](job: Job[ParamValues, Result, Func, PodSpecFunc]) =
-    new JobRunnerBuilder(job)
+  def apply[ParamValues <: HList, Result, Func, PodSpecFunc](
+    board: JobBoard[ParamValues, Result, Func, PodSpecFunc]
+  ) =
+    new JobBuilder(board)
 
-  class JobRunnerBuilder[ParamValues <: HList, Result, Func, PodSpecFunc](
-    job: Job[ParamValues, Result, Func, PodSpecFunc]
+  class JobBuilder[ParamValues <: HList, Result, Func, PodSpecFunc](
+    board: JobBoard[ParamValues, Result, Func, PodSpecFunc]
   ) {
     def apply(func: Directory => Func)(implicit fnToProdFunc: FnToProduct.Aux[Func, ParamValues => Result],
                                        encoderP: Encoder[ParamValues],
                                        decoderP: Decoder[ParamValues],
                                        encoderR: Encoder[Result],
                                        decoderR: Decoder[Result]) =
-      JobRunner(job, (_: ParamValues) => PodSpec(Seq.empty), fnToProdFunc(func(Directory("."))))
+      Job(board, (_: ParamValues) => PodSpec(Seq.empty), fnToProdFunc(func(Directory("."))))
 
     def apply(podSpec: PodSpec)(func: Directory => Func)(
       implicit fnToProdFunc: FnToProduct.Aux[Func, ParamValues => Result],
@@ -200,7 +200,7 @@ object JobRunner {
       encoderR: Encoder[Result],
       decoderR: Decoder[Result]
     ) =
-      JobRunner(job, (_: ParamValues) => podSpec, fnToProdFunc(func(Directory("."))))
+      Job(board, (_: ParamValues) => podSpec, fnToProdFunc(func(Directory("."))))
 
     def apply(podSpecFunc: PodSpecFunc)(func: Directory => Func)(
       implicit fnToProdFunc: FnToProduct.Aux[Func, ParamValues => Result],
@@ -210,6 +210,6 @@ object JobRunner {
       encoderR: Encoder[Result],
       decoderR: Decoder[Result]
     ) =
-      JobRunner(job, fnToProdPodSpec(podSpecFunc), fnToProdFunc(func(Directory("."))))
+      Job(board, fnToProdPodSpec(podSpecFunc), fnToProdFunc(func(Directory("."))))
   }
 }

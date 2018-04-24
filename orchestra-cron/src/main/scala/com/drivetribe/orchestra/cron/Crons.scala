@@ -21,7 +21,7 @@ private[cron] object Crons {
     for {
       currentCronJobs <- kubernetesClient.cronJobs.namespace(orchestraConfig.namespace).list()
       currentCronJobNames = currentCronJobs.items.flatMap(_.metadata).flatMap(_.name).toSet
-      cronJobNames = cronTriggers.map(cronTrigger => cronJobName(cronTrigger.jobRunner.job.id))
+      cronJobNames = cronTriggers.map(cronTrigger => cronJobName(cronTrigger.job.board.id))
       jobsToRemove = currentCronJobNames.diff(cronJobNames)
       _ <- Future.traverse(jobsToRemove) { cronJobName =>
         logger.debug(s"Deleting cronjob $cronJobName")
@@ -35,15 +35,13 @@ private[cron] object Crons {
       masterPod <- MasterPod.get()
       _ <- Future.traverse(cronTriggers) { cronTrigger =>
         val cronJob = CronJob(
-          metadata = Option(ObjectMeta(name = Option(cronJobName(cronTrigger.jobRunner.job.id)))),
+          metadata = Option(ObjectMeta(name = Option(cronJobName(cronTrigger.job.board.id)))),
           spec = Option(
             CronJobSpec(
               schedule = cronTrigger.schedule,
               jobTemplate = JobTemplateSpec(
                 spec = Option(
-                  JobSpecs.create(masterPod,
-                                  EnvRunInfo(cronTrigger.jobRunner.job.id, None),
-                                  cronTrigger.jobRunner.podSpec(HNil))
+                  JobSpecs.create(masterPod, EnvRunInfo(cronTrigger.job.board.id, None), cronTrigger.job.podSpec(HNil))
                 )
               )
             )

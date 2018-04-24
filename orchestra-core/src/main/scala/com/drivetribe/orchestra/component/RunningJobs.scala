@@ -12,22 +12,20 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.component.builder.Lifecycle.ComponentDidMount
 import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
-
 import io.circe.generic.auto._
 import io.circe.shapes._
 import japgolly.scalajs.react.extra.router.RouterCtl
 import japgolly.scalajs.react.vdom.Style
 import shapeless.HList
-
 import com.drivetribe.orchestra.CommonApi
-import com.drivetribe.orchestra.board.Job
+import com.drivetribe.orchestra.board.JobBoard
 import com.drivetribe.orchestra.css.Global
 import com.drivetribe.orchestra.model.Indexed._
 import com.drivetribe.orchestra.route.WebRouter.{BoardPageRoute, LogsPageRoute, PageRoute}
 
 object RunningJobs {
 
-  case class Props(ctl: RouterCtl[PageRoute], jobs: Seq[Job[_ <: HList, _, _, _]], closeRunningJobs: Callback)
+  case class Props(ctl: RouterCtl[PageRoute], jobs: Seq[JobBoard[_ <: HList, _, _, _]], closeRunningJobs: Callback)
 
   val component = ScalaComponent
     .builder[Props](getClass.getSimpleName)

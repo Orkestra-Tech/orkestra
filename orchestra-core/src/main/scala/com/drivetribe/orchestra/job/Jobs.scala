@@ -19,7 +19,7 @@ import com.drivetribe.orchestra.model.RunInfo
 import com.drivetribe.orchestra.utils.AkkaImplicits._
 import com.drivetribe.orchestra.utils.BaseEncoders._
 
-object JobRunners {
+private[orchestra] object Jobs {
 
   def pong(runInfo: RunInfo)(implicit elasticsearchClient: HttpClient) =
     elasticsearchClient

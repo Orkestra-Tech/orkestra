@@ -42,39 +42,34 @@ lazy val orchestrationJVM = orchestration.jvm
 lazy val orchestrationJS = orchestration.js
 ```
 
-## Hello World example
+## Simple example
 
-Given the above [installation](#installation), here is a minimal project with one Hello World job:
+Given the above [installation](#installation), here is a minimal project with one job:
 
 *orchestration/src/main/scala/Orchestration.scala*:
 ```tut:silent
 import com.drivetribe.orchestra._
 import com.drivetribe.orchestra.Dsl._
 import com.drivetribe.orchestra.board._
-import com.drivetribe.orchestra.job.JobRunner
+import com.drivetribe.orchestra.job._
 import com.drivetribe.orchestra.model._
 
-// We extend Orchestra to create the API server and UI to create the web UI
-object Orchestration extends Orchestra with UI {
+// We extend Orchestra to create the web server
+object Orchestration extends Orchestra {
   // Configuring the UI
-  lazy val board = Folder("Orchestra")(helloJob)
-  // Configuring the job runners
-  lazy val jobRunners = Set(helloJobRunner)
+  lazy val board = deployFrontendJobBoard
+  // Configuring the jobs
+  lazy val jobs = Set(deployFrontendJob)
   
-  // Defining the job and configuring UI related settings (this will be mostly compiled to JS)
-  // - () => Unit           This job will have no parameter and return nothing
-  // - JobId("helloWorld")  The JobId is a unique identifier for the job
-  // - "Hello World"        And we give it a pretty name for the display
-  lazy val helloJob = Job[() => Unit](JobId("helloWorld"), "Hello World")()
-  // Creating the job runner from the above definition (this will be compiled to JVM)
-  // - helloJob                      This JobRunner will be registered for the Job helloJob
-  // - implicit workDir              Defines the working directory, we will not be using it in this example
-  // - () => println("Hello World")  The function to execute when the job is ran
-  lazy val helloJobRunner = JobRunner(helloJob) { implicit workDir => () =>
-    println("Hello World")
+  // Creating the job and configuring UI related settings
+  lazy val deployFrontendJobBoard = JobBoard[() => Unit](JobId("deployFrontend"), "Deploy Frontend")()
+  // Creating the job from the above definition (this will be compiled to JVM)
+  lazy val deployFrontendJob = Job(deployFrontendJobBoard) { implicit workDir => () =>
+    println("Deploying Frontend")
   }
 }
 ```
+This example is described in [Jobs & Boards](https://drivetribe.github.io/orchestra/jobsboards.html).
 
 [See example projects](https://github.com/drivetribe/orchestra/tree/master/examples)
 
@@ -94,10 +89,22 @@ kubectl proxy                             # Proxy the Kubernetes api
 Visit Orchestra on `https://127.0.0.1:8001/api/v1/namespaces/orchestra/services/orchestration:http/proxy`.  
 You can troubleshoot any deployment issue with `minikube dashboard`.
 
+More on how to configure the deployment in [Config](https://drivetribe.github.io/orchestra/config.html).
 
 # Documentation
 
 Find all the documentation on [https://drivetribe.github.io/orchestra/](https://drivetribe.github.io/orchestra/)
+- [Jobs & Boards](https://drivetribe.github.io/orchestra/jobsboards.html)
+- [Config](https://drivetribe.github.io/orchestra/config.html)
+- [Parameters](https://drivetribe.github.io/orchestra/parameters.html)
+- [Stages](https://drivetribe.github.io/orchestra/stages.html)
+- [Shell scripts](https://drivetribe.github.io/orchestra/shells.html)
+- [Directories](https://drivetribe.github.io/orchestra/directories.html)
+- [Secrets](https://drivetribe.github.io/orchestra/secrets.html)
+- [Triggering jobs](https://drivetribe.github.io/orchestra/triggers.html)
+- [RunId](https://drivetribe.github.io/orchestra/runid.html)
+- [Containers](https://drivetribe.github.io/orchestra/containers.html)
+- [Plugins](https://drivetribe.github.io/orchestra/plugins/)
 
 
 # Related projects

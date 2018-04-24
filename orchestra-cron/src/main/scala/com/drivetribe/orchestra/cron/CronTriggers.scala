@@ -33,7 +33,7 @@ trait CronTriggers extends OrchestraPlugin {
   override def onJobStart(runInfo: RunInfo): Future[Unit] =
     for {
       _ <- super.onJobStart(runInfo)
-      _ <- if (cronTriggers.exists(_.jobRunner.job.id == runInfo.jobId))
+      _ <- if (cronTriggers.exists(_.job.board.id == runInfo.jobId))
         elasticsearchClient
           .execute(Elasticsearch.indexRun[HNil](runInfo, HNil, Seq.empty, None).refresh(RefreshPolicy.WaitFor))
       else Future.unit

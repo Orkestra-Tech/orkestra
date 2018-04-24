@@ -8,7 +8,7 @@ import io.circe.Json
 import shapeless._
 
 import com.drivetribe.orchestra.OrchestraConfig
-import com.drivetribe.orchestra.job.JobRunner
+import com.drivetribe.orchestra.job.Job
 import com.drivetribe.orchestra.kubernetes.Kubernetes
 import com.drivetribe.orchestra.model.RunId
 import com.drivetribe.orchestra.utils.{Elasticsearch, RunIdOperation}
@@ -21,7 +21,7 @@ sealed trait GithubTrigger {
 case class BranchTrigger[ParamValuesNoRunIdBranch <: HList, ParamValuesNoBranch <: HList, ParamValues <: HList] private (
   repository: Repository,
   branchRegex: String,
-  job: JobRunner[ParamValues, _],
+  job: Job[ParamValues, _],
   values: ParamValuesNoRunIdBranch
 )(
   implicit runIdOperation: RunIdOperation[ParamValuesNoRunIdBranch, ParamValuesNoBranch],
@@ -53,12 +53,12 @@ object BranchTrigger {
   private implicit lazy val kubernetesClient: KubernetesClient = Kubernetes.client
   private implicit lazy val httpClient: HttpClient = Elasticsearch.client
 
-  def apply[ParamValues <: HList](repository: Repository, branchRegex: String, job: JobRunner[ParamValues, _]) =
+  def apply[ParamValues <: HList](repository: Repository, branchRegex: String, job: Job[ParamValues, _]) =
     new BranchTriggerBuilder[ParamValues](repository, branchRegex, job)
 
   class BranchTriggerBuilder[ParamValues <: HList](repository: Repository,
                                                    branchRegex: String,
-                                                   job: JobRunner[ParamValues, _]) {
+                                                   job: Job[ParamValues, _]) {
 
     // No Params
     def apply[ParamValuesNoBranch <: HList]()(
@@ -88,7 +88,7 @@ object BranchTrigger {
 
 case class PullRequestTrigger[ParamValuesNoRunIdBranch <: HList, ParamValuesNoBranch <: HList, ParamValues <: HList] private (
   repository: Repository,
-  job: JobRunner[ParamValues, _],
+  job: Job[ParamValues, _],
   values: ParamValuesNoRunIdBranch
 )(
   implicit runIdOperation: RunIdOperation[ParamValuesNoRunIdBranch, ParamValuesNoBranch],
@@ -122,10 +122,10 @@ object PullRequestTrigger {
   private implicit lazy val kubernetesClient: KubernetesClient = Kubernetes.client
   private implicit lazy val httpClient: HttpClient = Elasticsearch.client
 
-  def apply[ParamValues <: HList](repository: Repository, job: JobRunner[ParamValues, _]) =
+  def apply[ParamValues <: HList](repository: Repository, job: Job[ParamValues, _]) =
     new PullRequestTriggerBuilder[ParamValues](repository, job)
 
-  class PullRequestTriggerBuilder[ParamValues <: HList](repository: Repository, job: JobRunner[ParamValues, _]) {
+  class PullRequestTriggerBuilder[ParamValues <: HList](repository: Repository, job: Job[ParamValues, _]) {
 
     // No Params
     def apply[ParamValuesNoBranch <: HList]()(

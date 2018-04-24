@@ -2,12 +2,12 @@ package com.drivetribe.orchestra.cron
 
 import shapeless.HNil
 
-import com.drivetribe.orchestra.job.JobRunner
+import com.drivetribe.orchestra.job.Job
 
 /**
   * A cron triggerable job.
   *
   * @param schedule The cron schedule expression
-  * @param jobRunner The job to trigger
+  * @param job The job to trigger
   */
-case class CronTrigger(schedule: String, jobRunner: JobRunner[HNil, _])
+case class CronTrigger(schedule: String, job: Job[HNil, _])

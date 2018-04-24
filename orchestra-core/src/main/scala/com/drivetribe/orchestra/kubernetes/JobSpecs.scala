@@ -10,7 +10,7 @@ import io.k8s.api.core.v1._
 
 import com.drivetribe.orchestra.model.EnvRunInfo
 
-object JobSpecs {
+private[orchestra] object JobSpecs {
   private val home = "home"
   private def homeDirMount(implicit orchestraConfig: OrchestraConfig) =
     VolumeMount(home, mountPath = orchestraConfig.workspace)

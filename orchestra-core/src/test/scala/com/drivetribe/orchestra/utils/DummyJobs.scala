@@ -1,52 +1,54 @@
 package com.drivetribe.orchestra.utils
 
 import io.circe.shapes._
-
-import com.drivetribe.orchestra.{board, OrchestraConfig}
-import com.drivetribe.orchestra.job.JobRunner
+import com.drivetribe.orchestra.OrchestraConfig
+import com.drivetribe.orchestra.board.JobBoard
+import com.drivetribe.orchestra.job.Job
 import com.drivetribe.orchestra.model.RunId
 import com.drivetribe.orchestra.parameter.{Checkbox, Input}
 
 object DummyJobs {
-  def emptyJob(implicit orchestraConfig: OrchestraConfig) =
-    board.Job[() => Unit](orchestraConfig.runInfo.jobId, "Empty Job")()
-  def emptyJobRunner(implicit orchestraConfig: OrchestraConfig) = JobRunner(emptyJob)(implicit workDir => () => ())
+  def emptyJobBoard(implicit orchestraConfig: OrchestraConfig) =
+    JobBoard[() => Unit](orchestraConfig.runInfo.jobId, "Empty Job")()
+  def emptyJob(implicit orchestraConfig: OrchestraConfig) = Job(emptyJobBoard)(implicit workDir => () => ())
 
+  def emptyWithRunIdJobBoard(implicit orchestraConfig: OrchestraConfig) =
+    JobBoard[RunId => Unit](orchestraConfig.runInfo.jobId, "Empty with RunId Job")()
   def emptyWithRunIdJob(implicit orchestraConfig: OrchestraConfig) =
-    board.Job[RunId => Unit](orchestraConfig.runInfo.jobId, "Empty with RunId Job")()
-  def emptyWithRunIdJobRunner(implicit orchestraConfig: OrchestraConfig) =
-    JobRunner(emptyWithRunIdJob)(implicit workDir => runId => ())
+    Job(emptyWithRunIdJobBoard)(implicit workDir => runId => ())
 
+  def oneParamJobBoard(implicit orchestraConfig: OrchestraConfig) =
+    JobBoard[String => Unit](orchestraConfig.runInfo.jobId, "One Param Job")(Input[String]("Some string"))
   def oneParamJob(implicit orchestraConfig: OrchestraConfig) =
-    board.Job[String => Unit](orchestraConfig.runInfo.jobId, "One Param Job")(Input[String]("Some string"))
-  def oneParamJobRunner(implicit orchestraConfig: OrchestraConfig) =
-    JobRunner(oneParamJob)(implicit workDir => someString => ())
+    Job(oneParamJobBoard)(implicit workDir => someString => ())
 
+  def oneParamWithRunIdJobBoard(implicit orchestraConfig: OrchestraConfig) =
+    JobBoard[(String, RunId) => Unit](orchestraConfig.runInfo.jobId, "One Param with RunId Job")(
+      Input[String]("Some string")
+    )
   def oneParamWithRunIdJob(implicit orchestraConfig: OrchestraConfig) =
-    board.Job[(String, RunId) => Unit](orchestraConfig.runInfo.jobId, "One Param with RunId Job")(
+    Job(oneParamWithRunIdJobBoard)(implicit workDir => (someString, runId) => ())
+
+  def runIdWithOneParamJobBoard(implicit orchestraConfig: OrchestraConfig) =
+    JobBoard[(RunId, String) => Unit](orchestraConfig.runInfo.jobId, "RunId with One Param Job")(
       Input[String]("Some string")
     )
-  def oneParamWithRunIdJobRunner(implicit orchestraConfig: OrchestraConfig) =
-    JobRunner(oneParamWithRunIdJob)(implicit workDir => (someString, runId) => ())
-
   def runIdWithOneParamJob(implicit orchestraConfig: OrchestraConfig) =
-    board.Job[(RunId, String) => Unit](orchestraConfig.runInfo.jobId, "RunId with One Param Job")(
-      Input[String]("Some string")
-    )
-  def runIdWithOneParamJobRunner(implicit orchestraConfig: OrchestraConfig) =
-    JobRunner(runIdWithOneParamJob)(implicit workDir => (runId, someString) => ())
+    Job(runIdWithOneParamJobBoard)(implicit workDir => (runId, someString) => ())
 
-  def twoParamsJob(implicit orchestraConfig: OrchestraConfig) =
-    board.Job[(String, Boolean) => Unit](orchestraConfig.runInfo.jobId, "Two Params Job")(Input[String]("Some string"),
-                                                                                          Checkbox("Some bool"))
-  def twoParamsJobRunner(implicit orchestraConfig: OrchestraConfig) =
-    JobRunner(twoParamsJob)(implicit workDir => (someString, someBool) => ())
-
-  def twoParamsWithRunIdJob(implicit orchestraConfig: OrchestraConfig) =
-    board.Job[(String, Boolean, RunId) => Unit](orchestraConfig.runInfo.jobId, "Two Params Job")(
+  def twoParamsJobBoard(implicit orchestraConfig: OrchestraConfig) =
+    JobBoard[(String, Boolean) => Unit](orchestraConfig.runInfo.jobId, "Two Params Job")(
       Input[String]("Some string"),
       Checkbox("Some bool")
     )
-  def twoParamsWithRunIdJobRunner(implicit orchestraConfig: OrchestraConfig) =
-    JobRunner(twoParamsWithRunIdJob)(implicit workDir => (someString, someBool, runId) => ())
+  def twoParamsJob(implicit orchestraConfig: OrchestraConfig) =
+    Job(twoParamsJobBoard)(implicit workDir => (someString, someBool) => ())
+
+  def twoParamsWithRunIdJobBoard(implicit orchestraConfig: OrchestraConfig) =
+    JobBoard[(String, Boolean, RunId) => Unit](orchestraConfig.runInfo.jobId, "Two Params Job")(
+      Input[String]("Some string"),
+      Checkbox("Some bool")
+    )
+  def twoParamsWithRunIdJob(implicit orchestraConfig: OrchestraConfig) =
+    Job(twoParamsWithRunIdJobBoard)(implicit workDir => (someString, someBool, runId) => ())
 }

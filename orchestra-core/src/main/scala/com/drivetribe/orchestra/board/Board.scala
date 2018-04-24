@@ -1,8 +1,7 @@
 package com.drivetribe.orchestra.board
 
-import japgolly.scalajs.react.extra.router.StaticDsl
-
 import com.drivetribe.orchestra.route.WebRouter.PageRoute
+import japgolly.scalajs.react.extra.router.StaticDsl
 
 trait Board {
   val segment: String

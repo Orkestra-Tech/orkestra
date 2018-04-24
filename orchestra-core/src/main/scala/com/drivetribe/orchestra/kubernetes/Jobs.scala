@@ -12,7 +12,7 @@ import io.k8s.apimachinery.pkg.apis.meta.v1.{DeleteOptions, ObjectMeta}
 
 import com.drivetribe.orchestra.model.{EnvRunInfo, RunInfo}
 
-object Jobs {
+private[orchestra] object Jobs {
 
   def name(runInfo: RunInfo) =
     s"${runInfo.jobId.value.toLowerCase}-${runInfo.runId.value.toString.split("-").head}"

@@ -23,19 +23,19 @@ import com.drivetribe.orchestra.Dsl._
 import com.drivetribe.orchestra.board._
 // We import the Github package
 import com.drivetribe.orchestra.github._
-import com.drivetribe.orchestra.job.JobRunner
+import com.drivetribe.orchestra.job._
 import com.drivetribe.orchestra.model._
 import com.drivetribe.orchestra.parameter._
 
-object Orchestration extends Orchestra with UI with GithubHooks { // Note that we mix in GithubHooks
-  lazy val board = Folder("Orchestra")(branchJob)
-  lazy val jobRunners = Set(branchJobRunner) // We still need to add the job runners to the jobRunners
+object Orchestration extends Orchestra with GithubHooks { // Note that we mix in GithubHooks
+  lazy val board = Folder("Orchestra")(branchJobBoard)
+  lazy val jobs = Set(branchJob) // We still need to add the Job to jobs
   
   // We add the BranchTrigger to the githubTriggers
-  lazy val githubTriggers = Set(BranchTrigger(Repository("myOrganisation/myRepo"), "master", branchJobRunner)())
+  lazy val githubTriggers = Set(BranchTrigger(Repository("myOrganisation/myRepo"), "master", branchJob)())
 
-  lazy val branchJob = Job[GitRef => Unit](JobId("branch"), "Branch")(Input[GitRef]("Git ref"))
-  lazy val branchJobRunner = JobRunner(branchJob) { implicit workDir => gitRef =>
+  lazy val branchJobBoard = JobBoard[GitRef => Unit](JobId("branch"), "Branch")(Input[GitRef]("Git ref"))
+  lazy val branchJob = Job(branchJobBoard) { implicit workDir => gitRef =>
     println("Hello World")
   }
 }
@@ -51,19 +51,21 @@ import com.drivetribe.orchestra.Dsl._
 import com.drivetribe.orchestra.board._
 // We import the Github package
 import com.drivetribe.orchestra.github._
-import com.drivetribe.orchestra.job.JobRunner
+import com.drivetribe.orchestra.job._
 import com.drivetribe.orchestra.model._
 import com.drivetribe.orchestra.parameter._
 
-object Orchestration extends Orchestra with UI with GithubHooks { // Note that we mix in GithubHooks
-  lazy val board = Folder("Orchestra")(pullRequestJob)
-  lazy val jobRunners = Set(pullRequestJobRunner) // We still need to add the job runners to the jobRunners
+object Orchestration extends Orchestra with GithubHooks { // Note that we mix in GithubHooks
+  lazy val board = Folder("Orchestra")(pullRequestJobBoard)
+  lazy val jobs = Set(pullRequestJob) // We still need to add the Job to jobs
 
   // We add the PullRequestTrigger to the githubTriggers 
-  lazy val githubTriggers = Set(PullRequestTrigger(Repository("myOrganisation/myRepo"), pullRequestJobRunner)())
+  lazy val githubTriggers = Set(PullRequestTrigger(Repository("myOrganisation/myRepo"), pullRequestJob)())
 
-  lazy val pullRequestJob = Job[GitRef => Unit](JobId("pullRequest"), "Pull Request")(Input[GitRef]("Git ref"))
-  lazy val pullRequestJobRunner = JobRunner(pullRequestJob) { implicit workDir => gitRef =>
+  lazy val pullRequestJobBoard = JobBoard[GitRef => Unit](JobId("pullRequest"), "Pull Request")(
+    Input[GitRef]("Git ref")
+  )
+  lazy val pullRequestJob = Job(pullRequestJobBoard) { implicit workDir => gitRef =>
     Github.statusUpdated(Repository("myOrganisation/myRepo"), gitRef) { implicit workDir =>
       println("This PR is good of course")
     }
@@ -72,6 +74,7 @@ object Orchestration extends Orchestra with UI with GithubHooks { // Note that w
 ```
 
 ## Config
+
 - `ORCHESTRA_GITHUB_URI`: The URI of the home page as Github displays links to it for PRs for example. Required.
 - `ORCHESTRA_GITHUB_TOKEN`: The token of the account that will be used to clone or to update commit statuses. Required.
 - `ORCHESTRA_GITHUB_PORT`: The separate port where to bind the Github Hooks server. Default `8081`.

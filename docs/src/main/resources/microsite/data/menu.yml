@@ -1,6 +1,6 @@
 options:
-  - title: Jobs
-    url: jobs.html
+  - title: Jobs & Boards
+    url: jobsboards.html
 
   - title: Config
     url: config.html

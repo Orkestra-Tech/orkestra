@@ -14,6 +14,7 @@ JVM compiled languages).
 - Installation of plugins becomes code too. So it's very easy to code review and rollback changes
 
 ## Talking to AWS
+
 In order to talk to AWS we can use the [official Java SDK](https://github.com/aws/aws-sdk-java). Let's add the dependency
 to `build.sbt`:
 ```scala
@@ -44,6 +45,7 @@ def uploadToS3()(implicit workDir: Directory) = {
 ```
 
 ## Sending a Slack message
+
 Let's try to integrate with Slack. If I Google "slack scala" and hit "I'm feeling lucky" I end up on this Slack client
 [https://github.com/gilbertw1/slack-scala-client](https://github.com/gilbertw1/slack-scala-client). So it seems that
 someone already wrote a Slack plugin for Orchestra even before Orchestra was born!  

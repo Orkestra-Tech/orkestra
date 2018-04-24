@@ -15,7 +15,7 @@ import io.circe.shapes._
 import shapeless._
 import shapeless.ops.hlist.Tupler
 
-import com.drivetribe.orchestra.job.JobRunner
+import com.drivetribe.orchestra.job.Job
 import com.drivetribe.orchestra.model.Indexed.{HistoryIndex, Run}
 import com.drivetribe.orchestra.model.{RunId, RunInfo}
 import com.drivetribe.orchestra.utils.BaseEncoders._
@@ -28,7 +28,7 @@ trait Triggers {
   protected implicit def kubernetesClient: KubernetesClient
   protected implicit def elasticsearchClient: HttpClient
 
-  implicit class TriggerableNoParamJob[Result: Decoder](jobRunner: JobRunner[HNil, Result]) {
+  implicit class TriggerableNoParamJob[Result: Decoder](job: Job[HNil, Result]) {
 
     /**
       * Trigger the job with the same run id as the current job. This means the triggered job will output in the same
@@ -37,7 +37,7 @@ trait Triggers {
       * run().
       */
     def trigger(): Future[Unit] =
-      jobRunner.ApiServer().trigger(orchestraConfig.runInfo.runId, HNil)
+      job.ApiServer().trigger(orchestraConfig.runInfo.runId, HNil)
 
     /**
       * Run the job with the same run id as the current job. This means the triggered job will output in the same
@@ -46,14 +46,14 @@ trait Triggers {
       */
     def run(): Future[Result] =
       for {
-        _ <- jobRunner
+        _ <- job
           .ApiServer()
           .trigger(orchestraConfig.runInfo.runId, HNil, parent = Option(orchestraConfig.runInfo))
-        result <- jobResult(jobRunner)
+        result <- jobResult(job)
       } yield result
   }
 
-  implicit class TriggerableRunIdJob[Result: Decoder](jobRunner: JobRunner[RunId :: HNil, Result]) {
+  implicit class TriggerableRunIdJob[Result: Decoder](job: Job[RunId :: HNil, Result]) {
 
     /**
       * Trigger the job with the same run id as the current job. This means the triggered job will output in the same
@@ -62,7 +62,7 @@ trait Triggers {
       * run().
       */
     def trigger(): Future[Unit] =
-      jobRunner.ApiServer().trigger(orchestraConfig.runInfo.runId, orchestraConfig.runInfo.runId :: HNil)
+      job.ApiServer().trigger(orchestraConfig.runInfo.runId, orchestraConfig.runInfo.runId :: HNil)
 
     /**
       * Run the job with the same run id as the current job. This means the triggered job will output in the same
@@ -71,12 +71,12 @@ trait Triggers {
       */
     def run(): Future[Result] =
       for {
-        _ <- jobRunner
+        _ <- job
           .ApiServer()
           .trigger(orchestraConfig.runInfo.runId,
                    orchestraConfig.runInfo.runId :: HNil,
                    parent = Option(orchestraConfig.runInfo))
-        result <- jobResult(jobRunner)
+        result <- jobResult(job)
       } yield result
   }
 
@@ -84,7 +84,7 @@ trait Triggers {
                                              ParamValuesNoRunId <: HList,
                                              TupledValues <: Product,
                                              Result: Decoder](
-    jobRunner: JobRunner[ParamValues, Result]
+    job: Job[ParamValues, Result]
   )(
     implicit runIdOperation: RunIdOperation[ParamValuesNoRunId, ParamValues],
     tupler: Tupler.Aux[ParamValuesNoRunId, TupledValues],
@@ -98,7 +98,7 @@ trait Triggers {
       * run().
       */
     def trigger(values: TupledValues): Future[Unit] =
-      jobRunner
+      job
         .ApiServer()
         .trigger(orchestraConfig.runInfo.runId,
                  runIdOperation.inject(tupleToHList.to(values), orchestraConfig.runInfo.runId))
@@ -110,29 +110,29 @@ trait Triggers {
       */
     def run(values: TupledValues): Future[Result] =
       for {
-        _ <- jobRunner
+        _ <- job
           .ApiServer()
           .trigger(orchestraConfig.runInfo.runId,
                    runIdOperation.inject(tupleToHList.to(values), orchestraConfig.runInfo.runId),
                    parent = Option(orchestraConfig.runInfo))
-        result <- jobResult(jobRunner)
+        result <- jobResult(job)
       } yield result
   }
 
   private def jobResult[ParamValues <: HList: Decoder, Result: Decoder](
-    jobRunner: JobRunner[ParamValues, Result]
+    job: Job[ParamValues, Result]
   ): Future[Result] =
     for {
       runResponse <- elasticsearchClient.execute(
         get(HistoryIndex.index,
             HistoryIndex.`type`,
-            HistoryIndex.formatId(RunInfo(jobRunner.job.id, orchestraConfig.runInfo.runId)))
+            HistoryIndex.formatId(RunInfo(job.board.id, orchestraConfig.runInfo.runId)))
       )
       run = runResponse
         .fold(failure => throw new IOException(failure.error.reason), identity)
         .result
         .toOpt[Run[ParamValues, Result]]
-      result <- run.fold(jobResult(jobRunner))(_.result.fold(jobResult(jobRunner))(_.fold(throw _, Future(_))))
+      result <- run.fold(jobResult(job))(_.result.fold(jobResult(job))(_.fold(throw _, Future(_))))
     } yield result
 }
 

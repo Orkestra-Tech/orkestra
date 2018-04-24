@@ -1,12 +1,12 @@
 package com.drivetribe.orchestra.component
 
+import com.drivetribe.orchestra.board.JobBoard
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.Reusability
 import japgolly.scalajs.react.extra.router.RouterCtl
 import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
 import shapeless.HList
-import com.drivetribe.orchestra.board.Job
 import com.drivetribe.orchestra.css.Global
 import com.drivetribe.orchestra.route.WebRouter.{BoardPageRoute, PageRoute, StatusPageRoute}
 
@@ -47,7 +47,7 @@ object TopNav {
   case class Props(rootPage: BoardPageRoute,
                    selectedPage: PageRoute,
                    ctl: RouterCtl[PageRoute],
-                   jobs: Seq[Job[_ <: HList, _, _, _]])
+                   jobs: Seq[JobBoard[_ <: HList, _, _, _]])
 
   implicit val currentPageReuse: Reusability[PageRoute] = Reusability.by_==[PageRoute]
   implicit val propsReuse: Reusability[Props] = Reusability.by((_: Props).selectedPage)

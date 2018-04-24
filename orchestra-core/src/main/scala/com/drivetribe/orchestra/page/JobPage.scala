@@ -8,7 +8,7 @@ import scala.scalajs.js.timers.SetIntervalHandle
 import scala.scalajs.js
 
 import autowire._
-
+import com.drivetribe.orchestra.board.JobBoard
 import com.drivetribe.orchestra.parameter.State
 import com.drivetribe.orchestra.parameter.ParameterOperations
 import com.drivetribe.orchestra.route.WebRouter.{BoardPageRoute, LogsPageRoute, PageRoute}
@@ -21,9 +21,7 @@ import japgolly.scalajs.react.extra.router.RouterCtl
 import japgolly.scalajs.react.vdom.html_<^._
 import shapeless.HList
 import scalacss.ScalaCssReact._
-
 import com.drivetribe.orchestra.css.Global
-import com.drivetribe.orchestra.board.Job
 import com.drivetribe.orchestra.component.StopButton
 import com.drivetribe.orchestra.model.{Page, RunId}
 import com.drivetribe.orchestra.utils.{Colours, RunIdOperation}
@@ -34,7 +32,7 @@ object JobPage {
                    ParamValuesNoRunId <: HList,
                    ParamValues <: HList: Encoder: Decoder,
                    Result: Decoder](
-    job: Job[ParamValues, Result, _, _],
+    job: JobBoard[ParamValues, Result, _, _],
     params: Params,
     page: BoardPageRoute,
     ctl: RouterCtl[PageRoute]
