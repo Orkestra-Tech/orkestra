@@ -24,7 +24,7 @@ import com.drivetribe.orchestra.utils.AkkaImplicits._
 
 class ElasticsearchOutputStream(client: HttpClient, runId: RunId) extends OutputStream {
   private val lineBuffer = new DynamicVariable(new StringBuffer())
-  private implicit val requestBuilder: RequestBuilder[LogLine] = indexInto(LogsIndex.index, LogsIndex.`type`).source(_)
+  implicit private val requestBuilder: RequestBuilder[LogLine] = indexInto(LogsIndex.index, LogsIndex.`type`).source(_)
   private val batchSize = 50
   private val elasticsearchSink =
     Sink.fromSubscriber(

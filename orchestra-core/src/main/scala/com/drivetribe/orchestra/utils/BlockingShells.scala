@@ -34,6 +34,6 @@ trait BlockingShells {
 }
 
 object BlockingShells extends BlockingShells {
-  private implicit lazy val orchestraConfig: OrchestraConfig = OrchestraConfig.fromEnvVars()
+  implicit private lazy val orchestraConfig: OrchestraConfig = OrchestraConfig.fromEnvVars()
   override lazy val kubernetesClient: KubernetesClient = Kubernetes.client
 }

@@ -26,9 +26,9 @@ import scalajs.html.scripts
   */
 trait Orchestra extends OrchestraPlugin {
   private lazy val logger = Logger(getClass)
-  override implicit lazy val orchestraConfig: OrchestraConfig = OrchestraConfig.fromEnvVars()
-  override implicit lazy val kubernetesClient: KubernetesClient = Kubernetes.client
-  override implicit lazy val elasticsearchClient: HttpClient = Elasticsearch.client
+  implicit override lazy val orchestraConfig: OrchestraConfig = OrchestraConfig.fromEnvVars()
+  implicit override lazy val kubernetesClient: KubernetesClient = Kubernetes.client
+  implicit override lazy val elasticsearchClient: HttpClient = Elasticsearch.client
 
   def jobs: Set[Job[_, _]]
 

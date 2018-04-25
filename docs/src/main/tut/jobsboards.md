@@ -13,7 +13,7 @@ execute and how to execute them.
 
 The trait `Orchestra` act as the main of our app, it will start the web server.  
 Mixing in `Orchestra` requires us to implement 2 attributes, `board: Board` that will be the root Board to
-display and `jobs: Set[Job]` that will be our set of jobs that can be executed by Orchestra: 
+display and `jobs: Set[Job]` that will be our set of jobs that can be executed by Orchestra:
 ```tut:silent
 import com.drivetribe.orchestra._
 

@@ -80,6 +80,6 @@ trait Shells {
 }
 
 object Shells extends Shells {
-  override implicit lazy val orchestraConfig: OrchestraConfig = OrchestraConfig.fromEnvVars()
+  implicit override lazy val orchestraConfig: OrchestraConfig = OrchestraConfig.fromEnvVars()
   override lazy val kubernetesClient: KubernetesClient = Kubernetes.client
 }

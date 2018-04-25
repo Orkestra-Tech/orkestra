@@ -92,6 +92,6 @@ trait Github extends LazyLogging {
 }
 
 object Github extends Github {
-  override implicit val orchestraConfig: OrchestraConfig = OrchestraConfig.fromEnvVars()
-  override implicit val githubConfig: GithubConfig = GithubConfig.fromEnvVars()
+  implicit override val orchestraConfig: OrchestraConfig = OrchestraConfig.fromEnvVars()
+  implicit override val githubConfig: GithubConfig = GithubConfig.fromEnvVars()
 }

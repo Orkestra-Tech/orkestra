@@ -13,7 +13,7 @@ import com.drivetribe.orchestra.model.Indexed
 import com.drivetribe.orchestra.utils.AkkaImplicits._
 
 trait IntegrationTest extends BeforeAndAfter with BeforeAndAfterAll with ScalaFutures with Eventually { this: Suite =>
-  override implicit val patienceConfig = PatienceConfig(timeout = 1.minute, interval = 500.millis)
+  implicit override val patienceConfig = PatienceConfig(timeout = 1.minute, interval = 500.millis)
 
   override def beforeAll() = {
     super.beforeAll()

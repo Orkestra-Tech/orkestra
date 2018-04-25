@@ -16,7 +16,7 @@ trait ElasticsearchTest
     with BeforeAndAfterEach
     with BeforeAndAfterAll
     with ScalaFutures { self: Suite =>
-  override implicit val patienceConfig: PatienceConfig = PatienceConfig(timeout = 10.seconds)
+  implicit override val patienceConfig: PatienceConfig = PatienceConfig(timeout = 10.seconds)
 
   // https://discuss.elastic.co/t/elasticsearch-5-4-1-availableprocessors-is-already-set/88036
   System.setProperty("es.set.netty.runtime.available.processors", false.toString)

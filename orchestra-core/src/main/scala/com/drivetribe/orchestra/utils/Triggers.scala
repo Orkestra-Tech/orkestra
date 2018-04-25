@@ -24,9 +24,9 @@ import com.drivetribe.orchestra.OrchestraConfig
 import com.drivetribe.orchestra.kubernetes.Kubernetes
 
 trait Triggers {
-  protected implicit def orchestraConfig: OrchestraConfig
-  protected implicit def kubernetesClient: KubernetesClient
-  protected implicit def elasticsearchClient: HttpClient
+  implicit protected def orchestraConfig: OrchestraConfig
+  implicit protected def kubernetesClient: KubernetesClient
+  implicit protected def elasticsearchClient: HttpClient
 
   implicit class TriggerableNoParamJob[Result: Decoder](job: Job[HNil, Result]) {
 
@@ -137,7 +137,7 @@ trait Triggers {
 }
 
 object Triggers extends Triggers {
-  override implicit lazy val orchestraConfig: OrchestraConfig = OrchestraConfig.fromEnvVars()
+  implicit override lazy val orchestraConfig: OrchestraConfig = OrchestraConfig.fromEnvVars()
   override lazy val kubernetesClient: KubernetesClient = Kubernetes.client
   override lazy val elasticsearchClient: HttpClient = Elasticsearch.client
 }

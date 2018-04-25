@@ -10,7 +10,7 @@ import com.drivetribe.orchestra.utils.AkkaImplicits._
 import com.drivetribe.orchestra.utils.Elasticsearch
 
 sealed trait ElasticsearchLock {
-  protected implicit val elasticsearchClient: HttpClient
+  implicit protected val elasticsearchClient: HttpClient
   val id: String
 
   /**
@@ -68,6 +68,6 @@ sealed trait ElasticsearchLock {
   * @param id The id of the lock
   */
 case class Lock(id: String) extends ElasticsearchLock {
-  private implicit val orchestraConfig: OrchestraConfig = OrchestraConfig.fromEnvVars()
+  implicit private val orchestraConfig: OrchestraConfig = OrchestraConfig.fromEnvVars()
   protected val elasticsearchClient: HttpClient = Elasticsearch.client
 }

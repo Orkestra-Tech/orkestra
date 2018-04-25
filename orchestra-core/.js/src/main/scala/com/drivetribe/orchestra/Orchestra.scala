@@ -11,9 +11,9 @@ import org.scalajs.dom
   * Mix in this trait to create the Orchestra server.
   */
 trait Orchestra extends OrchestraPlugin {
-  override implicit def orchestraConfig: OrchestraConfig = ???
-  override implicit def kubernetesClient: KubernetesClient = ???
-  override implicit def elasticsearchClient: HttpClient = ???
+  implicit override def orchestraConfig: OrchestraConfig = ???
+  implicit override def kubernetesClient: KubernetesClient = ???
+  implicit override def elasticsearchClient: HttpClient = ???
 
   def board: Board
 

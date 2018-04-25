@@ -64,6 +64,6 @@ trait Stages {
 }
 
 object Stages extends Stages {
-  override implicit lazy val orchestraConfig: OrchestraConfig = OrchestraConfig.fromEnvVars()
+  implicit override lazy val orchestraConfig: OrchestraConfig = OrchestraConfig.fromEnvVars()
   override lazy val elasticsearchClient: HttpClient = Elasticsearch.client
 }
