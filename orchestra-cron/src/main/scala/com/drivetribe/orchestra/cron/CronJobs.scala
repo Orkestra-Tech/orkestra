@@ -13,11 +13,13 @@ import com.drivetribe.orchestra.kubernetes.{JobSpecs, MasterPod}
 import com.drivetribe.orchestra.model.{EnvRunInfo, JobId}
 import com.drivetribe.orchestra.utils.AkkaImplicits._
 
-private[cron] object Crons {
+private[cron] object CronJobs {
   private lazy val logger = Logger(getClass)
 
-  def deleteStaleCronJobs(cronTriggers: Set[CronTrigger])(implicit orchestraConfig: OrchestraConfig,
-                                                          kubernetesClient: KubernetesClient) =
+  private def cronJobName(jobId: JobId) = jobId.value.toLowerCase
+
+  def deleteStale(cronTriggers: Set[CronTrigger])(implicit orchestraConfig: OrchestraConfig,
+                                                  kubernetesClient: KubernetesClient) =
     for {
       currentCronJobs <- kubernetesClient.cronJobs.namespace(orchestraConfig.namespace).list()
       currentCronJobNames = currentCronJobs.items.flatMap(_.metadata).flatMap(_.name).toSet
@@ -29,8 +31,8 @@ private[cron] object Crons {
       }
     } yield ()
 
-  def applyCronJobs(cronTriggers: Set[CronTrigger])(implicit orchestraConfig: OrchestraConfig,
-                                                    kubernetesClient: KubernetesClient) =
+  def createOrUpdate(cronTriggers: Set[CronTrigger])(implicit orchestraConfig: OrchestraConfig,
+                                                     kubernetesClient: KubernetesClient) =
     for {
       masterPod <- MasterPod.get()
       _ <- Future.traverse(cronTriggers) { cronTrigger =>
@@ -55,5 +57,8 @@ private[cron] object Crons {
       }
     } yield ()
 
-  def cronJobName(jobId: JobId) = jobId.value.toLowerCase
+  def list()(implicit orchestraConfig: OrchestraConfig, kubernetesClient: KubernetesClient) =
+    kubernetesClient.cronJobs
+      .namespace(orchestraConfig.namespace)
+      .list()
 }

@@ -13,6 +13,7 @@ import io.circe.generic.auto._
 import io.circe.parser._
 import io.circe.syntax._
 import io.k8s.api.batch.v1.{Job, JobList}
+import io.k8s.api.batch.v1beta1.{CronJob, CronJobList}
 import io.k8s.api.core.v1.{Container, Pod, PodSpec}
 import io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta
 import org.scalatest.concurrent.ScalaFutures
@@ -23,29 +24,77 @@ trait KubernetesTest extends BeforeAndAfterEach with BeforeAndAfterAll with Scal
   implicit override val patienceConfig: PatienceConfig = PatienceConfig(timeout = 10.seconds)
   implicit val kubernetesClient: KubernetesClient = KubernetesClient(KubeConfig(orchestraConfig.kubeUri))
 
-  private var runningKubeJobs = Seq.empty[Job]
+  private var jobs = Map.empty[String, Job]
+  private var cronJobs = Map.empty[String, CronJob]
   private val routes =
-    pathPrefix("apis" / "batch" / "v1" / "namespaces" / orchestraConfig.namespace / "jobs") {
-      pathEndOrSingleSlash {
-        get {
-          complete(JobList(runningKubeJobs).asJson.noSpaces)
-        } ~
-          post {
-            entity(as[String]) { entity =>
-              complete {
-                runningKubeJobs :+= decode[Job](entity).fold(throw _, identity)
-                OK
+    pathPrefix("apis" / "batch") {
+      pathPrefix("v1beta1" / "namespaces" / orchestraConfig.namespace / "cronjobs") {
+        pathEndOrSingleSlash {
+          get {
+            complete(CronJobList(cronJobs.values.toSeq).asJson.noSpaces)
+          } ~
+            post {
+              entity(as[String]) { entity =>
+                complete {
+                  val cronjob = decode[CronJob](entity).fold(throw _, identity)
+                  cronJobs += cronjob.metadata.get.name.get -> cronjob
+                  OK
+                }
               }
             }
+        } ~
+          path(Segment) { cronJobName =>
+            patch {
+              entity(as[String]) { entity =>
+                complete {
+                  cronJobs += cronJobName -> decode[CronJob](entity).fold(throw _, identity)
+                  OK
+                }
+              }
+            } ~
+              get {
+                cronJobs.get(cronJobName) match {
+                  case Some(cronJob) => complete(cronJob.asJson.noSpaces)
+                  case None          => complete(NotFound)
+                }
+              } ~
+              delete {
+                complete {
+                  cronJobs -= cronJobName
+                  OK
+                }
+              }
           }
       } ~
-        path(Segment) { jobName =>
-          delete {
-            complete {
-              runningKubeJobs = runningKubeJobs.filterNot(_.metadata.get.name.get == jobName)
-              OK
+        pathPrefix("v1" / "namespaces" / orchestraConfig.namespace / "jobs") {
+          pathEndOrSingleSlash {
+            get {
+              complete(JobList(jobs.values.toSeq).asJson.noSpaces)
+            } ~
+              post {
+                entity(as[String]) { entity =>
+                  complete {
+                    val job = decode[Job](entity).fold(throw _, identity)
+                    jobs += job.metadata.get.name.get -> job
+                    OK
+                  }
+                }
+              }
+          } ~
+            path(Segment) { jobName =>
+              get {
+                jobs.get(jobName) match {
+                  case Some(job) => complete(job.asJson.noSpaces)
+                  case None      => complete(NotFound)
+                }
+              } ~
+                delete {
+                  complete {
+                    jobs -= jobName
+                    OK
+                  }
+                }
             }
-          }
         }
     } ~
       pathPrefix("api" / "v1" / "namespaces" / orchestraConfig.namespace / "pods" / orchestraConfig.podName) {
@@ -65,7 +114,8 @@ trait KubernetesTest extends BeforeAndAfterEach with BeforeAndAfterAll with Scal
 
   override def beforeEach(): Unit = {
     super.beforeEach()
-    runningKubeJobs = Seq.empty
+    jobs = Map.empty
+    cronJobs = Map.empty
   }
 
   override def beforeAll(): Unit = {

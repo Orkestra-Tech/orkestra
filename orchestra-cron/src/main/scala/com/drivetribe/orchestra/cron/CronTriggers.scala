@@ -26,8 +26,8 @@ trait CronTriggers extends OrchestraPlugin {
       _ <- super.onMasterStart()
       _ = logger.info("Configuring cron jobs")
 
-      _ <- Crons.deleteStaleCronJobs(cronTriggers)
-      _ <- Crons.applyCronJobs(cronTriggers)
+      _ <- CronJobs.deleteStale(cronTriggers)
+      _ <- CronJobs.createOrUpdate(cronTriggers)
     } yield ()
 
   override def onJobStart(runInfo: RunInfo): Future[Unit] =

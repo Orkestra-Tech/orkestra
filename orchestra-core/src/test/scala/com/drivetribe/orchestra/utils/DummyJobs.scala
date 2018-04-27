@@ -4,13 +4,17 @@ import io.circe.shapes._
 import com.drivetribe.orchestra.OrchestraConfig
 import com.drivetribe.orchestra.board.JobBoard
 import com.drivetribe.orchestra.job.Job
-import com.drivetribe.orchestra.model.RunId
+import com.drivetribe.orchestra.model.{JobId, RunId}
 import com.drivetribe.orchestra.parameter.{Checkbox, Input}
 
 object DummyJobs {
   def emptyJobBoard(implicit orchestraConfig: OrchestraConfig) =
     JobBoard[() => Unit](orchestraConfig.runInfo.jobId, "Empty Job")()
   def emptyJob(implicit orchestraConfig: OrchestraConfig) = Job(emptyJobBoard)(implicit workDir => () => ())
+
+  def emptyJobBoard2(implicit orchestraConfig: OrchestraConfig) =
+    JobBoard[() => Unit](JobId("emptyJob2"), "Empty Job 2")()
+  def emptyJob2(implicit orchestraConfig: OrchestraConfig) = Job(emptyJobBoard2)(implicit workDir => () => ())
 
   def emptyWithRunIdJobBoard(implicit orchestraConfig: OrchestraConfig) =
     JobBoard[RunId => Unit](orchestraConfig.runInfo.jobId, "Empty with RunId Job")()
