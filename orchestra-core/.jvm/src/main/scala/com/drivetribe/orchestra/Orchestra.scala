@@ -10,8 +10,8 @@ import autowire.Core
 import com.goyeau.kubernetesclient.KubernetesClient
 import com.sksamuel.elastic4s.http.HttpClient
 import com.typesafe.scalalogging.Logger
+import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
 import io.circe.Json
-import io.circe.parser._
 import io.circe.generic.auto._
 import io.circe.shapes._
 import io.circe.java8.time._
@@ -68,10 +68,10 @@ trait Orchestra extends OrchestraPlugin {
           jobs.map(_.apiRoute).reduce(_ ~ _)
         } ~
           path(OrchestraConfig.commonSegment / Segments) { segments =>
-            entity(as[String]) { entity =>
-              val body = AutowireServer.read[Map[String, Json]](parse(entity).fold(throw _, identity))
+            entity(as[Json]) { json =>
+              val body = AutowireServer.read[Map[String, Json]](json)
               val request = AutowireServer.route[CommonApi](CommonApiServer())(Core.Request(segments, body))
-              onSuccess(request)(json => complete(json.noSpaces))
+              onSuccess(request)(json => complete(json))
             }
           }
       }

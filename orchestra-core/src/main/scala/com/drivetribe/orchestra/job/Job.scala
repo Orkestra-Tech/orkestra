@@ -3,30 +3,29 @@ package com.drivetribe.orchestra.job
 import java.io.{IOException, PrintStream}
 import java.time.Instant
 
-import scala.concurrent.duration._
 import scala.concurrent.Future
+import scala.concurrent.duration._
 
 import akka.http.scaladsl.server.Route
 import autowire.Core
 import com.drivetribe.orchestra.board.JobBoard
+import com.drivetribe.orchestra.filesystem.Directory
+import com.drivetribe.orchestra.model.Indexed._
+import com.drivetribe.orchestra.model._
+import com.drivetribe.orchestra.utils.AkkaImplicits._
+import com.drivetribe.orchestra.utils.{AutowireServer, Elasticsearch, ElasticsearchOutputStream}
+import com.drivetribe.orchestra.{kubernetes, CommonApiServer, OrchestraConfig}
 import com.goyeau.kubernetesclient.KubernetesClient
+import com.sksamuel.elastic4s.circe._
+import com.sksamuel.elastic4s.http.ElasticDsl._
+import com.sksamuel.elastic4s.http.HttpClient
+import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
 import io.circe.{Decoder, Encoder, Json}
+import io.circe.generic.auto._
+import io.circe.java8.time._
 import io.k8s.api.core.v1.PodSpec
 import shapeless._
 import shapeless.ops.function.FnToProduct
-import com.sksamuel.elastic4s.http.ElasticDsl._
-import com.sksamuel.elastic4s.circe._
-import com.sksamuel.elastic4s.http.HttpClient
-import io.circe.generic.auto._
-import io.circe.java8.time._
-import io.circe.parser._
-import com.drivetribe.orchestra.filesystem.Directory
-import com.drivetribe.orchestra.kubernetes
-import com.drivetribe.orchestra.model._
-import com.drivetribe.orchestra.model.Indexed._
-import com.drivetribe.orchestra.utils.{AutowireServer, Elasticsearch, ElasticsearchOutputStream}
-import com.drivetribe.orchestra.utils.AkkaImplicits._
-import com.drivetribe.orchestra.{CommonApiServer, OrchestraConfig}
 
 case class Job[ParamValues <: HList: Encoder: Decoder, Result: Encoder: Decoder](
   board: JobBoard[ParamValues, Result, _, _],
@@ -162,10 +161,10 @@ case class Job[ParamValues <: HList: Encoder: Decoder, Result: Encoder: Decoder]
                                   elasticsearchClient: HttpClient): Route = {
     import akka.http.scaladsl.server.Directives._
     path(board.id.value / Segments) { segments =>
-      entity(as[String]) { entity =>
-        val body = AutowireServer.read[Map[String, Json]](parse(entity).fold(throw _, identity))
+      entity(as[Json]) { json =>
+        val body = AutowireServer.read[Map[String, Json]](json)
         val request = board.Api.router(ApiServer()).apply(Core.Request(segments, body))
-        onSuccess(request)(json => complete(json.noSpaces))
+        onSuccess(request)(json => complete(json))
       }
     }
   }

@@ -1,5 +1,6 @@
 import microsites.ExtraMdFileConfig
 import org.scalajs.sbtplugin.cross.CrossProject
+import sbt.librarymanagement.Configuration
 
 lazy val orchestra = project
   .in(file("."))
@@ -60,9 +61,10 @@ lazy val core = CrossProject("orchestra-core", file("orchestra-core"), CrossType
     ) ++
       scalaJsReact.value ++
       akkaHttp.value ++
+      akkaHttpCirce.value ++
+      circe.value ++
       scalaCss.value ++
       logging.value ++
-      circe.value ++
       elastic4s.value ++
       scalaTest.value ++
       enumeratum.value.map(_ % Provided)
@@ -71,7 +73,7 @@ lazy val coreJVM = core.jvm
 lazy val coreJS = core.js
 
 lazy val github = CrossProject("orchestra-github", file("orchestra-github"), CrossType.Pure)
-  .dependsOn(core % Provided)
+  .dependsOn(core % CompileTest)
   .settings(
     name := "Orchestra Github",
     libraryDependencies += "org.eclipse.jgit" % "org.eclipse.jgit" % "4.9.0.201710071750-r"
@@ -80,13 +82,13 @@ lazy val githubJVM = github.jvm
 lazy val githubJS = github.js
 
 lazy val cron = CrossProject("orchestra-cron", file("orchestra-cron"), CrossType.Pure)
-  .dependsOn(core % Provided)
+  .dependsOn(core % CompileTest)
   .settings(name := "Orchestra Cron")
 lazy val cronJVM = cron.jvm
 lazy val cronJS = cron.js
 
 lazy val lock = Project("orchestra-lock", file("orchestra-lock"))
-  .dependsOn(coreJVM % Provided)
+  .dependsOn(coreJVM % CompileTest)
   .settings(name := "Orchestra Lock")
 
 lazy val plugin = Project("orchestra-plugin", file("orchestra-plugin"))
@@ -128,7 +130,6 @@ lazy val docs = project
     publishLocal := {}
   )
 
-lazy val TestCi = config("testci").extend(Test)
 lazy val integrationTests =
   CrossProject("orchestra-integration-tests", file("orchestra-integration-tests"), CrossType.Pure)
     .dependsOn(core, github, cron)
@@ -156,6 +157,9 @@ lazy val integrationTestsJVM = integrationTests.jvm
   )
 lazy val integrationTestsJS = integrationTests.js
 
+lazy val TestCi = config("testci").extend(Test)
+lazy val CompileTest = "compile->compile;test->test"
+
 /*************** Dependencies ***************/
 lazy val akkaHttp = Def.setting {
   val akkaHttpVersion = "10.1.1"
@@ -163,6 +167,21 @@ lazy val akkaHttp = Def.setting {
     "com.typesafe.akka" %% "akka-http" % akkaHttpVersion,
     "com.typesafe.akka" %% "akka-stream" % "2.5.11",
     "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpVersion % Test
+  )
+}
+
+lazy val akkaHttpCirce = Def.setting {
+  Seq("de.heikoseeberger" %% "akka-http-circe" % "1.20.1")
+}
+
+lazy val circe = Def.setting {
+  val version = "0.9.3"
+  Seq(
+    "io.circe" %%% "circe-core" % version,
+    "io.circe" %%% "circe-generic" % version,
+    "io.circe" %%% "circe-parser" % version,
+    "io.circe" %%% "circe-shapes" % version,
+    "io.circe" %%% "circe-java8" % version
   )
 }
 
@@ -195,17 +214,6 @@ lazy val react = Def.setting {
     "org.webjars.npm" % "react" % reactVersion / "umd/react.development.js" minified "umd/react.production.min.js" commonJSName "React",
     "org.webjars.npm" % "react-dom" % reactVersion / "umd/react-dom.development.js" minified "umd/react-dom.production.min.js" dependsOn "umd/react.development.js" commonJSName "ReactDOM",
     "org.webjars.npm" % "react-dom" % reactVersion / "umd/react-dom-server.browser.development.js" minified "umd/react-dom-server.browser.production.min.js" dependsOn "umd/react-dom.development.js" commonJSName "ReactDOMServer"
-  )
-}
-
-lazy val circe = Def.setting {
-  val version = "0.9.3"
-  Seq(
-    "io.circe" %%% "circe-core" % version,
-    "io.circe" %%% "circe-generic" % version,
-    "io.circe" %%% "circe-parser" % version,
-    "io.circe" %%% "circe-shapes" % version,
-    "io.circe" %%% "circe-java8" % version
   )
 }
 
