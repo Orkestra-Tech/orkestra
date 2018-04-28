@@ -36,9 +36,12 @@ trait KubernetesTest extends BeforeAndAfterEach with BeforeAndAfterAll with Scal
             post {
               entity(as[String]) { entity =>
                 complete {
-                  val cronjob = decode[CronJob](entity).fold(throw _, identity)
-                  cronJobs += cronjob.metadata.get.name.get -> cronjob
-                  OK
+                  val cronJob = decode[CronJob](entity).fold(throw _, identity)
+                  if (cronJobs.contains(cronJob.metadata.get.name.get)) Conflict
+                  else {
+                    cronJobs += cronJob.metadata.get.name.get -> cronJob
+                    OK
+                  }
                 }
               }
             }
@@ -75,8 +78,11 @@ trait KubernetesTest extends BeforeAndAfterEach with BeforeAndAfterAll with Scal
                 entity(as[String]) { entity =>
                   complete {
                     val job = decode[Job](entity).fold(throw _, identity)
-                    jobs += job.metadata.get.name.get -> job
-                    OK
+                    if (cronJobs.contains(job.metadata.get.name.get)) Conflict
+                    else {
+                      jobs += job.metadata.get.name.get -> job
+                      OK
+                    }
                   }
                 }
               }

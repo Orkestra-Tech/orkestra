@@ -8,10 +8,29 @@ import org.scalatest.concurrent.Eventually
 
 class CronTests extends OrchestraSpec with OrchestraConfigTest with KubernetesTest with Eventually {
 
-  scenario("Schedule a Cron") {
-    CronJobs.createOrUpdate(Set(CronTrigger("*/5 * * * *", emptyJob))).futureValue
-    val scheduledCronJobs = CronJobs.list().futureValue.items
-    scheduledCronJobs should have size 1
+  scenario("Schedule a cron job") {
+    val someCronJob = CronTrigger("*/5 * * * *", emptyJob)
+
+    CronJobs.createOrUpdate(Set(someCronJob)).futureValue
+    val cronJobs = CronJobs.list().futureValue.items
+    cronJobs should have size 1
+    cronJobs.head.spec.value.schedule should ===(someCronJob.schedule)
+  }
+
+  scenario("Update a cron job") {
+    val someCronJob = CronTrigger("*/5 * * * *", emptyJob)
+
+    CronJobs.createOrUpdate(Set(someCronJob)).futureValue
+    val cronJobs = CronJobs.list().futureValue.items
+    cronJobs should have size 1
+    cronJobs.head.spec.value.schedule should ===(someCronJob.schedule)
+
+    // Update
+    val newCronJob = someCronJob.copy(schedule = "*/10 * * * *")
+    CronJobs.createOrUpdate(Set(newCronJob)).futureValue
+    val updatedCronJobs = CronJobs.list().futureValue.items
+    updatedCronJobs should have size 1
+    updatedCronJobs.head.spec.value.schedule should ===(newCronJob.schedule)
   }
 
   scenario("No cron job scheduled") {
