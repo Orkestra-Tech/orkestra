@@ -1,54 +1,16 @@
 package com.drivetribe.orchestra
 
 import shapeless.test.illTyped
-
-import com.drivetribe.orchestra.Dsl._
 import com.drivetribe.orchestra.board.JobBoard
 import com.drivetribe.orchestra.job.Job
-import com.drivetribe.orchestra.model.{JobId, RunId}
+import com.drivetribe.orchestra.model.JobId
 import com.drivetribe.orchestra.parameter.{Checkbox, Input}
+import com.drivetribe.orchestra.utils.DummyJobs._
+import com.drivetribe.orchestra.utils.OrchestraConfigTest
 
-object ParametersStaticTests {
+object ParametersStaticTests extends OrchestraConfigTest {
 
-  object `Define a job only with RunId` {
-    lazy val board = JobBoard[RunId => Unit](JobId("someJob"), "Some Job")()
-
-    lazy val job = Job(board) { implicit workDir => runId =>
-      println(s"RunId: $runId")
-    }
-  }
-
-  object `Define a job with one parameter and RunId` {
-    lazy val board = JobBoard[(String, RunId) => Unit](JobId("someJob"), "Some Job")(Input[String]("Some string"))
-
-    lazy val job = Job(board) { implicit workDir => (s, runId) =>
-      println(s"Some string: $s")
-      println(s"RunId: $runId")
-    }
-  }
-
-  object `Define a job with RunId and one parameter` {
-    lazy val board = JobBoard[(RunId, String) => Unit](JobId("someJob"), "Some Job")(Input[String]("Some string"))
-
-    lazy val job = Job(board) { implicit workDir => (runId, s) =>
-      println(s"RunId: $runId")
-      println(s"Some string: $s")
-    }
-  }
-
-  object `Define a job with multiple parameters and RunId` {
-    lazy val board =
-      JobBoard[(Boolean, String, RunId) => Unit](JobId("someJob"), "Some Job")(Checkbox("Some string"),
-                                                                               Input[String]("Some string"))
-
-    lazy val job = Job(board) { implicit workDir => (someBoolean, someString, runId) =>
-      println(s"Some boolean: $someBoolean")
-      println(s"Some string: $someString")
-      println(s"RunId: $runId")
-    }
-  }
-
-  object `Should not compile if 1 UI parameter is not given` {
+  object `Define a job with 1 UI parameter not given should not compile` {
     illTyped(
       """
       lazy val board = JobBoard[(Boolean, String) => Unit](JobId("someJob"), "Some Job")(Checkbox("Some string"))
@@ -57,44 +19,58 @@ object ParametersStaticTests {
     )
   }
 
-  object `Should not compile if 1 parameter value is not given` {
-    lazy val board =
-      JobBoard[(Boolean, String) => Unit](JobId("someJob"), "Some Job")(Checkbox("Some string"),
-                                                                        Input[String]("Some string"))
-
+  object `Define a job with 1 parameter value not given should not compile` {
     illTyped(
       """
-      lazy val job = Job(board) { implicit workDir => someBoolean =>
-        println(s"Some boolean: $someBoolean")
+      lazy val job = Job(twoParamsJobBoard) { implicit workDir => someBoolean =>
+        ()
       }
       """,
       "missing parameter type"
     )
   }
 
-  object `Should not compile if 1 UI parameter is not of the same type` {
+  object `Define a job with 1 UI parameter not of the same type should not compile` {
     illTyped(
       """
-      lazy val board =
-        JobBoard[(Boolean, String) => Unit](JobId("someJob"), "Some Job")(Checkbox("Some string"),
-                                                                          Checkbox("Some string"))
+      lazy val board = JobBoard[(Boolean, String) => Unit](JobId("someJob"), "Some Job")(Checkbox("Some Boolean"),
+                                                                                         Checkbox("Some Boolean 2"))
       """,
       "could not find implicit value for parameter paramOperations:.+"
     )
   }
 
-  object `Should not compile if 1 parameter value is not of the same type` {
-    lazy val board =
-      JobBoard[(Boolean, String) => Unit](JobId("someJob"), "Some Job")(Checkbox("Some string"),
-                                                                        Input[String]("Some string"))
-
+  object `Define a job with 1 parameter value not of the same type should not compile` {
     illTyped(
       """
-      lazy val job = Job(board) { implicit workDir => (someBoolean: Boolean, someWrongType: Boolean) =>
-        println(s"Some boolean: $someBoolean")
+      lazy val job = Job(twoParamsJobBoard) { implicit workDir => (someBoolean: Boolean, someWrongType: Boolean) =>
+        ()
       }
       """,
       "type mismatch;.+"
+    )
+  }
+
+  object `Define a job with too many UI parameters should not compile` {
+    illTyped(
+      """
+      lazy val board = JobBoard[(Boolean, String) => Unit](JobId("someJob"), "Some Job")(Input("Some String"),
+                                                                                         Checkbox("Some Boolean"),
+                                                                                         Checkbox("Some other"))
+      """,
+      """too many arguments \(3\) for method apply:.+"""
+    )
+  }
+
+  object `Define a job with too many parameters value should not compile` {
+    illTyped(
+      """
+      lazy val job = Job(twoParamsJobBoard) {
+        implicit workDir => (someString: String, someBoolean: Boolean, someOther: String) =>
+          ()
+      }
+      """,
+      "missing parameter type"
     )
   }
 }

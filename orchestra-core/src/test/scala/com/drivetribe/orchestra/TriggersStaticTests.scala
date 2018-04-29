@@ -13,22 +13,22 @@ object TriggersStaticTests {
     emptyWithRunIdJob.run()
   }
 
-  object `Define job with one parameter and RunId` {
+  object `Trigger a job with one parameter and RunId` {
     oneParamWithRunIdJob.trigger("someString")
     oneParamWithRunIdJob.run("someString")
   }
 
-  object `Define job with RunId and one parameter` {
+  object `Trigger a job with RunId and one parameter` {
     runIdWithOneParamJob.trigger("someString")
     runIdWithOneParamJob.run("someString")
   }
 
-  object `Define job with multiple parameters and RunId` {
+  object `Trigger a job with multiple parameters and RunId` {
     twoParamsWithRunIdJob.trigger("someString", true)
     twoParamsWithRunIdJob.run("someString", true)
   }
 
-  object `Should not compile if 1 parameter is not given` {
+  object `Trigger a job with 1 parameter not given should not compile` {
     illTyped("""
       twoParamsWithRunIdJob.trigger("someString")
     """, "type mismatch;.+")
@@ -37,7 +37,7 @@ object TriggersStaticTests {
     """, "type mismatch;.+")
   }
 
-  object `Should not compile if 1 parameter is not of the same type` {
+  object `Trigger a job with 1 parameter not of the same type should not compile` {
     illTyped("""
       twoParamsWithRunIdJob.trigger("someString", "true")
     """, """too many arguments \(2\) for method trigger:.+""")

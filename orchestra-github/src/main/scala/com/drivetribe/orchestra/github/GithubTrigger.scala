@@ -61,38 +61,38 @@ object BranchTrigger {
                                                    job: Job[ParamValues, _]) {
 
     // No Params
-    def apply[ParamValuesNoBranch <: HList]()(
-      implicit gitRefInjector: GitRefInjector[ParamValuesNoBranch, ParamValues],
-      runIdOperation: RunIdOperation[HNil, ParamValuesNoBranch]
-    ): BranchTrigger[HNil, ParamValuesNoBranch, ParamValues] =
+    def apply[ParamValuesNoGitRef <: HList]()(
+      implicit gitRefInjector: GitRefInjector[ParamValuesNoGitRef, ParamValues],
+      runIdOperation: RunIdOperation[HNil, ParamValuesNoGitRef]
+    ): BranchTrigger[HNil, ParamValuesNoGitRef, ParamValues] =
       BranchTrigger(repository, branchRegex, job, HNil)
 
     // One param
-    def apply[ParamValuesNoBranch <: HList, ParamValueNoRunIdBranch](value: ParamValueNoRunIdBranch)(
-      implicit gitRefInjector: GitRefInjector[ParamValuesNoBranch, ParamValues],
-      runIdOperation: RunIdOperation[ParamValueNoRunIdBranch :: HNil, ParamValuesNoBranch]
-    ): BranchTrigger[ParamValueNoRunIdBranch :: HNil, ParamValuesNoBranch, ParamValues] =
+    def apply[ParamValuesNoGitRef <: HList, ParamValueNoRunIdGitRef](value: ParamValueNoRunIdGitRef)(
+      implicit gitRefInjector: GitRefInjector[ParamValuesNoGitRef, ParamValues],
+      runIdOperation: RunIdOperation[ParamValueNoRunIdGitRef :: HNil, ParamValuesNoGitRef]
+    ): BranchTrigger[ParamValueNoRunIdGitRef :: HNil, ParamValuesNoGitRef, ParamValues] =
       BranchTrigger(repository, branchRegex, job, value :: HNil)
 
     // Multi param
-    def apply[TupledValues <: Product, ParamValuesNoRunIdBranch <: HList, ParamValuesNoBranch <: HList](
+    def apply[TupledValues <: Product, ParamValuesNoRunIdGitRef <: HList, ParamValuesNoGitRef <: HList](
       paramValues: TupledValues
     )(
-      implicit tupleToHList: Generic.Aux[TupledValues, ParamValuesNoRunIdBranch],
-      gitRefInjector: GitRefInjector[ParamValuesNoBranch, ParamValues],
-      runIdOperation: RunIdOperation[ParamValuesNoRunIdBranch, ParamValuesNoBranch]
-    ): BranchTrigger[ParamValuesNoRunIdBranch, ParamValuesNoBranch, ParamValues] =
+      implicit tupleToHList: Generic.Aux[TupledValues, ParamValuesNoRunIdGitRef],
+      gitRefInjector: GitRefInjector[ParamValuesNoGitRef, ParamValues],
+      runIdOperation: RunIdOperation[ParamValuesNoRunIdGitRef, ParamValuesNoGitRef]
+    ): BranchTrigger[ParamValuesNoRunIdGitRef, ParamValuesNoGitRef, ParamValues] =
       BranchTrigger(repository, branchRegex, job, tupleToHList.to(paramValues))
   }
 }
 
-case class PullRequestTrigger[ParamValuesNoRunIdBranch <: HList, ParamValuesNoBranch <: HList, ParamValues <: HList] private (
+case class PullRequestTrigger[ParamValuesNoRunIdGitRef <: HList, ParamValuesNoGitRef <: HList, ParamValues <: HList] private (
   repository: Repository,
   job: Job[ParamValues, _],
-  values: ParamValuesNoRunIdBranch
+  values: ParamValuesNoRunIdGitRef
 )(
-  implicit runIdOperation: RunIdOperation[ParamValuesNoRunIdBranch, ParamValuesNoBranch],
-  gitRefInjector: GitRefInjector[ParamValuesNoBranch, ParamValues],
+  implicit runIdOperation: RunIdOperation[ParamValuesNoRunIdGitRef, ParamValuesNoGitRef],
+  gitRefInjector: GitRefInjector[ParamValuesNoGitRef, ParamValues],
   orchestraConfig: OrchestraConfig,
   kubernetesClient: KubernetesClient,
   elasticsearchClient: HttpClient
@@ -128,27 +128,27 @@ object PullRequestTrigger {
   class PullRequestTriggerBuilder[ParamValues <: HList](repository: Repository, job: Job[ParamValues, _]) {
 
     // No Params
-    def apply[ParamValuesNoBranch <: HList]()(
-      implicit gitRefInjector: GitRefInjector[ParamValuesNoBranch, ParamValues],
-      runIdOperation: RunIdOperation[HNil, ParamValuesNoBranch]
-    ): PullRequestTrigger[HNil, ParamValuesNoBranch, ParamValues] =
+    def apply[ParamValuesNoGitRef <: HList]()(
+      implicit gitRefInjector: GitRefInjector[ParamValuesNoGitRef, ParamValues],
+      runIdOperation: RunIdOperation[HNil, ParamValuesNoGitRef]
+    ): PullRequestTrigger[HNil, ParamValuesNoGitRef, ParamValues] =
       PullRequestTrigger(repository, job, HNil)
 
     // One param
-    def apply[ParamValuesNoBranch <: HList, ParamValueNoRunIdBranch](value: ParamValueNoRunIdBranch)(
-      implicit gitRefInjector: GitRefInjector[ParamValuesNoBranch, ParamValues],
-      runIdOperation: RunIdOperation[ParamValueNoRunIdBranch :: HNil, ParamValuesNoBranch]
-    ): PullRequestTrigger[ParamValueNoRunIdBranch :: HNil, ParamValuesNoBranch, ParamValues] =
+    def apply[ParamValuesNoGitRef <: HList, ParamValueNoRunIdGitRef](value: ParamValueNoRunIdGitRef)(
+      implicit gitRefInjector: GitRefInjector[ParamValuesNoGitRef, ParamValues],
+      runIdOperation: RunIdOperation[ParamValueNoRunIdGitRef :: HNil, ParamValuesNoGitRef]
+    ): PullRequestTrigger[ParamValueNoRunIdGitRef :: HNil, ParamValuesNoGitRef, ParamValues] =
       PullRequestTrigger(repository, job, value :: HNil)
 
     // Multi param
-    def apply[TupledValues <: Product, ParamValuesNoRunIdBranch <: HList, ParamValuesNoBranch <: HList](
+    def apply[TupledValues <: Product, ParamValuesNoRunIdGitRef <: HList, ParamValuesNoGitRef <: HList](
       paramValues: TupledValues
     )(
-      implicit tupleToHList: Generic.Aux[TupledValues, ParamValuesNoRunIdBranch],
-      gitRefInjector: GitRefInjector[ParamValuesNoBranch, ParamValues],
-      runIdOperation: RunIdOperation[ParamValuesNoRunIdBranch, ParamValuesNoBranch]
-    ): PullRequestTrigger[ParamValuesNoRunIdBranch, ParamValuesNoBranch, ParamValues] =
+      implicit tupleToHList: Generic.Aux[TupledValues, ParamValuesNoRunIdGitRef],
+      gitRefInjector: GitRefInjector[ParamValuesNoGitRef, ParamValues],
+      runIdOperation: RunIdOperation[ParamValuesNoRunIdGitRef, ParamValuesNoGitRef]
+    ): PullRequestTrigger[ParamValuesNoRunIdGitRef, ParamValuesNoGitRef, ParamValues] =
       PullRequestTrigger(repository, job, tupleToHList.to(paramValues))
   }
 }
