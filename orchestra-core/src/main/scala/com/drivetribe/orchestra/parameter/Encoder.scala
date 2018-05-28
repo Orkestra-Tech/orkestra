@@ -12,7 +12,9 @@ object Encoder {
   implicit val doubleDecoder: Encoder[Double] = _.toString
   implicit def hlist1Encoder[T](implicit encoder: Encoder[T]): Encoder[T :: HNil] =
     hlist => encoder(hlist.head)
-  implicit def product1Encoder[Product, L <: HList](implicit generic: Generic.Aux[Product, L],
-                                                    encoder: Encoder[L]): Encoder[Product] =
+  implicit def product1Encoder[Product, L <: HList](
+    implicit generic: Generic.Aux[Product, L],
+    encoder: Encoder[L]
+  ): Encoder[Product] =
     product => encoder(generic.to(product))
 }

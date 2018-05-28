@@ -33,9 +33,11 @@ case class Job[ParamValues <: HList: Encoder: Decoder, Result: Encoder: Decoder]
   func: ParamValues => Result
 ) {
 
-  private[orchestra] def start(runInfo: RunInfo)(implicit orchestraConfig: OrchestraConfig,
-                                                 kubernetesClient: KubernetesClient,
-                                                 elasticsearchClient: HttpClient): Future[Result] = {
+  private[orchestra] def start(runInfo: RunInfo)(
+    implicit orchestraConfig: OrchestraConfig,
+    kubernetesClient: KubernetesClient,
+    elasticsearchClient: HttpClient
+  ): Future[Result] = {
     val runningPong = system.scheduler.schedule(0.second, 1.second)(Jobs.pong(runInfo))
 
     (for {
@@ -84,14 +86,17 @@ case class Job[ParamValues <: HList: Encoder: Decoder, Result: Encoder: Decoder]
       }
   }
 
-  private[orchestra] case class ApiServer()(implicit orchestraConfig: OrchestraConfig,
-                                            kubernetesClient: KubernetesClient,
-                                            elasticsearchClient: HttpClient)
-      extends board.Api {
-    override def trigger(runId: RunId,
-                         paramValues: ParamValues,
-                         tags: Seq[String] = Seq.empty,
-                         parent: Option[RunInfo] = None): Future[Unit] =
+  private[orchestra] case class ApiServer()(
+    implicit orchestraConfig: OrchestraConfig,
+    kubernetesClient: KubernetesClient,
+    elasticsearchClient: HttpClient
+  ) extends board.Api {
+    override def trigger(
+      runId: RunId,
+      paramValues: ParamValues,
+      tags: Seq[String] = Seq.empty,
+      parent: Option[RunInfo] = None
+    ): Future[Unit] =
       for {
         runInfo <- Future.successful(RunInfo(board.id, runId))
         _ <- elasticsearchClient
@@ -152,13 +157,17 @@ case class Job[ParamValues <: HList: Encoder: Decoder, Result: Encoder: Decoder]
             .map(_.fold(failure => throw new IOException(failure.error.reason), identity).result.to[Stage])
         else Future.successful(Seq.empty)
       } yield
-        History(runs.map(run => (run, stages.filter(_.runInfo.runId == run.runInfo.runId).sortBy(_.startedOn))),
-                Instant.now())
+        History(
+          runs.map(run => (run, stages.filter(_.runInfo.runId == run.runInfo.runId).sortBy(_.startedOn))),
+          Instant.now()
+        )
   }
 
-  private[orchestra] def apiRoute(implicit orchestraConfig: OrchestraConfig,
-                                  kubernetesClient: KubernetesClient,
-                                  elasticsearchClient: HttpClient): Route = {
+  private[orchestra] def apiRoute(
+    implicit orchestraConfig: OrchestraConfig,
+    kubernetesClient: KubernetesClient,
+    elasticsearchClient: HttpClient
+  ): Route = {
     import akka.http.scaladsl.server.Directives._
     path(board.id.value / Segments) { segments =>
       entity(as[Json]) { json =>
@@ -185,11 +194,13 @@ object Job {
   class JobBuilder[ParamValues <: HList, Result, Func, PodSpecFunc](
     board: JobBoard[ParamValues, Result, Func, PodSpecFunc]
   ) {
-    def apply(func: Directory => Func)(implicit fnToProdFunc: FnToProduct.Aux[Func, ParamValues => Result],
-                                       encoderP: Encoder[ParamValues],
-                                       decoderP: Decoder[ParamValues],
-                                       encoderR: Encoder[Result],
-                                       decoderR: Decoder[Result]) =
+    def apply(func: Directory => Func)(
+      implicit fnToProdFunc: FnToProduct.Aux[Func, ParamValues => Result],
+      encoderP: Encoder[ParamValues],
+      decoderP: Decoder[ParamValues],
+      encoderR: Encoder[Result],
+      decoderR: Decoder[Result]
+    ) =
       Job(board, (_: ParamValues) => PodSpec(Seq.empty), fnToProdFunc(func(Directory("."))))
 
     def apply(podSpec: PodSpec)(func: Directory => Func)(

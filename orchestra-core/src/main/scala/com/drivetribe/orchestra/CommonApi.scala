@@ -28,10 +28,11 @@ object CommonApi {
   val client = AutowireClient(OrchestraConfig.commonSegment)[CommonApi]
 }
 
-case class CommonApiServer()(implicit orchestraConfig: OrchestraConfig,
-                             kubernetesClient: KubernetesClient,
-                             elasticsearchClient: HttpClient)
-    extends CommonApi {
+case class CommonApiServer()(
+  implicit orchestraConfig: OrchestraConfig,
+  kubernetesClient: KubernetesClient,
+  elasticsearchClient: HttpClient
+) extends CommonApi {
   import com.drivetribe.orchestra.utils.AkkaImplicits._
 
   override def logs(runId: RunId, page: Page[(Instant, Int)]): Future[Seq[LogLine]] =
@@ -39,9 +40,11 @@ case class CommonApiServer()(implicit orchestraConfig: OrchestraConfig,
       .execute(
         search(LogsIndex.index)
           .query(boolQuery.filter(termQuery("runId", runId.value.toString)))
-          .sortBy(fieldSort("loggedOn").order(if (page.size < 0) SortOrder.Desc else SortOrder.Asc),
-                  fieldSort("position").asc(),
-                  fieldSort("_id").desc())
+          .sortBy(
+            fieldSort("loggedOn").order(if (page.size < 0) SortOrder.Desc else SortOrder.Asc),
+            fieldSort("position").asc(),
+            fieldSort("_id").desc()
+          )
           .searchAfter(
             Seq(
               page.after
@@ -67,8 +70,10 @@ case class CommonApiServer()(implicit orchestraConfig: OrchestraConfig,
           .execute(
             search(HistoryIndex.index)
               .query(
-                boolQuery.filter(termsQuery("runInfo.runId", runInfos.map(_.runId.value)),
-                                 termsQuery("runInfo.jobId", runInfos.map(_.jobId.value)))
+                boolQuery.filter(
+                  termsQuery("runInfo.runId", runInfos.map(_.runId.value)),
+                  termsQuery("runInfo.jobId", runInfos.map(_.jobId.value))
+                )
               )
               .sortBy(fieldSort("triggeredOn").desc(), fieldSort("_id").desc())
               .size(1000)

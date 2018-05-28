@@ -16,13 +16,15 @@ import shapeless.HList
 import com.drivetribe.orchestra.utils.BaseEncoders._
 
 trait HistoryIndex extends Indexed {
-  case class Run[ParamValues <: HList, Result](runInfo: RunInfo,
-                                               paramValues: ParamValues,
-                                               triggeredOn: Instant,
-                                               parentJob: Option[RunInfo],
-                                               latestUpdateOn: Instant,
-                                               result: Option[Either[Throwable, Result]],
-                                               tags: Seq[String])
+  case class Run[ParamValues <: HList, Result](
+    runInfo: RunInfo,
+    paramValues: ParamValues,
+    triggeredOn: Instant,
+    parentJob: Option[RunInfo],
+    latestUpdateOn: Instant,
+    result: Option[Either[Throwable, Result]],
+    tags: Seq[String]
+  )
 
   object Run {
     implicit def decoder[ParamValues <: HList: Decoder, Result: Decoder]: Decoder[Run[ParamValues, Result]] =
@@ -49,7 +51,7 @@ trait HistoryIndex extends Indexed {
           "latestUpdateOn" -> run.latestUpdateOn.asJson,
           "result" -> run.result.asJson,
           "tags" -> run.tags.asJson
-      )
+        )
   }
 
   override def indices: Set[IndexDefinition] = super.indices + HistoryIndex

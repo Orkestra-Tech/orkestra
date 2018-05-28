@@ -11,14 +11,16 @@ import io.circe.parser._
 
 import com.drivetribe.orchestra.model.{EnvRunInfo, RunId, RunInfo}
 
-case class OrchestraConfig(elasticsearchUri: ElasticsearchClientUri,
-                           workspace: String = OrchestraConfig.defaultWorkspace,
-                           port: Int = OrchestraConfig.defaultPort,
-                           runInfoMaybe: Option[RunInfo] = None,
-                           kubeUri: String,
-                           namespace: String,
-                           podName: String,
-                           basePath: String = OrchestraConfig.defaultBasePath) {
+case class OrchestraConfig(
+  elasticsearchUri: ElasticsearchClientUri,
+  workspace: String = OrchestraConfig.defaultWorkspace,
+  port: Int = OrchestraConfig.defaultPort,
+  runInfoMaybe: Option[RunInfo] = None,
+  kubeUri: String,
+  namespace: String,
+  podName: String,
+  basePath: String = OrchestraConfig.defaultBasePath
+) {
   lazy val runInfo = runInfoMaybe.getOrElse(throw new IllegalStateException("ORCHESTRA_RUN_INFO should be set"))
 }
 

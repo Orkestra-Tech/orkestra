@@ -21,21 +21,25 @@ trait JobBoard[ParamValues <: HList, Result, Func, PodSpecFunc] extends Board {
   val name: String
 
   private[orchestra] trait Api {
-    def trigger(runId: RunId,
-                params: ParamValues,
-                tags: Seq[String] = Seq.empty,
-                by: Option[RunInfo] = None): Future[Unit]
+    def trigger(
+      runId: RunId,
+      params: ParamValues,
+      tags: Seq[String] = Seq.empty,
+      by: Option[RunInfo] = None
+    ): Future[Unit]
     def stop(runId: RunId): Future[Unit]
     def tags(): Future[Seq[String]]
     def history(page: Page[Instant]): Future[History[ParamValues, Result]]
   }
 
   private[orchestra] object Api {
-    def router(apiServer: Api)(implicit ec: ExecutionContext,
-                               encoderP: Encoder[ParamValues],
-                               decoderP: Decoder[ParamValues],
-                               encoderR: Encoder[Result],
-                               decoderR: Decoder[Result]) =
+    def router(apiServer: Api)(
+      implicit ec: ExecutionContext,
+      encoderP: Encoder[ParamValues],
+      decoderP: Decoder[ParamValues],
+      encoderR: Encoder[Result],
+      decoderR: Decoder[Result]
+    ) =
       AutowireServer.route[Api](apiServer)
 
     val client = AutowireClient(s"${OrchestraConfig.jobSegment}/${id.value}")[Api]
@@ -92,8 +96,10 @@ object JobBoard {
       decoderP: Decoder[ParamValues],
       decoderR: Decoder[Result]
     ) =
-      SimpleJobBoard[ParamValuesNoRunId, ParamValues, Params, Result, Func, PodSpecFunc](id,
-                                                                                         name,
-                                                                                         tupleToHList.to(params))
+      SimpleJobBoard[ParamValuesNoRunId, ParamValues, Params, Result, Func, PodSpecFunc](
+        id,
+        name,
+        tupleToHList.to(params)
+      )
   }
 }

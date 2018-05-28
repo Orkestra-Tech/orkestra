@@ -43,16 +43,22 @@ object DeployOrchestration {
                   env = Option(
                     Seq(
                       EnvVar(name = "ORCHESTRA_KUBE_URI", value = Option("https://kubernetes.default")),
-                      EnvVar(name = "ORCHESTRA_ELASTICSEARCH_URI",
-                             value = Option("elasticsearch://elasticsearch:9200")),
-                      EnvVar(name = "ORCHESTRA_POD_NAME",
-                             valueFrom = Option(
-                               EnvVarSource(fieldRef = Option(ObjectFieldSelector(fieldPath = "metadata.name")))
-                             )),
-                      EnvVar(name = "ORCHESTRA_NAMESPACE",
-                             valueFrom = Option(
-                               EnvVarSource(fieldRef = Option(ObjectFieldSelector(fieldPath = "metadata.namespace")))
-                             ))
+                      EnvVar(
+                        name = "ORCHESTRA_ELASTICSEARCH_URI",
+                        value = Option("elasticsearch://elasticsearch:9200")
+                      ),
+                      EnvVar(
+                        name = "ORCHESTRA_POD_NAME",
+                        valueFrom = Option(
+                          EnvVarSource(fieldRef = Option(ObjectFieldSelector(fieldPath = "metadata.name")))
+                        )
+                      ),
+                      EnvVar(
+                        name = "ORCHESTRA_NAMESPACE",
+                        valueFrom = Option(
+                          EnvVarSource(fieldRef = Option(ObjectFieldSelector(fieldPath = "metadata.namespace")))
+                        )
+                      )
                     )
                   )
                 )

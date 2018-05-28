@@ -86,7 +86,7 @@ sbt orchestrationJVM/Docker/publishLocal  # Publish the docker artifact
 kubectl apply -f ../kubernetes-dev        # Apply the deployement to Kubernetes
 kubectl proxy                             # Proxy the Kubernetes api
 ```
-Visit Orchestra on `https://127.0.0.1:8001/api/v1/namespaces/orchestra/services/orchestration:http/proxy`.  
+Visit Orchestra on `httpe://127.0.0.1:8001/api/v1/namespaces/orchestra/services/orchestration:http/proxy`.  
 You can troubleshoot any deployment issue with `minikube dashboard`.
 
 More on how to configure the deployment in [Config](https://drivetribe.github.io/orchestra/config.html).

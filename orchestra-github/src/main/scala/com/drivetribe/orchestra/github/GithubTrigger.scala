@@ -56,9 +56,11 @@ object BranchTrigger {
   def apply[ParamValues <: HList](repository: Repository, branchRegex: String, job: Job[ParamValues, _]) =
     new BranchTriggerBuilder[ParamValues](repository, branchRegex, job)
 
-  class BranchTriggerBuilder[ParamValues <: HList](repository: Repository,
-                                                   branchRegex: String,
-                                                   job: Job[ParamValues, _]) {
+  class BranchTriggerBuilder[ParamValues <: HList](
+    repository: Repository,
+    branchRegex: String,
+    job: Job[ParamValues, _]
+  ) {
 
     // No Params
     def apply[ParamValuesNoGitRef <: HList]()(

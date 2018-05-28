@@ -57,8 +57,10 @@ object LogsPage {
 
   private def pullLogs($ : ComponentDidMount[Props, (Option[Seq[LogLine]], SetIntervalHandle), Unit]) =
     CommonApi.client
-      .logs($.props.page.runId,
-            Page($.state._1.flatMap(_.lastOption).map(line => (line.loggedOn, line.position)), 10000))
+      .logs(
+        $.props.page.runId,
+        Page($.state._1.flatMap(_.lastOption).map(line => (line.loggedOn, line.position)), 10000)
+      )
       .call()
       .foreach { logs =>
         val isScrolledToBottom = window.innerHeight + window.pageYOffset + 1 >= document.body.scrollHeight

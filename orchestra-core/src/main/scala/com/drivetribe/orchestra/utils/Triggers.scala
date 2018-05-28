@@ -73,17 +73,21 @@ trait Triggers {
       for {
         _ <- job
           .ApiServer()
-          .trigger(orchestraConfig.runInfo.runId,
-                   orchestraConfig.runInfo.runId :: HNil,
-                   parent = Option(orchestraConfig.runInfo))
+          .trigger(
+            orchestraConfig.runInfo.runId,
+            orchestraConfig.runInfo.runId :: HNil,
+            parent = Option(orchestraConfig.runInfo)
+          )
         result <- jobResult(job)
       } yield result
   }
 
-  implicit class TriggerableMultipleParamJob[ParamValues <: HList: Decoder,
-                                             ParamValuesNoRunId <: HList,
-                                             TupledValues <: Product,
-                                             Result: Decoder](
+  implicit class TriggerableMultipleParamJob[
+    ParamValues <: HList: Decoder,
+    ParamValuesNoRunId <: HList,
+    TupledValues <: Product,
+    Result: Decoder
+  ](
     job: Job[ParamValues, Result]
   )(
     implicit runIdOperation: RunIdOperation[ParamValuesNoRunId, ParamValues],
@@ -100,8 +104,10 @@ trait Triggers {
     def trigger(values: TupledValues): Future[Unit] =
       job
         .ApiServer()
-        .trigger(orchestraConfig.runInfo.runId,
-                 runIdOperation.inject(tupleToHList.to(values), orchestraConfig.runInfo.runId))
+        .trigger(
+          orchestraConfig.runInfo.runId,
+          runIdOperation.inject(tupleToHList.to(values), orchestraConfig.runInfo.runId)
+        )
 
     /**
       * Run the job with the same run id as the current job. This means the triggered job will output in the same
@@ -112,9 +118,11 @@ trait Triggers {
       for {
         _ <- job
           .ApiServer()
-          .trigger(orchestraConfig.runInfo.runId,
-                   runIdOperation.inject(tupleToHList.to(values), orchestraConfig.runInfo.runId),
-                   parent = Option(orchestraConfig.runInfo))
+          .trigger(
+            orchestraConfig.runInfo.runId,
+            runIdOperation.inject(tupleToHList.to(values), orchestraConfig.runInfo.runId),
+            parent = Option(orchestraConfig.runInfo)
+          )
         result <- jobResult(job)
       } yield result
   }
@@ -124,9 +132,11 @@ trait Triggers {
   ): Future[Result] =
     for {
       runResponse <- elasticsearchClient.execute(
-        get(HistoryIndex.index,
-            HistoryIndex.`type`,
-            HistoryIndex.formatId(RunInfo(job.board.id, orchestraConfig.runInfo.runId)))
+        get(
+          HistoryIndex.index,
+          HistoryIndex.`type`,
+          HistoryIndex.formatId(RunInfo(job.board.id, orchestraConfig.runInfo.runId))
+        )
       )
       run = runResponse
         .fold(failure => throw new IOException(failure.error.reason), identity)

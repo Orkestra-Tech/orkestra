@@ -28,10 +28,12 @@ import com.drivetribe.orchestra.utils.{Colours, RunIdOperation}
 
 object JobPage {
 
-  case class Props[Params <: HList,
-                   ParamValuesNoRunId <: HList,
-                   ParamValues <: HList: Encoder: Decoder,
-                   Result: Decoder](
+  case class Props[
+    Params <: HList,
+    ParamValuesNoRunId <: HList,
+    ParamValues <: HList: Encoder: Decoder,
+    Result: Decoder
+  ](
     job: JobBoard[ParamValues, Result, _, _],
     params: Params,
     page: BoardPageRoute,
@@ -67,18 +69,22 @@ object JobPage {
                   .map(param => s"${param._1}: ${param._2}")
                   .mkString("\n")
               val rerunButton =
-                <.div(Global.Style.brandColorButton,
-                      ^.width := "30px",
-                      ^.height := "30px",
-                      ^.onClick ==> reRun(run.paramValues, run.tags))("↻")
+                <.div(
+                  Global.Style.brandColorButton,
+                  ^.width := "30px",
+                  ^.height := "30px",
+                  ^.onClick ==> reRun(run.paramValues, run.tags)
+                )("↻")
               val stopButton = StopButton.component(StopButton.Props(job, run.runInfo.runId))
               def runIdDisplay(icon: String, runId: RunId, color: String, title: String) =
                 TagMod(
-                  <.div(Global.Style.cell,
-                        ^.width := "20px",
-                        ^.justifyContent.center,
-                        ^.backgroundColor := color,
-                        ^.title := title)(icon),
+                  <.div(
+                    Global.Style.cell,
+                    ^.width := "20px",
+                    ^.justifyContent.center,
+                    ^.backgroundColor := color,
+                    ^.title := title
+                  )(icon),
                   <.div(Global.Style.cell, Global.Style.runId, ^.backgroundColor := color, ^.title := title)(
                     runId.value.toString
                   )
@@ -90,21 +96,27 @@ object JobPage {
 
               val statusDisplay = run.result match {
                 case None if run.triggeredOn == run.latestUpdateOn =>
-                  TagMod(runIdDisplay("○", run.runInfo.runId, Global.Style.brandKubernetesColor.value, "Triggered"),
-                         datesDisplay,
-                         stopButton)
+                  TagMod(
+                    runIdDisplay("○", run.runInfo.runId, Global.Style.brandKubernetesColor.value, "Triggered"),
+                    datesDisplay,
+                    stopButton
+                  )
                 case None if run.latestUpdateOn.isBefore(history.updatedOn.minus(10, ChronoUnit.SECONDS)) =>
                   TagMod(runIdDisplay("✗", run.runInfo.runId, "dimgrey", "Stopped"), datesDisplay, rerunButton)
                 case None =>
-                  TagMod(runIdDisplay("≻", run.runInfo.runId, Global.Style.brandKubernetesColor.value, "Running"),
-                         datesDisplay,
-                         stopButton)
+                  TagMod(
+                    runIdDisplay("≻", run.runInfo.runId, Global.Style.brandKubernetesColor.value, "Running"),
+                    datesDisplay,
+                    stopButton
+                  )
                 case Some(Right(_)) =>
                   TagMod(runIdDisplay("✓", run.runInfo.runId, "green", "Success"), datesDisplay, rerunButton)
                 case Some(Left(t)) =>
-                  TagMod(runIdDisplay("✗", run.runInfo.runId, "firebrick", s"Failed: ${t.getMessage}"),
-                         datesDisplay,
-                         rerunButton)
+                  TagMod(
+                    runIdDisplay("✗", run.runInfo.runId, "firebrick", s"Failed: ${t.getMessage}"),
+                    datesDisplay,
+                    rerunButton
+                  )
               }
 
               <.div(

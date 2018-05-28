@@ -18,8 +18,9 @@ private[cron] object CronJobs {
 
   private def cronJobName(jobId: JobId) = jobId.value.toLowerCase
 
-  def deleteStale(cronTriggers: Set[CronTrigger])(implicit orchestraConfig: OrchestraConfig,
-                                                  kubernetesClient: KubernetesClient) =
+  def deleteStale(
+    cronTriggers: Set[CronTrigger]
+  )(implicit orchestraConfig: OrchestraConfig, kubernetesClient: KubernetesClient) =
     for {
       currentCronJobs <- kubernetesClient.cronJobs.namespace(orchestraConfig.namespace).list()
       currentCronJobNames = currentCronJobs.items.flatMap(_.metadata).flatMap(_.name).toSet
@@ -31,8 +32,9 @@ private[cron] object CronJobs {
       }
     } yield ()
 
-  def createOrUpdate(cronTriggers: Set[CronTrigger])(implicit orchestraConfig: OrchestraConfig,
-                                                     kubernetesClient: KubernetesClient) =
+  def createOrUpdate(
+    cronTriggers: Set[CronTrigger]
+  )(implicit orchestraConfig: OrchestraConfig, kubernetesClient: KubernetesClient) =
     for {
       masterPod <- MasterPod.get()
       _ <- Future.traverse(cronTriggers) { cronTrigger =>

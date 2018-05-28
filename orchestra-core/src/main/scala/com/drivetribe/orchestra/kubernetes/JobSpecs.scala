@@ -27,8 +27,9 @@ private[orchestra] object JobSpecs {
     )
   )
 
-  private def createContainer(container: Container,
-                              masterContainer: Container)(implicit orchestraConfig: OrchestraConfig): Container =
+  private def createContainer(container: Container, masterContainer: Container)(
+    implicit orchestraConfig: OrchestraConfig
+  ): Container =
     container.copy(
       stdin = Option(true),
       env = Option((container.env ++ masterContainer.env).flatten.toSeq),

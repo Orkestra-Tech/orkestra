@@ -44,10 +44,12 @@ object TopNav {
 
   case class PageMenu(name: String, route: PageRoute)
 
-  case class Props(rootPage: BoardPageRoute,
-                   selectedPage: PageRoute,
-                   ctl: RouterCtl[PageRoute],
-                   jobs: Seq[JobBoard[_ <: HList, _, _, _]])
+  case class Props(
+    rootPage: BoardPageRoute,
+    selectedPage: PageRoute,
+    ctl: RouterCtl[PageRoute],
+    jobs: Seq[JobBoard[_ <: HList, _, _, _]]
+  )
 
   implicit val currentPageReuse: Reusability[PageRoute] = Reusability.by_==[PageRoute]
   implicit val propsReuse: Reusability[Props] = Reusability.by((_: Props).selectedPage)

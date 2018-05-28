@@ -47,8 +47,10 @@ trait IntegrationTest extends BeforeAndAfter with BeforeAndAfterAll with ScalaFu
       _ <- Future.traverse(jobs.items) { job =>
         Kubernetes.client.jobs
           .namespace(Kubernetes.namespace.metadata.get.name.get)
-          .delete(job.metadata.get.name.get,
-                  Option(DeleteOptions(propagationPolicy = Option("Foreground"), gracePeriodSeconds = Option(0))))
+          .delete(
+            job.metadata.get.name.get,
+            Option(DeleteOptions(propagationPolicy = Option("Foreground"), gracePeriodSeconds = Option(0)))
+          )
       }
       _ <- awaitNoJobRunning()
     } yield ()

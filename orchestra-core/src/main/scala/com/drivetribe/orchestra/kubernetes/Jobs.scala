@@ -17,8 +17,10 @@ private[orchestra] object Jobs {
   def name(runInfo: RunInfo) =
     s"${runInfo.jobId.value.toLowerCase}-${runInfo.runId.value.toString.split("-").head}"
 
-  def create(runInfo: RunInfo, podSpec: PodSpec)(implicit orchestraConfig: OrchestraConfig,
-                                                 kubernetesClient: KubernetesClient): Future[Unit] =
+  def create(
+    runInfo: RunInfo,
+    podSpec: PodSpec
+  )(implicit orchestraConfig: OrchestraConfig, kubernetesClient: KubernetesClient): Future[Unit] =
     for {
       masterPod <- MasterPod.get()
       job = KubeJob(
@@ -28,16 +30,19 @@ private[orchestra] object Jobs {
       _ <- kubernetesClient.jobs.namespace(orchestraConfig.namespace).create(job)
     } yield ()
 
-  def delete(runInfo: RunInfo)(implicit orchestraConfig: OrchestraConfig,
-                               kubernetesClient: KubernetesClient): Future[Unit] = {
+  def delete(
+    runInfo: RunInfo
+  )(implicit orchestraConfig: OrchestraConfig, kubernetesClient: KubernetesClient): Future[Unit] = {
     val jobs = kubernetesClient.jobs.namespace(orchestraConfig.namespace)
 
     jobs.list().map { jobList =>
       jobList.items
         .find(RunInfo.fromKubeJob(_) == runInfo)
         .foreach { job =>
-          jobs.delete(job.metadata.get.name.get,
-                      Option(DeleteOptions(propagationPolicy = Option("Foreground"), gracePeriodSeconds = Option(0))))
+          jobs.delete(
+            job.metadata.get.name.get,
+            Option(DeleteOptions(propagationPolicy = Option("Foreground"), gracePeriodSeconds = Option(0)))
+          )
         }
     }
   }

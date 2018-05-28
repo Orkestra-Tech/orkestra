@@ -29,10 +29,12 @@ object Elasticsearch {
           init()
       }
 
-  def indexRun[ParamValues <: HList: Encoder](runInfo: RunInfo,
-                                              paramValues: ParamValues,
-                                              tags: Seq[String],
-                                              parent: Option[RunInfo]) =
+  def indexRun[ParamValues <: HList: Encoder](
+    runInfo: RunInfo,
+    paramValues: ParamValues,
+    tags: Seq[String],
+    parent: Option[RunInfo]
+  ) =
     indexInto(HistoryIndex.index, HistoryIndex.`type`)
       .id(HistoryIndex.formatId(runInfo))
       .source(Run[ParamValues, Unit](runInfo, paramValues, Instant.now(), parent, Instant.now(), None, tags))
