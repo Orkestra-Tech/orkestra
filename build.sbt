@@ -1,10 +1,22 @@
 import microsites.ExtraMdFileConfig
-import org.scalajs.sbtplugin.cross.CrossProject
-import sbt.librarymanagement.Configuration
+import org.scalajs.sbtplugin.ScalaJSCrossVersion
+import sbtcrossproject.{crossProject, CrossType}
 
 lazy val orchestra = project
   .in(file("."))
-  .aggregate(coreJVM, coreJS, githubJVM, githubJS, cronJVM, cronJS, lock, plugin, integrationTestsJVM, integrationTestsJS)
+  .aggregate(
+    `orchestra-coreJVM`,
+    `orchestra-coreJS`,
+    `orchestra-githubJVM`,
+    `orchestra-githubJS`,
+    `orchestra-cronJVM`,
+    `orchestra-cronJS`,
+    `orchestra-lock`,
+    `orchestra-plugin`,
+    `orchestra-integration-testsJVM`,
+    `orchestra-integration-testsJS`,
+    docs
+  )
   .settings(
     name := "Orchestra",
     ThisBuild / organization := "com.goyeau",
@@ -41,7 +53,8 @@ lazy val orchestra = project
   )
 
 /***************** Projects *****************/
-lazy val core = CrossProject("orchestra-core", file("orchestra-core"), CrossType.Pure)
+lazy val `orchestra-core` = crossProject(JVMPlatform, JSPlatform)
+  .crossType(CrossType.Pure)
   .enablePlugins(BuildInfoPlugin)
   .jsSettings(
     jsDependencies ++= Seq(
@@ -69,43 +82,46 @@ lazy val core = CrossProject("orchestra-core", file("orchestra-core"), CrossType
       scalaTest.value ++
       enumeratum.value.map(_ % Provided)
   )
-lazy val coreJVM = core.jvm
-lazy val coreJS = core.js
+lazy val `orchestra-coreJVM` = `orchestra-core`.jvm
+lazy val `orchestra-coreJS` = `orchestra-core`.js
 
-lazy val github = CrossProject("orchestra-github", file("orchestra-github"), CrossType.Pure)
-  .dependsOn(core % CompileTest)
+lazy val `orchestra-github` = crossProject(JVMPlatform, JSPlatform)
+  .crossType(CrossType.Pure)
+  .dependsOn(`orchestra-core` % CompileTest)
   .settings(
     name := "Orchestra Github",
     libraryDependencies += "org.eclipse.jgit" % "org.eclipse.jgit" % "4.9.0.201710071750-r"
   )
-lazy val githubJVM = github.jvm
-lazy val githubJS = github.js
+lazy val `orchestra-githubJVM` = `orchestra-github`.jvm
+lazy val `orchestra-githubJS` = `orchestra-github`.js
 
-lazy val cron = CrossProject("orchestra-cron", file("orchestra-cron"), CrossType.Pure)
-  .dependsOn(core % CompileTest)
+lazy val `orchestra-cron` = crossProject(JVMPlatform, JSPlatform)
+  .crossType(CrossType.Pure)
+  .dependsOn(`orchestra-core` % CompileTest)
   .settings(name := "Orchestra Cron")
-lazy val cronJVM = cron.jvm
-lazy val cronJS = cron.js
+lazy val `orchestra-cronJVM` = `orchestra-cron`.jvm
+lazy val `orchestra-cronJS` = `orchestra-cron`.js
 
-lazy val lock = Project("orchestra-lock", file("orchestra-lock"))
-  .dependsOn(coreJVM % CompileTest)
+lazy val `orchestra-lock` = project
+  .dependsOn(`orchestra-coreJVM` % CompileTest)
   .settings(name := "Orchestra Lock")
 
-lazy val plugin = Project("orchestra-plugin", file("orchestra-plugin"))
+lazy val `orchestra-plugin` = project
   .enablePlugins(BuildInfoPlugin)
   .settings(
     name := "Orchestra Plugin",
     moduleName := "sbt-orchestra",
     sbtPlugin := true,
     buildInfoPackage := s"${organization.value}.orchestra",
-    addSbtPlugin("org.scala-js" %% "sbt-scalajs" % "0.6.22"),
+    addSbtPlugin("org.portable-scala" % "sbt-scalajs-crossproject" % "0.4.0"),
+    addSbtPlugin("org.scala-js" %% "sbt-scalajs" % "0.6.23"),
     addSbtPlugin("com.vmunier" %% "sbt-web-scalajs" % "1.0.7"),
     addSbtPlugin("com.typesafe.sbt" %% "sbt-native-packager" % "1.3.4")
   )
 
 lazy val docs = project
   .in(file("docs"))
-  .dependsOn(coreJVM, githubJVM, cronJVM, lock)
+  .dependsOn(`orchestra-coreJVM`, `orchestra-githubJVM`, `orchestra-cronJVM`, `orchestra-lock`)
   .enablePlugins(MicrositesPlugin)
   .settings(
     name := "Orchestra",
@@ -130,21 +146,21 @@ lazy val docs = project
     publishLocal := {}
   )
 
-lazy val integrationTests =
-  CrossProject("orchestra-integration-tests", file("orchestra-integration-tests"), CrossType.Pure)
-    .dependsOn(core, github, cron)
-    .enablePlugins(BuildInfoPlugin)
-    .settings(
-      name := "Orchestra Integration Tests",
-      version ~= (_.replace('+', '-')),
-      buildInfoPackage := s"${organization.value}.orchestra.integration.tests",
-      buildInfoKeys += "artifactName" -> artifact.value.name,
-      libraryDependencies ++= scalaTest.value,
-      publishArtifact := false,
-      publishLocal := {}
-    )
-lazy val integrationTestsJVM = integrationTests.jvm
-  .dependsOn(lock)
+lazy val `orchestra-integration-tests` = crossProject(JVMPlatform, JSPlatform)
+  .crossType(CrossType.Pure)
+  .dependsOn(`orchestra-core`, `orchestra-github`, `orchestra-cron`)
+  .enablePlugins(BuildInfoPlugin)
+  .settings(
+    name := "Orchestra Integration Tests",
+    version ~= (_.replace('+', '-')),
+    buildInfoPackage := s"${organization.value}.orchestra.integration.tests",
+    buildInfoKeys += "artifactName" -> artifact.value.name,
+    libraryDependencies ++= scalaTest.value,
+    publishArtifact := false,
+    publishLocal := {}
+  )
+lazy val `orchestra-integration-testsJVM` = `orchestra-integration-tests`.jvm
+  .dependsOn(`orchestra-lock`)
   .enablePlugins(JavaAppPackaging)
   .configs(TestCi)
   .settings(
@@ -152,7 +168,7 @@ lazy val integrationTestsJVM = integrationTests.jvm
     Test / test := (Test / test).dependsOn(Docker / publishLocal).value,
     TestCi / test := (Test / test).dependsOn(Docker / publish).value
   )
-lazy val integrationTestsJS = integrationTests.js
+lazy val `orchestra-integration-testsJS` = `orchestra-integration-tests`.js
 
 lazy val TestCi = config("testci").extend(Test)
 lazy val CompileTest = "compile->compile;test->test"
@@ -192,16 +208,16 @@ lazy val logging = Def.setting {
 lazy val scalaCss = Def.setting {
   val scalaCssVersion = "0.5.5"
   Seq(
-    "com.github.japgolly.scalacss" %%%! "core" % scalaCssVersion,
-    "com.github.japgolly.scalacss" %%%! "ext-react" % scalaCssVersion
+    "com.github.japgolly.scalacss" % "core" % scalaCssVersion cross ScalaJSCrossVersion.binary,
+    "com.github.japgolly.scalacss" % "ext-react" % scalaCssVersion cross ScalaJSCrossVersion.binary
   )
 }
 
 lazy val scalaJsReact = Def.setting {
   val scalaJsReactVersion = "1.2.0"
   Seq(
-    "com.github.japgolly.scalajs-react" %%%! "core" % scalaJsReactVersion,
-    "com.github.japgolly.scalajs-react" %%%! "extra" % scalaJsReactVersion
+    "com.github.japgolly.scalajs-react" % "core" % scalaJsReactVersion cross ScalaJSCrossVersion.binary,
+    "com.github.japgolly.scalajs-react" % "extra" % scalaJsReactVersion cross ScalaJSCrossVersion.binary
   )
 }
 

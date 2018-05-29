@@ -31,22 +31,18 @@ object TriggersStaticTests {
   object `Trigger a job with 1 parameter not given should not compile` {
     illTyped("""
       twoParamsWithRunIdJob.trigger("someString")
-    """,
-             "type mismatch;.+")
+    """, "type mismatch;.+")
     illTyped("""
       twoParamsWithRunIdJob.run("someString")
-    """,
-             "type mismatch;.+")
+    """, "type mismatch;.+")
   }
 
   object `Trigger a job with 1 parameter not of the same type should not compile` {
     illTyped("""
       twoParamsWithRunIdJob.trigger("someString", "true")
-    """,
-             """too many arguments \(2\) for method trigger:.+""")
+    """, """too many arguments \(2\) for method trigger:.+""")
     illTyped("""
       twoParamsWithRunIdJob.run("someString", "true")
-    """,
-             """too many arguments \(2\) for method run:.+""")
+    """, """too many arguments \(2\) for method run:.+""")
   }
 }

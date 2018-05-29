@@ -51,7 +51,7 @@ trait HistoryIndex extends Indexed {
           "latestUpdateOn" -> run.latestUpdateOn.asJson,
           "result" -> run.result.asJson,
           "tags" -> run.tags.asJson
-      )
+        )
   }
 
   override def indices: Set[IndexDefinition] = super.indices + HistoryIndex
