@@ -9,8 +9,11 @@ object Secrets {
         line.replace(secret, "**********")
     }
 
-  def get(key: String): Option[String] =
-    sys.env.get(key).map { secret =>
+  def apply(name: String): String =
+    get(name: String).getOrElse(throw new IllegalArgumentException(s"Missing secret $name"))
+
+  def get(name: String): Option[String] =
+    sys.env.get(name).map { secret =>
       secrets = secrets :+ secret
       secret
     }

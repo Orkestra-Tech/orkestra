@@ -19,7 +19,7 @@ the logs:
 ```tut:silent
 import com.goyeau.orchestra.utils.Secrets
 
-val slackToken = Secrets.get("SLACK_TOKEN")
+val slackToken = Secrets.get("SLACK_TOKEN").getOrElse("not set")
 println(s"Look at my secret Slack token: $slackToken!")
 ```
 This will print `Look at my secret Slack token: **********!` in the logs.
