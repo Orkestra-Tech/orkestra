@@ -1,8 +1,8 @@
-import com.drivetribe.orchestra._
-import com.drivetribe.orchestra.Dsl._
-import com.drivetribe.orchestra.board._
-import com.drivetribe.orchestra.job._
-import com.drivetribe.orchestra.model._
+import com.goyeau.orchestra._
+import com.goyeau.orchestra.Dsl._
+import com.goyeau.orchestra.board._
+import com.goyeau.orchestra.job._
+import com.goyeau.orchestra.model._
 
 object Orchestration extends Orchestra {
   // Configuring the UI

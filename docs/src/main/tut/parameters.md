@@ -8,11 +8,11 @@ position: 3
 
 If you'd like to pass parameters to a job you can add the corresponding UI elements, here is an example:
 ```tut:silent
-import com.drivetribe.orchestra.Dsl._
-import com.drivetribe.orchestra.board._
-import com.drivetribe.orchestra.job._
-import com.drivetribe.orchestra.model.JobId
-import com.drivetribe.orchestra.parameter._
+import com.goyeau.orchestra.Dsl._
+import com.goyeau.orchestra.board._
+import com.goyeau.orchestra.job._
+import com.goyeau.orchestra.model.JobId
+import com.goyeau.orchestra.parameter._
 
 // Note that the signature of the function now contains the types of the parameters
 lazy val parametersJobBoard = JobBoard[(String, Boolean) => Unit](JobId("parameters"), "Parameters")(
@@ -38,11 +38,11 @@ libraryDependencies += "com.beachape" %%% "enumeratum" % "Enumeratum version"
 
 Then we can refine the previous code to include the drop-down:
 ```tut:silent
-import com.drivetribe.orchestra.Dsl._
-import com.drivetribe.orchestra.board._
-import com.drivetribe.orchestra.job._
-import com.drivetribe.orchestra.model.JobId
-import com.drivetribe.orchestra.parameter._
+import com.goyeau.orchestra.Dsl._
+import com.goyeau.orchestra.board._
+import com.goyeau.orchestra.job._
+import com.goyeau.orchestra.model.JobId
+import com.goyeau.orchestra.parameter._
 import enumeratum._
 
 // We declare the enum
@@ -75,12 +75,12 @@ We can also define default values: `Input[Double]("Some Double", default = Optio
 It is a good practice to type as much as possible and therefore avoid generic types like `String`s. Orchestra is able to
 handle any case class of one argument:
 ```tut:silent
-import com.drivetribe.orchestra._
-import com.drivetribe.orchestra.Dsl._
-import com.drivetribe.orchestra.board._
-import com.drivetribe.orchestra.job._
-import com.drivetribe.orchestra.model.JobId
-import com.drivetribe.orchestra.parameter._
+import com.goyeau.orchestra._
+import com.goyeau.orchestra.Dsl._
+import com.goyeau.orchestra.board._
+import com.goyeau.orchestra.job._
+import com.goyeau.orchestra.model.JobId
+import com.goyeau.orchestra.parameter._
 
 // We create our better typed Git Ref
 case class Ref(value: String) extends AnyVal

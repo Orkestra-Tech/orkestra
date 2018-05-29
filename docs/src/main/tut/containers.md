@@ -17,12 +17,12 @@ for a pull request, or if you need to run a command like `terraform apply` or `s
 
 Let's write a job that will run `sbt test` assuming that the tests need to have Elasticsearch available on localhost:
 ```tut:silent
-import com.drivetribe.orchestra.Dsl._
-import com.drivetribe.orchestra.board._
-import com.drivetribe.orchestra.job._
-import com.drivetribe.orchestra.model._
+import com.goyeau.orchestra.Dsl._
+import com.goyeau.orchestra.board._
+import com.goyeau.orchestra.job._
+import com.goyeau.orchestra.model._
 // We import the shells DSL
-import com.drivetribe.orchestra.utils.BlockingShells._
+import com.goyeau.orchestra.utils.BlockingShells._
 import io.k8s.api.core.v1.{Container, EnvVar, PodSpec}
 
 lazy val testJobBoard = JobBoard[() => Unit](JobId("test"), "Test")()

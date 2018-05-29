@@ -8,7 +8,7 @@ title:  "Github"
 Orchestra has a Github integration via the `orchestra-github` library/plugin. We can do so by adding the dependency in
 `build.sbt`:
 ```scala
-libraryDependencies += "com.drivetribe" %%% "orchestra-github" % orchestraVersion
+libraryDependencies += "com.goyeau" %%% "orchestra-github" % orchestraVersion
 ```
 
 To add a webhook server so that Github can trigger jobs, we mix in the trait `GithubHooks`, which requires us to
@@ -18,14 +18,14 @@ implement `githubTriggers: Set[GithubTrigger]`. There is two implementation of `
 
 Let's have a look first to `BranchTrigger`:
 ```tut:silent
-import com.drivetribe.orchestra._
-import com.drivetribe.orchestra.Dsl._
-import com.drivetribe.orchestra.board._
+import com.goyeau.orchestra._
+import com.goyeau.orchestra.Dsl._
+import com.goyeau.orchestra.board._
 // We import the Github package
-import com.drivetribe.orchestra.github._
-import com.drivetribe.orchestra.job._
-import com.drivetribe.orchestra.model._
-import com.drivetribe.orchestra.parameter._
+import com.goyeau.orchestra.github._
+import com.goyeau.orchestra.job._
+import com.goyeau.orchestra.model._
+import com.goyeau.orchestra.parameter._
 
 object Orchestration extends Orchestra with GithubHooks { // Note that we mix in GithubHooks
   lazy val board = Folder("Orchestra")(branchJobBoard)
@@ -46,14 +46,14 @@ that checkouts the Git ref and run the code updating the status on Github for th
 (<img alt="Github pending" srcset="img/github-pending.png 2x"><img alt="Github success" srcset="img/github-success.png 2x"><img alt="Github failure" srcset="img/github-failure.png 2x">)
 according to if an exception has been thrown in the code:
 ```tut:silent
-import com.drivetribe.orchestra._
-import com.drivetribe.orchestra.Dsl._
-import com.drivetribe.orchestra.board._
+import com.goyeau.orchestra._
+import com.goyeau.orchestra.Dsl._
+import com.goyeau.orchestra.board._
 // We import the Github package
-import com.drivetribe.orchestra.github._
-import com.drivetribe.orchestra.job._
-import com.drivetribe.orchestra.model._
-import com.drivetribe.orchestra.parameter._
+import com.goyeau.orchestra.github._
+import com.goyeau.orchestra.job._
+import com.goyeau.orchestra.model._
+import com.goyeau.orchestra.parameter._
 
 object Orchestration extends Orchestra with GithubHooks { // Note that we mix in GithubHooks
   lazy val board = Folder("Orchestra")(pullRequestJobBoard)

@@ -1,6 +1,6 @@
-<img alt="Orchestra" src="https://raw.githubusercontent.com/drivetribe/orchestra/master/docs/src/main/resources/microsite/img/orchestra.png" srcset="https://raw.githubusercontent.com/drivetribe/orchestra/master/docs/src/main/resources/microsite/img/orchestra.png 2x">
+<img alt="Orchestra" src="https://raw.githubusercontent.com/orchestracd/orchestra/master/docs/src/main/resources/microsite/img/orchestra.png" srcset="https://raw.githubusercontent.com/orchestracd/orchestra/master/docs/src/main/resources/microsite/img/orchestra.png 2x">
 
-[![Latest version](https://index.scala-lang.org/drivetribe/orchestra/orchestra-core/latest.svg?color=blue)](https://index.scala-lang.org/drivetribe/orchestra/orchestra-core)
+[![Latest version](https://index.scala-lang.org/orchestracd/orchestra/orchestra-core/latest.svg?color=blue)](https://index.scala-lang.org/orchestracd/orchestra/orchestra-core)
 
 Orchestra is an Open Source Continuous Integration / Continuous Deployment server as a library running on
 [Kubernetes](https://kubernetes.io).  
@@ -26,16 +26,16 @@ Key features:
 
 *project/plugins.sbt*:
 ```scala
-addSbtPlugin("com.drivetribe" % "sbt-orchestra" % "<latest version>")
+addSbtPlugin("com.goyeau" % "sbt-orchestra" % "<latest version>")
 ```
 *build.sbt*:
 ```scala
 lazy val orchestration = OrchestraProject("orchestration", file("orchestration"))
   .settings(
     libraryDependencies ++= Seq(
-      "com.drivetribe" %%% "orchestra-github" % orchestraVersion, // Optional Github plugin
-      "com.drivetribe" %%% "orchestra-cron" % orchestraVersion, // Optional Cron plugin
-      "com.drivetribe" %% "orchestra-lock" % orchestraVersion // Optional Lock plugin
+      "com.goyeau" %%% "orchestra-github" % orchestraVersion, // Optional Github plugin
+      "com.goyeau" %%% "orchestra-cron" % orchestraVersion, // Optional Cron plugin
+      "com.goyeau" %% "orchestra-lock" % orchestraVersion // Optional Lock plugin
     )
   )
 lazy val orchestrationJVM = orchestration.jvm
@@ -48,11 +48,11 @@ Given the above [installation](#installation), here is a minimal project with on
 
 *orchestration/src/main/scala/Orchestration.scala*:
 ```tut:silent
-import com.drivetribe.orchestra._
-import com.drivetribe.orchestra.Dsl._
-import com.drivetribe.orchestra.board._
-import com.drivetribe.orchestra.job._
-import com.drivetribe.orchestra.model._
+import com.goyeau.orchestra._
+import com.goyeau.orchestra.Dsl._
+import com.goyeau.orchestra.board._
+import com.goyeau.orchestra.job._
+import com.goyeau.orchestra.model._
 
 // We extend Orchestra to create the web server
 object Orchestration extends Orchestra {
@@ -69,15 +69,15 @@ object Orchestration extends Orchestra {
   }
 }
 ```
-This example is described in [Jobs & Boards](https://drivetribe.github.io/orchestra/jobsboards.html).
+This example is described in [Jobs & Boards](https://orchestracd.github.io/orchestra/jobsboards.html).
 
-[See example projects](https://github.com/drivetribe/orchestra/tree/master/examples)
+[See example projects](https://github.com/orchestracd/orchestra/tree/master/examples)
 
 ## Deployment on Kubernetes with Minikube
 
-We provide some basic Kubernetes Deployment in [kubernetes-dev](https://github.com/drivetribe/orchestra/tree/master/examples/kubernetes-dev)
+We provide some basic Kubernetes Deployment in [kubernetes-dev](https://github.com/orchestracd/orchestra/tree/master/examples/kubernetes-dev)
 that you can use to deploy on a dev environment.  
-Assuming that you are in one of the [example projects](https://github.com/drivetribe/orchestra/tree/master/examples)
+Assuming that you are in one of the [example projects](https://github.com/orchestracd/orchestra/tree/master/examples)
 (or in your own project), here is how to deploy on Kubernetes with Minikube:
 ```
 minikube start                            # Start Minikube
@@ -89,22 +89,22 @@ kubectl proxy                             # Proxy the Kubernetes api
 Visit Orchestra on `httpe://127.0.0.1:8001/api/v1/namespaces/orchestra/services/orchestration:http/proxy`.  
 You can troubleshoot any deployment issue with `minikube dashboard`.
 
-More on how to configure the deployment in [Config](https://drivetribe.github.io/orchestra/config.html).
+More on how to configure the deployment in [Config](https://orchestracd.github.io/orchestra/config.html).
 
 # Documentation
 
-Find all the documentation on [https://drivetribe.github.io/orchestra/](https://drivetribe.github.io/orchestra/)
-- [Jobs & Boards](https://drivetribe.github.io/orchestra/jobsboards.html)
-- [Config](https://drivetribe.github.io/orchestra/config.html)
-- [Parameters](https://drivetribe.github.io/orchestra/parameters.html)
-- [Stages](https://drivetribe.github.io/orchestra/stages.html)
-- [Shell scripts](https://drivetribe.github.io/orchestra/shells.html)
-- [Directories](https://drivetribe.github.io/orchestra/directories.html)
-- [Secrets](https://drivetribe.github.io/orchestra/secrets.html)
-- [Triggering jobs](https://drivetribe.github.io/orchestra/triggers.html)
-- [RunId](https://drivetribe.github.io/orchestra/runid.html)
-- [Containers](https://drivetribe.github.io/orchestra/containers.html)
-- [Plugins](https://drivetribe.github.io/orchestra/plugins/)
+Find all the documentation on [https://orchestracd.github.io/orchestra/](https://orchestracd.github.io/orchestra/)
+- [Jobs & Boards](https://orchestracd.github.io/orchestra/jobsboards.html)
+- [Config](https://orchestracd.github.io/orchestra/config.html)
+- [Parameters](https://orchestracd.github.io/orchestra/parameters.html)
+- [Stages](https://orchestracd.github.io/orchestra/stages.html)
+- [Shell scripts](https://orchestracd.github.io/orchestra/shells.html)
+- [Directories](https://orchestracd.github.io/orchestra/directories.html)
+- [Secrets](https://orchestracd.github.io/orchestra/secrets.html)
+- [Triggering jobs](https://orchestracd.github.io/orchestra/triggers.html)
+- [RunId](https://orchestracd.github.io/orchestra/runid.html)
+- [Containers](https://orchestracd.github.io/orchestra/containers.html)
+- [Plugins](https://orchestracd.github.io/orchestra/plugins/)
 
 
 # Related projects

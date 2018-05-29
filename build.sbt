@@ -7,11 +7,11 @@ lazy val orchestra = project
   .aggregate(coreJVM, coreJS, githubJVM, githubJS, cronJVM, cronJS, lock, plugin, integrationTestsJVM, integrationTestsJS)
   .settings(
     name := "Orchestra",
-    ThisBuild / organization := "com.drivetribe",
+    ThisBuild / organization := "com.goyeau",
     ThisBuild / licenses += "APL2" -> url("http://www.apache.org/licenses/LICENSE-2.0"),
-    ThisBuild / homepage := Option(url("https://drivetribe.github.io/orchestra/")),
+    ThisBuild / homepage := Option(url("https://orchestracd.github.io/orchestra/")),
     ThisBuild / scmInfo := Option(
-      ScmInfo(url("https://github.com/drivetribe/orchestra"), "https://github.com/drivetribe/orchestra.git")
+      ScmInfo(url("https://github.com/orchestracd/orchestra"), "https://github.com/orchestracd/orchestra.git")
     ),
     ThisBuild / developers += Developer(id = "joan38",
                                         name = "Joan Goyeau",
@@ -110,7 +110,7 @@ lazy val docs = project
   .settings(
     name := "Orchestra",
     description := "DevOps with Scala and Kubernetes",
-    micrositeGithubOwner := "drivetribe",
+    micrositeGithubOwner := "OrchestraCD",
     micrositeGithubRepo := "orchestra",
     micrositeBaseUrl := micrositeGithubRepo.value,
     micrositeHighlightTheme := "atom-one-light",
@@ -149,9 +149,6 @@ lazy val integrationTestsJVM = integrationTests.jvm
   .configs(TestCi)
   .settings(
     dockerUpdateLatest := true,
-    // Workaround the fact that ENTRYPOINT is not absolute, so when we change the WORKDIR it won't start
-    dockerEntrypoint := Seq(s"${(Docker / defaultLinuxInstallLocation).value}/bin/${executableScriptName.value}"),
-    dockerRepository := Option("registry.drivetribe.com/tools"),
     Test / test := (Test / test).dependsOn(Docker / publishLocal).value,
     TestCi / test := (Test / test).dependsOn(Docker / publish).value
   )

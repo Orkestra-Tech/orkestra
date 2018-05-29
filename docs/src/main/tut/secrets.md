@@ -17,7 +17,7 @@ in the documentation of [Kubernetes Secrets](https://kubernetes.io/docs/concepts
 Then we can access the secret safely with the `Secrets` utility object which will make sure the secrets are not saved in
 the logs:
 ```tut:silent
-import com.drivetribe.orchestra.utils.Secrets
+import com.goyeau.orchestra.utils.Secrets
 
 val slackToken = Secrets.get("SLACK_TOKEN")
 println(s"Look at my secret Slack token: $slackToken!")

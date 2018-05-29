@@ -7,7 +7,7 @@ title:  "Cron jobs"
 
 Orchestra supports Cron jobs via the `orchestra-cron` library/plugin.
 ```scala
-libraryDependencies += "com.drivetribe" %%% "orchestra-cron" % orchestraVersion
+libraryDependencies += "com.goyeau" %%% "orchestra-cron" % orchestraVersion
 ```
 
 Orchestra Cron jobs have a one to one mapping to [Kubernetes CronJobs](https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/).
@@ -17,13 +17,13 @@ To add cron support, we mix in the trait `CronTriggers`, which requires us to im
 
 Let's write a job that is triggered every 5min:
 ```tut:silent
-import com.drivetribe.orchestra._
-import com.drivetribe.orchestra.Dsl._
-import com.drivetribe.orchestra.board._
+import com.goyeau.orchestra._
+import com.goyeau.orchestra.Dsl._
+import com.goyeau.orchestra.board._
 // We import the Cron package
-import com.drivetribe.orchestra.cron._
-import com.drivetribe.orchestra.job._
-import com.drivetribe.orchestra.model._
+import com.goyeau.orchestra.cron._
+import com.goyeau.orchestra.job._
+import com.goyeau.orchestra.model._
 
 object Orchestration extends Orchestra with CronTriggers { // Note that we mix in GithubHooks
   lazy val board = Folder("Orchestra")(cronJobBoard)

@@ -14,12 +14,12 @@ but if you are coming from a more DevOps background this might blow you mind.
 The `BlockingShells` provides us a function `sh` that will run the shell script you give and returns the output in a
 `String`:
 ```tut:silent
-import com.drivetribe.orchestra.Dsl._
-import com.drivetribe.orchestra.board._
-import com.drivetribe.orchestra.job._
-import com.drivetribe.orchestra.model._
+import com.goyeau.orchestra.Dsl._
+import com.goyeau.orchestra.board._
+import com.goyeau.orchestra.job._
+import com.goyeau.orchestra.model._
 // We import the blocking shell DSL
-import com.drivetribe.orchestra.utils.BlockingShells._
+import com.goyeau.orchestra.utils.BlockingShells._
 
 lazy val shellJobBoard = JobBoard[() => Unit](JobId("shell"), "Shell")()
 lazy val shellJob = Job(shellJobBoard) { implicit workDir => () =>
@@ -35,12 +35,12 @@ scripts in parallel like in this example:
 ```tut:silent
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
-import com.drivetribe.orchestra.Dsl._
-import com.drivetribe.orchestra.board._
-import com.drivetribe.orchestra.job._
-import com.drivetribe.orchestra.model._
+import com.goyeau.orchestra.Dsl._
+import com.goyeau.orchestra.board._
+import com.goyeau.orchestra.job._
+import com.goyeau.orchestra.model._
 // We import the shell DSL
-import com.drivetribe.orchestra.utils.Shells._
+import com.goyeau.orchestra.utils.Shells._
 
 lazy val shellJobBoard = JobBoard[() => Unit](JobId("shell"), "Shell")()
 lazy val shellJob = Job(shellJobBoard) { implicit workDir => () =>

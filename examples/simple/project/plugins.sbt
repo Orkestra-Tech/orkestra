@@ -1,1 +1,1 @@
-addSbtPlugin("com.drivetribe" % "sbt-orchestra" % "0.7")
+addSbtPlugin("com.goyeau" % "sbt-orchestra" % "0.7")

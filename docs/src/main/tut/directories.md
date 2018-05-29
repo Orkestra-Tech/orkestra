@@ -14,14 +14,14 @@ scope of the function passed to it:
 ```tut:silent
 import scala.concurrent.Await
 import scala.concurrent.duration._
-import com.drivetribe.orchestra._
-import com.drivetribe.orchestra.Dsl._
-import com.drivetribe.orchestra.board._
+import com.goyeau.orchestra._
+import com.goyeau.orchestra.Dsl._
+import com.goyeau.orchestra.board._
 // We import the directories DSL
-import com.drivetribe.orchestra.utils.Directories._
-import com.drivetribe.orchestra.job._
-import com.drivetribe.orchestra.model._
-import com.drivetribe.orchestra.utils.Shells._
+import com.goyeau.orchestra.utils.Directories._
+import com.goyeau.orchestra.job._
+import com.goyeau.orchestra.model._
+import com.goyeau.orchestra.utils.Shells._
 
 lazy val directoryJobBoard = JobBoard[() => Unit](JobId("directory"), "Directory")()
 lazy val directoryJob = Job(directoryJobBoard) { implicit workDir => () =>
@@ -45,7 +45,7 @@ directory we need the relative `File` to be aware of it. This is why we have the
 so that we can use it in Scala or Java libraries.  
 Here is an example of how to use it:
 ```tut:silent
-import com.drivetribe.orchestra.filesystem._
+import com.goyeau.orchestra.filesystem._
 
 def createFile()(implicit workDir: Directory): Unit = { 
   dir("subDir") { implicit workDir =>
