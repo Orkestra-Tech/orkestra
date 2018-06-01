@@ -1,6 +1,7 @@
 <img alt="Orkestra" src="https://raw.githubusercontent.com/orkestracd/orkestra/master/docs/src/main/resources/microsite/img/orkestra.png" srcset="https://raw.githubusercontent.com/orkestracd/orkestra/master/docs/src/main/resources/microsite/img/orkestra.png 2x">
 
 [![Latest version](https://index.scala-lang.org/orkestracd/orkestra/orkestra-core/latest.svg?color=blue)](https://index.scala-lang.org/orkestracd/orkestra/orkestra-core)
+[![Gitter](https://img.shields.io/badge/gitter-join%20chat-green.svg)](https://gitter.im/OrkestraCD/orkestra)
 
 Orkestra is an Open Source Continuous Integration / Continuous Deployment server as a library running on
 [Kubernetes](https://kubernetes.io).  
