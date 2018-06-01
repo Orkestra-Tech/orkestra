@@ -12,7 +12,7 @@ lazy val orkestra = project
     `orkestra-cronJVM`,
     `orkestra-cronJS`,
     `orkestra-lock`,
-    `orkestra-plugin`,
+    `orkestra-sbt`,
     `orkestra-integration-testsJVM`,
     `orkestra-integration-testsJS`,
     docs
@@ -106,7 +106,7 @@ lazy val `orkestra-lock` = project
   .dependsOn(`orkestra-coreJVM` % CompileTest)
   .settings(name := "Orkestra Lock")
 
-lazy val `orkestra-plugin` = project
+lazy val `orkestra-sbt` = project
   .enablePlugins(BuildInfoPlugin)
   .settings(
     name := "Orkestra Plugin",

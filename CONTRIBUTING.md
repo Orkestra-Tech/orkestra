@@ -15,7 +15,7 @@ Please come to ask anything to the maintainers, contributors and other users on 
 - `orkestra-github` GitHub integration plugin.
 - `orkestra-cron` Cron plugin using Kubernetes Cron.
 - `orkestra-lock` Lock plugin using Elasticsearch.
-- `orkestra-plugin` SBT plugin for easy project setup.
+- `orkestra-sbt` SBT plugin for easy project setup.
 - `orkestra-integration-tests` Integration tests.
 - `docs` Documentation with sbt-microsite.
 
