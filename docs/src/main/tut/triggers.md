@@ -11,12 +11,12 @@ Sometimes to achieve a goal we need multiple jobs to run. This is why we have th
 We can trigger a job by calling `.trigger()` on the `Job` we want to trigger. Note that this a fire and forget
 action:
 ```tut:silent
-import com.goyeau.orchestra.Dsl._
-import com.goyeau.orchestra.board._
-import com.goyeau.orchestra.job._
-import com.goyeau.orchestra.model._
+import com.goyeau.orkestra.Dsl._
+import com.goyeau.orkestra.board._
+import com.goyeau.orkestra.job._
+import com.goyeau.orkestra.model._
 // We import the triggers DSL
-import com.goyeau.orchestra.utils.Triggers._
+import com.goyeau.orkestra.utils.Triggers._
 
 lazy val helloJobBoard = JobBoard[() => Unit](JobId("helloWorld"), "Hello World")()
 lazy val helloJob = Job(helloJobBoard) { implicit workDir => () =>
@@ -35,12 +35,12 @@ If you'd like to run a job and therefore await the result of it call `.run()`. T
 ```tut:silent
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
-import com.goyeau.orchestra.Dsl._
-import com.goyeau.orchestra.board._
-import com.goyeau.orchestra.job._
-import com.goyeau.orchestra.model._
+import com.goyeau.orkestra.Dsl._
+import com.goyeau.orkestra.board._
+import com.goyeau.orkestra.job._
+import com.goyeau.orkestra.model._
 // We import the triggers DSL
-import com.goyeau.orchestra.utils.Triggers._
+import com.goyeau.orkestra.utils.Triggers._
 
 lazy val runJobBoard = JobBoard[() => Unit](JobId("run"), "Run")()
 lazy val runJob = Job(runJobBoard) { implicit workDir => () =>

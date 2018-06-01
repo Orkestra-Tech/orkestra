@@ -5,15 +5,15 @@ title:  "Locking"
 
 # Locking
 
-Orchestra can ensure some code is running only once at a time across all the running jobs via the `orchestra-lock`
+Orkestra can ensure some code is running only once at a time across all the running jobs via the `orkestra-lock`
 library/plugin. We can do so by adding the dependency in `build.sbt`:
 ```scala
-libraryDependencies += "com.goyeau" %% "orchestra-lock" % orchestraVersion
+libraryDependencies += "com.goyeau" %% "orkestra-lock" % orkestraVersion
 ```
 
 Then we can use the `Lock` class to create a lock and use it either awaiting the potential release of the lock:
 ```tut:silent
-import com.goyeau.orchestra.lock.Lock
+import com.goyeau.orkestra.lock.Lock
 
 def deploy(environment: String) = Lock(environment).orWait {
   println(s"Deploying on $environment")
@@ -22,7 +22,7 @@ def deploy(environment: String) = Lock(environment).orWait {
 
 Or by running another function if the lock is already acquired:
 ```tut:silent
-import com.goyeau.orchestra.lock.Lock
+import com.goyeau.orkestra.lock.Lock
 
 def deploy(environment: String) = Lock(environment).orElse {
   println(s"Deploying on $environment")

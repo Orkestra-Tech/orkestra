@@ -6,18 +6,18 @@ position: 1
 
 # Jobs & Boards
 
-Orchestra is split in 2 main parts, the `Board`s which are UI elements and actual `Job`s that contains the tasks to
+Orkestra is split in 2 main parts, the `Board`s which are UI elements and actual `Job`s that contains the tasks to
 execute and how to execute them.
 
-## The Orchestra trait
+## The Orkestra trait
 
-The trait `Orchestra` act as the main of our app, it will start the web server.  
-Mixing in `Orchestra` requires us to implement 2 attributes, `board: Board` that will be the root Board to
-display and `jobs: Set[Job]` that will be our set of jobs that can be executed by Orchestra:
+The trait `Orkestra` act as the main of our app, it will start the web server.  
+Mixing in `Orkestra` requires us to implement 2 attributes, `board: Board` that will be the root Board to
+display and `jobs: Set[Job]` that will be our set of jobs that can be executed by Orkestra:
 ```tut:silent
-import com.goyeau.orchestra._
+import com.goyeau.orkestra._
 
-object Orchestration extends Orchestra {
+object Orkestra extends OrkestraServer {
   // Configuring the UI
   lazy val board = ???
 
@@ -33,9 +33,9 @@ The boards are UI elements, there is 2 main implementation of `Board`: `JobBoard
 ### JobBoard
 `JobBoard` represent the job on the UI:
 ```tut:silent
-import com.goyeau.orchestra.Dsl._
-import com.goyeau.orchestra.board._
-import com.goyeau.orchestra.model._
+import com.goyeau.orkestra.Dsl._
+import com.goyeau.orkestra.board._
+import com.goyeau.orkestra.model._
 
 JobBoard[() => Unit](JobId("deployFrontend"), "Deploy Frontend")()
 ```
@@ -47,10 +47,10 @@ JobBoard[() => Unit](JobId("deployFrontend"), "Deploy Frontend")()
 ### Folder
 `Folder`s let you create a tree that can eventually contain `JobBoard`s: 
 ```tut:silent
-import com.goyeau.orchestra.board._
-import com.goyeau.orchestra.model._
+import com.goyeau.orkestra.board._
+import com.goyeau.orkestra.model._
 
-Folder("Orchestra")(
+Folder("Orkestra")(
   Folder("Some folder")(
     JobBoard[() => Unit](JobId("someId1"), "Some Job 1")()
   ),
@@ -64,14 +64,14 @@ Now that we have the UI defined we can define the actual `Job` with a function t
 button on the UI.  
 Here is a full example with a `Folder`, the `JobBoard` and the `Job`:
 ```tut:silent
-import com.goyeau.orchestra._
-import com.goyeau.orchestra.Dsl._
-import com.goyeau.orchestra.board._
-import com.goyeau.orchestra.job._
-import com.goyeau.orchestra.model._
+import com.goyeau.orkestra._
+import com.goyeau.orkestra.Dsl._
+import com.goyeau.orkestra.board._
+import com.goyeau.orkestra.job._
+import com.goyeau.orkestra.model._
 
-object Orchestration extends Orchestra {
-  lazy val board = Folder("Orchestra")(deployFrontendJobBoard)
+object Orkestra extends OrkestraServer {
+  lazy val board = Folder("Orkestra")(deployFrontendJobBoard)
   lazy val jobs = Set(deployFrontendJob)
 
   lazy val deployFrontendJobBoard = JobBoard[() => Unit](JobId("deployFrontend"), "Deploy Frontend")()

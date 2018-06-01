@@ -6,7 +6,7 @@ position: 11
 
 # Plugins
 
-Orchestra doesn't have a plugins system like you can find in other CD tools with their own store. Instead it relies on
+Orkestra doesn't have a plugins system like you can find in other CD tools with their own store. Instead it relies on
 jar dependencies and distribution systems like Maven or Ivy.  
 There are multiple advantages to this system:
 - Since Scala is a JVM language we have access to all the libraries from the JVM community (Scala, Java or any other
@@ -26,8 +26,8 @@ Now we can define a function `uploadToS3()` that we will be able to use in any j
 import com.amazonaws.regions.Regions
 import com.amazonaws.services.s3.AmazonS3ClientBuilder
 import com.amazonaws.services.s3.transfer.TransferManagerBuilder
-import com.goyeau.orchestra.filesystem._
-import com.goyeau.orchestra.utils.BlockingShells._
+import com.goyeau.orkestra.filesystem._
+import com.goyeau.orkestra.utils.BlockingShells._
 
 // We need the implicit workDir in order to know in which directory we are working in
 def uploadToS3()(implicit workDir: Directory) = {
@@ -48,7 +48,7 @@ def uploadToS3()(implicit workDir: Directory) = {
 
 Let's try to integrate with Slack. If I Google "slack scala" and hit "I'm feeling lucky" I end up on this Slack client
 [https://github.com/gilbertw1/slack-scala-client](https://github.com/gilbertw1/slack-scala-client). So it seems that
-someone already wrote a Slack plugin for Orchestra even before Orchestra was born!  
+someone already wrote a Slack plugin for Orkestra even before Orkestra was born!  
 Let's add the dependency to `build.sbt`:
 ```scala
 libraryDependencies += "com.github.gilbertw1" %% "slack-scala-client" % "Slack client version"
@@ -57,8 +57,8 @@ libraryDependencies += "com.github.gilbertw1" %% "slack-scala-client" % "Slack c
 And create the `sendSlackMessage()` function:
 ```tut:silent
 import slack.api.SlackApiClient
-// Orchestra already uses Akka so we can import the implicits for the Slack too
-import com.goyeau.orchestra.utils.AkkaImplicits._
+// Orkestra already uses Akka so we can import the implicits for the Slack too
+import com.goyeau.orkestra.utils.AkkaImplicits._
 
 def sendSlackMessage() = {
   val slack = SlackApiClient("slack token")
@@ -68,6 +68,6 @@ def sendSlackMessage() = {
 You will be able to get the token by creating a Slack app on https://api.slack.com/apps and then adding it to your
 workspace.
 
-Their are endless possibilities with the access to all the Java world and this is why Orchestra has been designed from
+Their are endless possibilities with the access to all the Java world and this is why Orkestra has been designed from
 the beginning as code first.  
 See also the [Github Integration](github.html), [Cron jobs](cron.html) and [Locking](github.html) documentation.

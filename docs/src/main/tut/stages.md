@@ -8,12 +8,12 @@ position: 4
 
 Stages are more UI related elements to show some sort of progress of the job. It also shows the time spent in the stage:
 ```tut:silent
-import com.goyeau.orchestra.Dsl._
-import com.goyeau.orchestra.board._
-import com.goyeau.orchestra.job._
-import com.goyeau.orchestra.model._
+import com.goyeau.orkestra.Dsl._
+import com.goyeau.orkestra.board._
+import com.goyeau.orkestra.job._
+import com.goyeau.orkestra.model._
 // We import the stages DSL
-import com.goyeau.orchestra.utils.Stages._
+import com.goyeau.orkestra.utils.Stages._
 
 lazy val stagesJobBoard = JobBoard[() => Unit](JobId("stages"), "Stages")()
 lazy val stagesJob = Job(stagesJobBoard) { implicit workDir => () =>

@@ -2,28 +2,28 @@ import microsites.ExtraMdFileConfig
 import org.scalajs.sbtplugin.ScalaJSCrossVersion
 import sbtcrossproject.{crossProject, CrossType}
 
-lazy val orchestra = project
+lazy val orkestra = project
   .in(file("."))
   .aggregate(
-    `orchestra-coreJVM`,
-    `orchestra-coreJS`,
-    `orchestra-githubJVM`,
-    `orchestra-githubJS`,
-    `orchestra-cronJVM`,
-    `orchestra-cronJS`,
-    `orchestra-lock`,
-    `orchestra-plugin`,
-    `orchestra-integration-testsJVM`,
-    `orchestra-integration-testsJS`,
+    `orkestra-coreJVM`,
+    `orkestra-coreJS`,
+    `orkestra-githubJVM`,
+    `orkestra-githubJS`,
+    `orkestra-cronJVM`,
+    `orkestra-cronJS`,
+    `orkestra-lock`,
+    `orkestra-plugin`,
+    `orkestra-integration-testsJVM`,
+    `orkestra-integration-testsJS`,
     docs
   )
   .settings(
-    name := "Orchestra",
+    name := "Orkestra",
     ThisBuild / organization := "com.goyeau",
     ThisBuild / licenses += "APL2" -> url("http://www.apache.org/licenses/LICENSE-2.0"),
-    ThisBuild / homepage := Option(url("https://orchestracd.github.io/orchestra/")),
+    ThisBuild / homepage := Option(url("https://orkestracd.github.io/orkestra/")),
     ThisBuild / scmInfo := Option(
-      ScmInfo(url("https://github.com/orchestracd/orchestra"), "https://github.com/orchestracd/orchestra.git")
+      ScmInfo(url("https://github.com/orkestracd/orkestra"), "https://github.com/orkestracd/orkestra.git")
     ),
     ThisBuild / developers += Developer(id = "joan38",
                                         name = "Joan Goyeau",
@@ -53,7 +53,7 @@ lazy val orchestra = project
   )
 
 /***************** Projects *****************/
-lazy val `orchestra-core` = crossProject(JVMPlatform, JSPlatform)
+lazy val `orkestra-core` = crossProject(JVMPlatform, JSPlatform)
   .crossType(CrossType.Pure)
   .enablePlugins(BuildInfoPlugin)
   .jsSettings(
@@ -62,9 +62,9 @@ lazy val `orchestra-core` = crossProject(JVMPlatform, JSPlatform)
     ) ++ react.value
   )
   .settings(
-    name := "Orchestra Core",
-    buildInfoPackage := s"${organization.value}.orchestra",
-    buildInfoKeys += "projectName" -> "Orchestra",
+    name := "Orkestra Core",
+    buildInfoPackage := s"${organization.value}.orkestra",
+    buildInfoKeys += "projectName" -> "Orkestra",
     resolvers += Opts.resolver.sonatypeSnapshots,
     libraryDependencies ++= Seq(
       "com.chuusai" %%% "shapeless" % "2.3.3",
@@ -82,37 +82,37 @@ lazy val `orchestra-core` = crossProject(JVMPlatform, JSPlatform)
       scalaTest.value ++
       enumeratum.value.map(_ % Provided)
   )
-lazy val `orchestra-coreJVM` = `orchestra-core`.jvm
-lazy val `orchestra-coreJS` = `orchestra-core`.js
+lazy val `orkestra-coreJVM` = `orkestra-core`.jvm
+lazy val `orkestra-coreJS` = `orkestra-core`.js
 
-lazy val `orchestra-github` = crossProject(JVMPlatform, JSPlatform)
+lazy val `orkestra-github` = crossProject(JVMPlatform, JSPlatform)
   .crossType(CrossType.Pure)
-  .dependsOn(`orchestra-core` % CompileTest)
+  .dependsOn(`orkestra-core` % CompileTest)
   .settings(
-    name := "Orchestra Github",
+    name := "Orkestra Github",
     libraryDependencies += "org.eclipse.jgit" % "org.eclipse.jgit" % "4.9.0.201710071750-r"
   )
-lazy val `orchestra-githubJVM` = `orchestra-github`.jvm
-lazy val `orchestra-githubJS` = `orchestra-github`.js
+lazy val `orkestra-githubJVM` = `orkestra-github`.jvm
+lazy val `orkestra-githubJS` = `orkestra-github`.js
 
-lazy val `orchestra-cron` = crossProject(JVMPlatform, JSPlatform)
+lazy val `orkestra-cron` = crossProject(JVMPlatform, JSPlatform)
   .crossType(CrossType.Pure)
-  .dependsOn(`orchestra-core` % CompileTest)
-  .settings(name := "Orchestra Cron")
-lazy val `orchestra-cronJVM` = `orchestra-cron`.jvm
-lazy val `orchestra-cronJS` = `orchestra-cron`.js
+  .dependsOn(`orkestra-core` % CompileTest)
+  .settings(name := "Orkestra Cron")
+lazy val `orkestra-cronJVM` = `orkestra-cron`.jvm
+lazy val `orkestra-cronJS` = `orkestra-cron`.js
 
-lazy val `orchestra-lock` = project
-  .dependsOn(`orchestra-coreJVM` % CompileTest)
-  .settings(name := "Orchestra Lock")
+lazy val `orkestra-lock` = project
+  .dependsOn(`orkestra-coreJVM` % CompileTest)
+  .settings(name := "Orkestra Lock")
 
-lazy val `orchestra-plugin` = project
+lazy val `orkestra-plugin` = project
   .enablePlugins(BuildInfoPlugin)
   .settings(
-    name := "Orchestra Plugin",
-    moduleName := "sbt-orchestra",
+    name := "Orkestra Plugin",
+    moduleName := "sbt-orkestra",
     sbtPlugin := true,
-    buildInfoPackage := s"${organization.value}.orchestra",
+    buildInfoPackage := s"${organization.value}.orkestra",
     addSbtPlugin("org.portable-scala" % "sbt-scalajs-crossproject" % "0.4.0"),
     addSbtPlugin("org.scala-js" %% "sbt-scalajs" % "0.6.23"),
     addSbtPlugin("com.vmunier" %% "sbt-web-scalajs" % "1.0.7"),
@@ -121,16 +121,16 @@ lazy val `orchestra-plugin` = project
 
 lazy val docs = project
   .in(file("docs"))
-  .dependsOn(`orchestra-coreJVM`, `orchestra-githubJVM`, `orchestra-cronJVM`, `orchestra-lock`)
+  .dependsOn(`orkestra-coreJVM`, `orkestra-githubJVM`, `orkestra-cronJVM`, `orkestra-lock`)
   .enablePlugins(MicrositesPlugin)
   .settings(
-    name := "Orchestra",
+    name := "Orkestra",
     description := "DevOps with Scala and Kubernetes",
-    micrositeGithubOwner := "OrchestraCD",
-    micrositeGithubRepo := "orchestra",
+    micrositeGithubOwner := "OrkestraCD",
+    micrositeGithubRepo := "orkestra",
     micrositeBaseUrl := micrositeGithubRepo.value,
     micrositeHighlightTheme := "atom-one-light",
-    micrositeGitterChannelUrl := "OrchestraCD/Orchestra",
+    micrositeGitterChannelUrl := "OrkestraCD/Orkestra",
     micrositePalette ++= Map(
       "brand-primary" -> "#DA3435",
       "brand-secondary" -> "#3570E5",
@@ -146,21 +146,21 @@ lazy val docs = project
     publishLocal := {}
   )
 
-lazy val `orchestra-integration-tests` = crossProject(JVMPlatform, JSPlatform)
+lazy val `orkestra-integration-tests` = crossProject(JVMPlatform, JSPlatform)
   .crossType(CrossType.Pure)
-  .dependsOn(`orchestra-core`, `orchestra-github`, `orchestra-cron`)
+  .dependsOn(`orkestra-core`, `orkestra-github`, `orkestra-cron`)
   .enablePlugins(BuildInfoPlugin)
   .settings(
-    name := "Orchestra Integration Tests",
+    name := "Orkestra Integration Tests",
     version ~= (_.replace('+', '-')),
-    buildInfoPackage := s"${organization.value}.orchestra.integration.tests",
+    buildInfoPackage := s"${organization.value}.orkestra.integration.tests",
     buildInfoKeys += "artifactName" -> artifact.value.name,
     libraryDependencies ++= scalaTest.value,
     publishArtifact := false,
     publishLocal := {}
   )
-lazy val `orchestra-integration-testsJVM` = `orchestra-integration-tests`.jvm
-  .dependsOn(`orchestra-lock`)
+lazy val `orkestra-integration-testsJVM` = `orkestra-integration-tests`.jvm
+  .dependsOn(`orkestra-lock`)
   .enablePlugins(JavaAppPackaging)
   .configs(TestCi)
   .settings(
@@ -168,7 +168,7 @@ lazy val `orchestra-integration-testsJVM` = `orchestra-integration-tests`.jvm
     Test / test := (Test / test).dependsOn(Docker / publishLocal).value,
     TestCi / test := (Test / test).dependsOn(Docker / publish).value
   )
-lazy val `orchestra-integration-testsJS` = `orchestra-integration-tests`.js
+lazy val `orkestra-integration-testsJS` = `orkestra-integration-tests`.js
 
 lazy val TestCi = config("testci").extend(Test)
 lazy val CompileTest = "compile->compile;test->test"

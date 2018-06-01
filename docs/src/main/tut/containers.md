@@ -6,23 +6,23 @@ position: 9
 
 # Containers
 
-The Orchestra jobs have a one to one mapping to [Kubernetes Jobs](https://kubernetes.io/docs/concepts/workloads/controllers/jobs-run-to-completion/).
-That means when you run a job, Orchestra will actually schedule a Kubernetes job that will schedule a [Pod](https://kubernetes.io/docs/concepts/workloads/pods/pod/)
+The Orkestra jobs have a one to one mapping to [Kubernetes Jobs](https://kubernetes.io/docs/concepts/workloads/controllers/jobs-run-to-completion/).
+That means when you run a job, Orkestra will actually schedule a Kubernetes job that will schedule a [Pod](https://kubernetes.io/docs/concepts/workloads/pods/pod/)
 that will run a container where the code of your job will be executed.
 
-As you may already know it is possible to run multiple containers in a Pod and Orchestra provides a way to do so from
+As you may already know it is possible to run multiple containers in a Pod and Orkestra provides a way to do so from
 the `Job` configuration.  
 We might want to run multiple containers per job for example to run a database that we will be used while running tests
 for a pull request, or if you need to run a command like `terraform apply` or `sbt test`.
 
 Let's write a job that will run `sbt test` assuming that the tests need to have Elasticsearch available on localhost:
 ```tut:silent
-import com.goyeau.orchestra.Dsl._
-import com.goyeau.orchestra.board._
-import com.goyeau.orchestra.job._
-import com.goyeau.orchestra.model._
+import com.goyeau.orkestra.Dsl._
+import com.goyeau.orkestra.board._
+import com.goyeau.orkestra.job._
+import com.goyeau.orkestra.model._
 // We import the shells DSL
-import com.goyeau.orchestra.utils.BlockingShells._
+import com.goyeau.orkestra.utils.BlockingShells._
 import io.k8s.api.core.v1.{Container, EnvVar, PodSpec}
 
 lazy val testJobBoard = JobBoard[() => Unit](JobId("test"), "Test")()

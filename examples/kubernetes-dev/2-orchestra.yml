@@ -1,11 +1,11 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: orchestration
-  namespace: orchestra
+  name: orkestra
+  namespace: orkestra
 spec:
   selector:
-    app: orchestration
+    app: orkestra
   ports:
   - name: http
     port: 80
@@ -18,34 +18,34 @@ spec:
 apiVersion: apps/v1beta2
 kind: Deployment
 metadata:
-  name: orchestration
-  namespace: orchestra
+  name: orkestra
+  namespace: orkestra
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: orchestration
+      app: orkestra
   template:
     metadata:
       labels:
-        app: orchestration
+        app: orkestra
     spec:
       containers:
-      - name: orchestration
-        image: orchestration:0.1.0-SNAPSHOT
+      - name: orkestra
+        image: orkestra:0.1.0-SNAPSHOT
         imagePullPolicy: IfNotPresent
         env:
-        - name: ORCHESTRA_KUBE_URI
+        - name: ORKESTRA_KUBE_URI
           value: https://kubernetes.default
-        - name: ORCHESTRA_ELASTICSEARCH_URI
+        - name: ORKESTRA_ELASTICSEARCH_URI
           value: elasticsearch://elasticsearch:9200
-        - name: ORCHESTRA_BASEPATH
-          value: /api/v1/namespaces/orchestra/services/orchestration:http/proxy
-        - name: ORCHESTRA_POD_NAME
+        - name: ORKESTRA_BASEPATH
+          value: /api/v1/namespaces/orkestra/services/orkestra:http/proxy
+        - name: ORKESTRA_POD_NAME
           valueFrom:
             fieldRef:
               fieldPath: metadata.name
-        - name: ORCHESTRA_NAMESPACE
+        - name: ORKESTRA_NAMESPACE
           valueFrom:
             fieldRef:
               fieldPath: metadata.namespace

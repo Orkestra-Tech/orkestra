@@ -1,1 +1,1 @@
-addSbtPlugin("com.goyeau" % "sbt-orchestra" % "0.8")
+addSbtPlugin("com.goyeau" % "sbt-orkestra" % "0.8")

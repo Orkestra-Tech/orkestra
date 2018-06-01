@@ -1,6 +1,6 @@
 # Contributing
 
-Contributions to Orchestra are more than welcomed!
+Contributions to Orkestra are more than welcomed!
 
 
 ## Getting help
@@ -11,12 +11,12 @@ Please come to ask anything to the maintainers, contributors and other users on 
 
 ## Modules
 
-- `orchestra-core` Main module.
-- `orchestra-github` GitHub integration plugin.
-- `orchestra-cron` Cron plugin using Kubernetes Cron.
-- `orchestra-lock` Lock plugin using Elasticsearch.
-- `orchestra-plugin` SBT plugin for easy project setup.
-- `orchestra-integration-tests` Integration tests.
+- `orkestra-core` Main module.
+- `orkestra-github` GitHub integration plugin.
+- `orkestra-cron` Cron plugin using Kubernetes Cron.
+- `orkestra-lock` Lock plugin using Elasticsearch.
+- `orkestra-plugin` SBT plugin for easy project setup.
+- `orkestra-integration-tests` Integration tests.
 - `docs` Documentation with sbt-microsite.
 
 

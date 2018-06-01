@@ -1,8 +1,8 @@
-<img alt="Orchestra" src="https://raw.githubusercontent.com/orchestracd/orchestra/master/docs/src/main/resources/microsite/img/orchestra.png" srcset="https://raw.githubusercontent.com/orchestracd/orchestra/master/docs/src/main/resources/microsite/img/orchestra.png 2x">
+<img alt="Orkestra" src="https://raw.githubusercontent.com/orkestracd/orkestra/master/docs/src/main/resources/microsite/img/orkestra.png" srcset="https://raw.githubusercontent.com/orkestracd/orkestra/master/docs/src/main/resources/microsite/img/orkestra.png 2x">
 
-[![Latest version](https://index.scala-lang.org/orchestracd/orchestra/orchestra-core/latest.svg?color=blue)](https://index.scala-lang.org/orchestracd/orchestra/orchestra-core)
+[![Latest version](https://index.scala-lang.org/orkestracd/orkestra/orkestra-core/latest.svg?color=blue)](https://index.scala-lang.org/orkestracd/orkestra/orkestra-core)
 
-Orchestra is an Open Source Continuous Integration / Continuous Deployment server as a library running on
+Orkestra is an Open Source Continuous Integration / Continuous Deployment server as a library running on
 [Kubernetes](https://kubernetes.io).  
 It leverages Kubernetes concepts such as Jobs or Secrets, and configuration as code in [Scala](https://scala-lang.org)
 to take the most of compile time type safety and compatibility with Scala or Java libraries.
@@ -26,36 +26,36 @@ Key features:
 
 *project/plugins.sbt*:
 ```scala
-addSbtPlugin("com.goyeau" % "sbt-orchestra" % "<latest version>")
+addSbtPlugin("com.goyeau" % "sbt-orkestra" % "<latest version>")
 ```
 *build.sbt*:
 ```scala
-lazy val orchestration = OrchestraProject("orchestration", file("orchestration"))
+lazy val orkestra = orkestraProject("orkestra", file("orkestra"))
   .settings(
     libraryDependencies ++= Seq(
-      "com.goyeau" %%% "orchestra-github" % orchestraVersion, // Optional Github plugin
-      "com.goyeau" %%% "orchestra-cron" % orchestraVersion, // Optional Cron plugin
-      "com.goyeau" %% "orchestra-lock" % orchestraVersion // Optional Lock plugin
+      "com.goyeau" %%% "orkestra-github" % orkestraVersion, // Optional Github plugin
+      "com.goyeau" %%% "orkestra-cron" % orkestraVersion, // Optional Cron plugin
+      "com.goyeau" %% "orkestra-lock" % orkestraVersion // Optional Lock plugin
     )
   )
-lazy val orchestrationJVM = orchestration.jvm
-lazy val orchestrationJS = orchestration.js
+lazy val orkestraJVM = orkestra.jvm
+lazy val orkestraJS = orkestra.js
 ```
 
 ## Simple example
 
 Given the above [installation](#installation), here is a minimal project with one job:
 
-*orchestration/src/main/scala/Orchestration.scala*:
+*orkestra/src/main/scala/orkestra.scala*:
 ```tut:silent
-import com.goyeau.orchestra._
-import com.goyeau.orchestra.Dsl._
-import com.goyeau.orchestra.board._
-import com.goyeau.orchestra.job._
-import com.goyeau.orchestra.model._
+import com.goyeau.orkestra._
+import com.goyeau.orkestra.Dsl._
+import com.goyeau.orkestra.board._
+import com.goyeau.orkestra.job._
+import com.goyeau.orkestra.model._
 
-// We extend Orchestra to create the web server
-object Orchestration extends Orchestra {
+// We extend OrkestraServer to create the web server
+object Orkestra extends OrkestraServer {
   // Configuring the UI
   lazy val board = deployFrontendJobBoard
   // Configuring the jobs
@@ -69,42 +69,42 @@ object Orchestration extends Orchestra {
   }
 }
 ```
-This example is described in [Jobs & Boards](https://orchestracd.github.io/orchestra/jobsboards.html).
+This example is described in [Jobs & Boards](https://orkestracd.github.io/orkestra/jobsboards.html).
 
-[See example projects](https://github.com/orchestracd/orchestra/tree/master/examples)
+[See example projects](https://github.com/orkestracd/orkestra/tree/master/examples)
 
 ## Deployment on Kubernetes with Minikube
 
-We provide some basic Kubernetes Deployment in [kubernetes-dev](https://github.com/orchestracd/orchestra/tree/master/examples/kubernetes-dev)
+We provide some basic Kubernetes Deployment in [kubernetes-dev](https://github.com/orkestracd/orkestra/tree/master/examples/kubernetes-dev)
 that you can use to deploy on a dev environment.  
-Assuming that you are in one of the [example projects](https://github.com/orchestracd/orchestra/tree/master/examples)
+Assuming that you are in one of the [example projects](https://github.com/orkestracd/orkestra/tree/master/examples)
 (or in your own project), here is how to deploy on Kubernetes with Minikube:
 ```
 minikube start                            # Start Minikube
 eval `minikube docker-env`                # Make docker use the docker engine of Minikube
-sbt orchestrationJVM/Docker/publishLocal  # Publish the docker artifact
+sbt orkestraJVM/Docker/publishLocal  # Publish the docker artifact
 kubectl apply -f ../kubernetes-dev        # Apply the deployement to Kubernetes
 kubectl proxy                             # Proxy the Kubernetes api
 ```
-Visit Orchestra on `httpe://127.0.0.1:8001/api/v1/namespaces/orchestra/services/orchestration:http/proxy`.  
+Visit Orkestra on `httpe://127.0.0.1:8001/api/v1/namespaces/orkestra/services/orkestra:http/proxy`.  
 You can troubleshoot any deployment issue with `minikube dashboard`.
 
-More on how to configure the deployment in [Config](https://orchestracd.github.io/orchestra/config.html).
+More on how to configure the deployment in [Config](https://orkestracd.github.io/orkestra/config.html).
 
 # Documentation
 
-Find all the documentation on [https://orchestracd.github.io/orchestra/](https://orchestracd.github.io/orchestra/)
-- [Jobs & Boards](https://orchestracd.github.io/orchestra/jobsboards.html)
-- [Config](https://orchestracd.github.io/orchestra/config.html)
-- [Parameters](https://orchestracd.github.io/orchestra/parameters.html)
-- [Stages](https://orchestracd.github.io/orchestra/stages.html)
-- [Shell scripts](https://orchestracd.github.io/orchestra/shells.html)
-- [Directories](https://orchestracd.github.io/orchestra/directories.html)
-- [Secrets](https://orchestracd.github.io/orchestra/secrets.html)
-- [Triggering jobs](https://orchestracd.github.io/orchestra/triggers.html)
-- [RunId](https://orchestracd.github.io/orchestra/runid.html)
-- [Containers](https://orchestracd.github.io/orchestra/containers.html)
-- [Plugins](https://orchestracd.github.io/orchestra/plugins/)
+Find all the documentation on [https://orkestracd.github.io/orkestra/](https://orkestracd.github.io/orkestra/)
+- [Jobs & Boards](https://orkestracd.github.io/orkestra/jobsboards.html)
+- [Config](https://orkestracd.github.io/orkestra/config.html)
+- [Parameters](https://orkestracd.github.io/orkestra/parameters.html)
+- [Stages](https://orkestracd.github.io/orkestra/stages.html)
+- [Shell scripts](https://orkestracd.github.io/orkestra/shells.html)
+- [Directories](https://orkestracd.github.io/orkestra/directories.html)
+- [Secrets](https://orkestracd.github.io/orkestra/secrets.html)
+- [Triggering jobs](https://orkestracd.github.io/orkestra/triggers.html)
+- [RunId](https://orkestracd.github.io/orkestra/runid.html)
+- [Containers](https://orkestracd.github.io/orkestra/containers.html)
+- [Plugins](https://orkestracd.github.io/orkestra/plugins/)
 
 
 # Related projects

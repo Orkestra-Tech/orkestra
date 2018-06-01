@@ -1,4 +1,4 @@
-lazy val orchestration = orchestraProject("orchestration", file("orchestration"))
-lazy val orchestrationJVM = orchestration.jvm
+lazy val orkestra = orkestraProject("orkestra", file("orkestra"))
+lazy val orkestraJVM = orkestra.jvm
   .settings(scalaJSPipeline / devCommands ++= Seq("publishLocal", "console", "test"))
-lazy val orchestrationJS = orchestration.js
+lazy val orkestraJS = orkestra.js
