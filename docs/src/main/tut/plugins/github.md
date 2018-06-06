@@ -43,7 +43,7 @@ object Orkestra extends OrkestraServer with GithubHooks { // Note that we mix in
 
 Before we jump into the `PullRequestTrigger` I'd like to introduce `Github.statusUpdated`, a little utility function
 that checkouts the Git ref and run the code updating the status on Github for the Git ref
-(<img alt="Github pending" srcset="img/github-pending.png 2x"><img alt="Github success" srcset="img/github-success.png 2x"><img alt="Github failure" srcset="img/github-failure.png 2x">)
+(<img alt="Github pending" srcset="../img/github-pending.png 2x"><img alt="Github success" srcset="../img/github-success.png 2x"><img alt="Github failure" srcset="../img/github-failure.png 2x">)
 according to if an exception has been thrown in the code:
 ```tut:silent
 import com.goyeau.orkestra._
