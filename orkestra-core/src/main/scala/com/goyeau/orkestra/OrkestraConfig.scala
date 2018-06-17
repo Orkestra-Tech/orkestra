@@ -4,17 +4,15 @@ import java.io.IOException
 import java.nio.file.Paths
 
 import scala.io.Source
-
 import com.sksamuel.elastic4s.ElasticsearchClientUri
 import io.circe.generic.auto._
 import io.circe.parser._
-
 import com.goyeau.orkestra.model.{EnvRunInfo, RunId, RunInfo}
 
 case class OrkestraConfig(
   elasticsearchUri: ElasticsearchClientUri,
   workspace: String = OrkestraConfig.defaultWorkspace,
-  port: Int = OrkestraConfig.defaultPort,
+  port: Int = OrkestraConfig.defaultBindPort,
   runInfoMaybe: Option[RunInfo] = None,
   kubeUri: String,
   namespace: String,
@@ -32,7 +30,7 @@ object OrkestraConfig {
       )
     ),
     fromEnvVar("WORKSPACE").getOrElse("/opt/docker/workspace"),
-    fromEnvVar("PORT").map(_.toInt).getOrElse(defaultPort),
+    fromEnvVar("BIND_PORT").fold(defaultBindPort)(_.toInt),
     fromEnvVar("RUN_INFO").map { runInfoJson =>
       decode[EnvRunInfo](runInfoJson).fold(throw _, runInfo => RunInfo(runInfo.jobId, runInfo.runId.getOrElse(jobUid)))
     },
@@ -44,7 +42,7 @@ object OrkestraConfig {
 
   def fromEnvVar(envVar: String) = sys.env.get(s"ORKESTRA_$envVar").filter(_.nonEmpty)
 
-  lazy val defaultPort = 8080
+  lazy val defaultBindPort = 8080
   lazy val defaultBasePath = ""
   lazy val defaultWorkspace = "/opt/docker/workspace"
   lazy val downwardApi = Paths.get("/var/run/downward-api")

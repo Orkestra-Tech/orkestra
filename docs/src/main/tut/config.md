@@ -8,7 +8,7 @@ position: 2
 
 - `ORKESTRA_KUBE_URI`: The URI of the Kubernetes API. Required.
 - `ORKESTRA_ELASTICSEARCH_URI`: The URI of Elasticsearch for the backend storage. Required.
-- `ORKESTRA_PORT`: Port to bind the API and UI on. Default: 8080.
+- `ORKESTRA_BIND_PORT`: Port to bind the API and UI on. Default: 8080.
 - `ORKESTRA_NAMESPACE`: Orkestra needs to know in which namespace it lives in. Required.  
   The easiest way is giving it via the downward API:
 

@@ -77,7 +77,7 @@ object Orkestra extends OrkestraServer with GithubHooks { // Note that we mix in
 
 - `ORKESTRA_GITHUB_URI`: The URI of the home page as Github displays links to it for PRs for example. Required.
 - `ORKESTRA_GITHUB_TOKEN`: The token of the account that will be used to clone or to update commit statuses. Required.
-- `ORKESTRA_GITHUB_PORT`: The separate port where to bind the Github Hooks server. Default `8081`.
+- `ORKESTRA_GITHUB_BIND_PORT`: The separate port where to bind the Github Hooks server. Default `8081`.
 
 The reason why the Github hooks server is bound on separate port is so that you can make Orkestra accessible only
 internally but still expose the Github hooks server on the public network.  
