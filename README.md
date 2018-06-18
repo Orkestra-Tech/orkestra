@@ -83,14 +83,15 @@ Assuming that you are in one of the [example projects](https://github.com/orkest
 ```
 minikube start                            # Start Minikube
 eval `minikube docker-env`                # Make docker use the docker engine of Minikube
-sbt orkestraJVM/Docker/publishLocal  # Publish the docker artifact
-kubectl apply -f ../kubernetes-dev        # Apply the deployement to Kubernetes
+sbt orkestraJVM/Docker/publishLocal       # Publish the docker artifact
+kubectl apply -f ../kubernetes-dev        # Apply the deployment to Kubernetes
 kubectl proxy                             # Proxy the Kubernetes api
 ```
-Visit Orkestra on `httpe://127.0.0.1:8001/api/v1/namespaces/orkestra/services/orkestra:http/proxy`.  
+Visit Orkestra on `http://127.0.0.1:8001/api/v1/namespaces/orkestra/services/orkestra:http/proxy`.
 You can troubleshoot any deployment issue with `minikube dashboard`.
 
 More on how to configure the deployment in [Config](https://orkestracd.github.io/orkestra/config.html).
+
 
 # Documentation
 
