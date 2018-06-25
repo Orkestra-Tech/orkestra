@@ -1,13 +1,10 @@
 package com.goyeau.orkestra.cron
 
 import scala.concurrent.Future
-
 import com.goyeau.kubernetesclient.KubernetesClient
 import com.typesafe.scalalogging.Logger
-import io.k8s.api.batch.v1beta1.{CronJob, CronJobSpec, JobTemplateSpec}
+import io.k8s.api.batch.v1beta1.{CronJob, CronJobList, CronJobSpec, JobTemplateSpec}
 import io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta
-import shapeless.HNil
-
 import com.goyeau.orkestra.OrkestraConfig
 import com.goyeau.orkestra.kubernetes.{JobSpecs, MasterPod}
 import com.goyeau.orkestra.model.{EnvRunInfo, JobId}
@@ -19,8 +16,8 @@ private[cron] object CronJobs {
   private def cronJobName(jobId: JobId) = jobId.value.toLowerCase
 
   def deleteStale(
-    cronTriggers: Set[CronTrigger]
-  )(implicit orkestraConfig: OrkestraConfig, kubernetesClient: KubernetesClient) =
+    cronTriggers: Set[CronTrigger[_]]
+  )(implicit orkestraConfig: OrkestraConfig, kubernetesClient: KubernetesClient): Future[Unit] =
     for {
       currentCronJobs <- kubernetesClient.cronJobs.namespace(orkestraConfig.namespace).list()
       currentCronJobNames = currentCronJobs.items.flatMap(_.metadata).flatMap(_.name).toSet
@@ -33,8 +30,8 @@ private[cron] object CronJobs {
     } yield ()
 
   def createOrUpdate(
-    cronTriggers: Set[CronTrigger]
-  )(implicit orkestraConfig: OrkestraConfig, kubernetesClient: KubernetesClient) =
+    cronTriggers: Set[CronTrigger[_]]
+  )(implicit orkestraConfig: OrkestraConfig, kubernetesClient: KubernetesClient): Future[Unit] =
     for {
       masterPod <- MasterPod.get()
       _ <- Future.traverse(cronTriggers) { cronTrigger =>
@@ -45,7 +42,8 @@ private[cron] object CronJobs {
               schedule = cronTrigger.schedule,
               jobTemplate = JobTemplateSpec(
                 spec = Option(
-                  JobSpecs.create(masterPod, EnvRunInfo(cronTrigger.job.board.id, None), cronTrigger.job.podSpec(HNil))
+                  JobSpecs
+                    .create(masterPod, EnvRunInfo(cronTrigger.job.board.id, None), cronTrigger.podSpecWithDefaultParams)
                 )
               )
             )
@@ -59,7 +57,7 @@ private[cron] object CronJobs {
       }
     } yield ()
 
-  def list()(implicit orkestraConfig: OrkestraConfig, kubernetesClient: KubernetesClient) =
+  def list()(implicit orkestraConfig: OrkestraConfig, kubernetesClient: KubernetesClient): Future[CronJobList] =
     kubernetesClient.cronJobs
       .namespace(orkestraConfig.namespace)
       .list()

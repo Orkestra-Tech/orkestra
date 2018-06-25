@@ -30,7 +30,7 @@ object Orkestra extends OrkestraServer with CronTriggers { // Note that we mix i
   lazy val jobs = Set(cronJob) // We still need to add the Job to jobs
 
   // We add the CronTrigger to the cronTriggers
-  lazy val cronTriggers = Set(CronTrigger("*/5 * * * *", cronJob))
+  lazy val cronTriggers = Set(CronTrigger("*/5 * * * *", cronJob)())
 
   lazy val cronJobBoard = JobBoard[() => Unit](JobId("cron"), "Cron")()
   lazy val cronJob = Job(cronJobBoard) { implicit workDir => () =>

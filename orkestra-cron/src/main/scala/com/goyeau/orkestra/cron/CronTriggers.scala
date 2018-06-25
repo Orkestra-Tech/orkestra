@@ -19,7 +19,7 @@ import com.goyeau.orkestra.OrkestraPlugin
 trait CronTriggers extends OrkestraPlugin {
   private lazy val logger = Logger(getClass)
 
-  def cronTriggers: Set[CronTrigger]
+  def cronTriggers: Set[CronTrigger[_]]
 
   override def onMasterStart(): Future[Unit] =
     for {
