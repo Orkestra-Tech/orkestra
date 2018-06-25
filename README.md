@@ -81,13 +81,13 @@ that you can use to deploy on a dev environment.
 Assuming that you are in one of the [example projects](https://github.com/orkestracd/orkestra/tree/master/examples)
 (or in your own project), here is how to deploy on Kubernetes with Minikube:
 ```
-minikube start                            # Start Minikube
+minikube start --memory 4096              # Start Minikube
 eval `minikube docker-env`                # Make docker use the docker engine of Minikube
 sbt orkestraJVM/Docker/publishLocal       # Publish the docker artifact
 kubectl apply -f ../kubernetes-dev        # Apply the deployment to Kubernetes
 kubectl proxy                             # Proxy the Kubernetes api
 ```
-Visit Orkestra on `http://127.0.0.1:8001/api/v1/namespaces/orkestra/services/orkestra:http/proxy`.
+Visit Orkestra on `http://127.0.0.1:8001/api/v1/namespaces/orkestra/services/orkestra:http/proxy`.  
 You can troubleshoot any deployment issue with `minikube dashboard`.
 
 More on how to configure the deployment in [Config](https://orkestracd.github.io/orkestra/config.html).
@@ -107,6 +107,13 @@ Find all the documentation on [https://orkestracd.github.io/orkestra/](https://o
 - [RunId](https://orkestracd.github.io/orkestra/runid.html)
 - [Containers](https://orkestracd.github.io/orkestra/containers.html)
 - [Plugins](https://orkestracd.github.io/orkestra/plugins/)
+
+
+# Origins of Orkestra
+
+<a href="https://drivetribe.com"><img alt="DriveTribe" src="https://raw.githubusercontent.com/orkestracd/orkestra/master/docs/src/main/resources/microsite/img/drivetribe.png" srcset="https://raw.githubusercontent.com/orkestracd/orkestra/master/docs/src/main/resources/microsite/img/drivetribe.png 2x"></a>
+
+Orkestra has been created at [DriveTribe](https://drivetribe.com) by its Scala backend team that had to do DevOps. Obsessed by functional programming they decided to apply the same paradigm to their DevOps.
 
 
 # Related projects
