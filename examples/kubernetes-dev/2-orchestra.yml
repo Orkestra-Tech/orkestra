@@ -30,6 +30,7 @@ spec:
       labels:
         app: orkestra
     spec:
+      serviceAccountName: orkestra
       containers:
       - name: orkestra
         image: orkestra:0.1.0-SNAPSHOT

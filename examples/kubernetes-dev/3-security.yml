@@ -1,0 +1,37 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  namespace: orkestra
+  name: orkestra
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: orkestra
+  name: orkestra
+rules:
+- apiGroups: ["batch"]
+  resources: ["cronjobs"]
+  verbs: ["*"]
+- apiGroups: ["batch"]
+  resources: ["jobs"]
+  verbs: ["*"]
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["*"]
+
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: orkestra
+  namespace: orkestra
+subjects:
+- kind: ServiceAccount
+  name: orkestra
+  namespace: orkestra
+roleRef:
+  kind: Role
+  name: orkestra
+  apiGroup: rbac.authorization.k8s.io
