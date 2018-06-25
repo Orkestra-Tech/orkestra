@@ -84,15 +84,13 @@ trait Triggers {
 
   implicit class TriggerableMultipleParamJob[
     ParamValues <: HList: Decoder,
-    ParamValuesNoRunId <: HList,
     TupledValues <: Product,
     Result: Decoder
   ](
     job: Job[ParamValues, Result]
   )(
-    implicit runIdOperation: RunIdOperation[ParamValuesNoRunId, ParamValues],
-    tupler: Tupler.Aux[ParamValuesNoRunId, TupledValues],
-    tupleToHList: Generic.Aux[TupledValues, ParamValuesNoRunId]
+    implicit tupler: Tupler.Aux[ParamValues, TupledValues],
+    tupleToHList: Generic.Aux[TupledValues, ParamValues]
   ) {
 
     /**
@@ -104,10 +102,7 @@ trait Triggers {
     def trigger(values: TupledValues): Future[Unit] =
       job
         .ApiServer()
-        .trigger(
-          orkestraConfig.runInfo.runId,
-          runIdOperation.inject(tupleToHList.to(values), orkestraConfig.runInfo.runId)
-        )
+        .trigger(orkestraConfig.runInfo.runId, tupleToHList.to(values))
 
     /**
       * Run the job with the same run id as the current job. This means the triggered job will output in the same
@@ -118,11 +113,7 @@ trait Triggers {
       for {
         _ <- job
           .ApiServer()
-          .trigger(
-            orkestraConfig.runInfo.runId,
-            runIdOperation.inject(tupleToHList.to(values), orkestraConfig.runInfo.runId),
-            parent = Option(orkestraConfig.runInfo)
-          )
+          .trigger(orkestraConfig.runInfo.runId, tupleToHList.to(values), parent = Option(orkestraConfig.runInfo))
         result <- jobResult(job)
       } yield result
   }

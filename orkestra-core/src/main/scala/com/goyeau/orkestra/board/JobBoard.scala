@@ -7,7 +7,7 @@ import scala.concurrent.{ExecutionContext, Future}
 import com.goyeau.orkestra.OrkestraConfig
 import com.goyeau.orkestra.model._
 import com.goyeau.orkestra.parameter.{Parameter, ParameterOperations}
-import com.goyeau.orkestra.utils.{AutowireClient, AutowireServer, RunIdOperation}
+import com.goyeau.orkestra.utils.{AutowireClient, AutowireServer}
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.auto._
 import io.circe.java8.time._
@@ -59,47 +59,41 @@ object JobBoard {
 
   class JobBuilder[Func](id: JobId, name: String) {
     // No Params
-    def apply[ParamValuesNoRunId <: HList, ParamValues <: HList, Result, PodSpecFunc]()(
+    def apply[ParamValues <: HList, Result, PodSpecFunc]()(
       implicit fnToProdFunc: FnToProduct.Aux[Func, ParamValues => Result],
       fnToProdPodSpec: FnToProduct.Aux[PodSpecFunc, ParamValues => PodSpec],
-      paramOperations: ParameterOperations[HNil, ParamValuesNoRunId],
-      runIdOperation: RunIdOperation[ParamValuesNoRunId, ParamValues],
-      encoderP: Encoder[ParamValues],
-      decoderP: Decoder[ParamValues],
-      decoderR: Decoder[Result]
-    ) = SimpleJobBoard[ParamValuesNoRunId, ParamValues, HNil, Result, Func, PodSpecFunc](id, name, HNil)
-
-    // One param
-    def apply[ParamValuesNoRunId <: HList, ParamValues <: HList, Param <: Parameter[_], Result, PodSpecFunc](
-      param: Param
-    )(
-      implicit fnToProdFunc: FnToProduct.Aux[Func, ParamValues => Result],
-      fnToProdPodSpec: FnToProduct.Aux[PodSpecFunc, ParamValues => PodSpec],
-      runIdOperation: RunIdOperation[ParamValuesNoRunId, ParamValues],
-      paramOperations: ParameterOperations[Param :: HNil, ParamValuesNoRunId],
+      paramOperations: ParameterOperations[HNil, ParamValues],
       encoderP: Encoder[ParamValues],
       decoderP: Decoder[ParamValues],
       decoderR: Decoder[Result]
     ) =
-      SimpleJobBoard[ParamValuesNoRunId, ParamValues, Param :: HNil, Result, Func, PodSpecFunc](id, name, param :: HNil)
+      SimpleJobBoard[ParamValues, HNil, Result, Func, PodSpecFunc](id, name, HNil)
+
+    // One param
+    def apply[ParamValues <: HList, Param <: Parameter[_], Result, PodSpecFunc](
+      param: Param
+    )(
+      implicit fnToProdFunc: FnToProduct.Aux[Func, ParamValues => Result],
+      fnToProdPodSpec: FnToProduct.Aux[PodSpecFunc, ParamValues => PodSpec],
+      paramOperations: ParameterOperations[Param :: HNil, ParamValues],
+      encoderP: Encoder[ParamValues],
+      decoderP: Decoder[ParamValues],
+      decoderR: Decoder[Result]
+    ) =
+      SimpleJobBoard[ParamValues, Param :: HNil, Result, Func, PodSpecFunc](id, name, param :: HNil)
 
     // Multi params
-    def apply[ParamValuesNoRunId <: HList, ParamValues <: HList, TupledParams, Params <: HList, Result, PodSpecFunc](
+    def apply[ParamValues <: HList, TupledParams, Params <: HList, Result, PodSpecFunc](
       params: TupledParams
     )(
       implicit fnToProdFunc: FnToProduct.Aux[Func, ParamValues => Result],
       fnToProdPodSpec: FnToProduct.Aux[PodSpecFunc, ParamValues => PodSpec],
       tupleToHList: Generic.Aux[TupledParams, Params],
-      runIdOperation: RunIdOperation[ParamValuesNoRunId, ParamValues],
-      paramOperations: ParameterOperations[Params, ParamValuesNoRunId],
+      paramOperations: ParameterOperations[Params, ParamValues],
       encoderP: Encoder[ParamValues],
       decoderP: Decoder[ParamValues],
       decoderR: Decoder[Result]
     ) =
-      SimpleJobBoard[ParamValuesNoRunId, ParamValues, Params, Result, Func, PodSpecFunc](
-        id,
-        name,
-        tupleToHList.to(params)
-      )
+      SimpleJobBoard[ParamValues, Params, Result, Func, PodSpecFunc](id, name, tupleToHList.to(params))
   }
 }

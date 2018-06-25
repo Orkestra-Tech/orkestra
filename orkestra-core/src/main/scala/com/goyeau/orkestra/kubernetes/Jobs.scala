@@ -25,7 +25,7 @@ private[orkestra] object Jobs {
       masterPod <- MasterPod.get()
       job = KubeJob(
         metadata = Option(ObjectMeta(name = Option(name(runInfo)))),
-        spec = Option(JobSpecs.create(masterPod, EnvRunInfo(runInfo.jobId, Option(runInfo.runId)), podSpec)),
+        spec = Option(JobSpecs.create(masterPod, EnvRunInfo(runInfo.jobId, Option(runInfo.runId)), podSpec))
       )
       _ <- kubernetesClient.jobs.namespace(orkestraConfig.namespace).create(job)
     } yield ()

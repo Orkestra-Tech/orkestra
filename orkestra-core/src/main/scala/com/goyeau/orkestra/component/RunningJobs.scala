@@ -43,7 +43,7 @@ object RunningJobs {
                 Global.Style.cell,
                 ^.overflow.hidden,
                 TopNav.Style.clickableItem(false),
-                ^.onClick --> props.ctl.set(BoardPageRoute(Seq.empty, job)).flatMap(_ => props.closeRunningJobs),
+                ^.onClick --> props.ctl.set(BoardPageRoute(Seq.empty, job)).flatMap(_ => props.closeRunningJobs)
               )(job.name),
               <.div(
                 Global.Style.cell,

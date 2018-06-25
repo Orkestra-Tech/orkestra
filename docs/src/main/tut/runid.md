@@ -12,9 +12,11 @@ import com.goyeau.orkestra.Dsl._
 import com.goyeau.orkestra.board._
 import com.goyeau.orkestra.job._
 import com.goyeau.orkestra.model._
+// We import the job run info utils
+import com.goyeau.orkestra.utils.JobRunInfo._
 
-lazy val runIdJobBoard = JobBoard[RunId => Unit](JobId("runId"), "RunId")()
-lazy val runIdJob = Job(runIdJobBoard) { implicit workDir => runId =>
+lazy val runIdJobBoard = JobBoard[() => Unit](JobId("runId"), "RunId")()
+lazy val runIdJob = Job(runIdJobBoard) { implicit workDir => () =>
   println(s"My run id is ${runId.value}")
 }
 ```
@@ -29,9 +31,11 @@ import com.goyeau.orkestra.Dsl._
 import com.goyeau.orkestra.board._
 import com.goyeau.orkestra.job._
 import com.goyeau.orkestra.model._
+// We import the job run info utils
+import com.goyeau.orkestra.utils.JobRunInfo._
 
-lazy val firstJobBoard = JobBoard[RunId => Unit](JobId("first"), "First")()
-lazy val firstJob = Job(firstJobBoard) { implicit workDir => runId =>
+lazy val firstJobBoard = JobBoard[() => Unit](JobId("first"), "First")()
+lazy val firstJob = Job(firstJobBoard) { implicit workDir => () =>
   println(s"Trigger the next job: http://orkestra.company.com/orkestra/second?runId=${runId.value}")
 }
 

@@ -2,8 +2,8 @@ package com.goyeau.orkestra.github
 
 import shapeless._
 
-trait GitRefInjector[ParamValuesNoBranch <: HList, ParamValues <: HList] {
-  def apply(params: ParamValuesNoBranch, ref: GitRef): ParamValues
+trait GitRefInjector[ParamValuesNoGifRef <: HList, ParamValues <: HList] {
+  def apply(params: ParamValuesNoGifRef, ref: GitRef): ParamValues
 }
 
 object GitRefInjector {

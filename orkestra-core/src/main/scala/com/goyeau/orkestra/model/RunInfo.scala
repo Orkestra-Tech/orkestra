@@ -25,7 +25,7 @@ object RunInfo {
 
   lazy val elasticsearchFields = Seq(
     keywordField("jobId"),
-    keywordField("runId"),
+    keywordField("runId")
   )
 }
 

@@ -24,7 +24,7 @@ import scalacss.ScalaCssReact._
 import com.goyeau.orkestra.css.Global
 import com.goyeau.orkestra.component.StopButton
 import com.goyeau.orkestra.model.{Page, RunId}
-import com.goyeau.orkestra.utils.{Colours, RunIdOperation}
+import com.goyeau.orkestra.utils.Colours
 
 object JobPage {
 
@@ -38,10 +38,7 @@ object JobPage {
     params: Params,
     page: BoardPageRoute,
     ctl: RouterCtl[PageRoute]
-  )(
-    implicit paramOperations: ParameterOperations[Params, ParamValuesNoRunId],
-    runIdOperation: RunIdOperation[ParamValuesNoRunId, ParamValues]
-  ) {
+  )(implicit paramOperations: ParameterOperations[Params, ParamValues]) {
 
     def runJob(
       $ : RenderScope[Props[_, _, _ <: HList, _], (RunId, Map[Symbol, Any], TagMod, SetIntervalHandle), Unit]
@@ -49,7 +46,7 @@ object JobPage {
       Callback.future {
         event.preventDefault()
         job.Api.client
-          .trigger($.state._1, runIdOperation.inject(paramOperations.values(params, $.state._2), $.state._1))
+          .trigger($.state._1, paramOperations.values(params, $.state._2))
           .call()
           .map(_ => $.modState(_.copy(_1 = RunId.random(), _2 = Map.empty)))
       }
@@ -65,7 +62,7 @@ object JobPage {
             case ((run, stages), index) =>
               val paramsDescription =
                 paramOperations
-                  .paramsState(params, runIdOperation.remove(run.paramValues))
+                  .paramsState(params, run.paramValues)
                   .map(param => s"${param._1}: ${param._2}")
                   .mkString("\n")
               val rerunButton =

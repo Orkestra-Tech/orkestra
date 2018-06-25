@@ -1,7 +1,6 @@
 package com.goyeau.orkestra.integration.tests
 
 import scala.concurrent.duration._
-
 import com.goyeau.orkestra.Dsl._
 import com.goyeau.orkestra.OrkestraServer
 import com.goyeau.orkestra.board.{Folder, JobBoard}
@@ -10,7 +9,7 @@ import com.goyeau.orkestra.github.GithubHooks
 import com.goyeau.orkestra.job.Job
 import com.goyeau.orkestra.model.JobId
 
-object orkestra extends OrkestraServer with GithubHooks with CronTriggers {
+object Orkestra extends OrkestraServer with GithubHooks with CronTriggers {
   lazy val board = Folder("Integration Test")(SomeJob.board)
   lazy val jobs = Set(SomeJob.job)
   lazy val githubTriggers = Set.empty

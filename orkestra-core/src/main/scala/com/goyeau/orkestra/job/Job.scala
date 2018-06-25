@@ -5,7 +5,6 @@ import java.time.Instant
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
-
 import akka.http.scaladsl.server.Route
 import autowire.Core
 import com.goyeau.orkestra.board.JobBoard
