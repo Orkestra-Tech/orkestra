@@ -27,16 +27,16 @@ Key features:
 
 *project/plugins.sbt*:
 ```scala
-addSbtPlugin("com.goyeau" % "sbt-orkestra" % "<latest version>")
+addSbtPlugin("tech.orkestra" % "sbt-orkestra" % "<latest version>")
 ```
 *build.sbt*:
 ```scala
 lazy val orkestra = orkestraProject("orkestra", file("orkestra"))
   .settings(
     libraryDependencies ++= Seq(
-      "com.goyeau" %%% "orkestra-github" % orkestraVersion, // Optional Github plugin
-      "com.goyeau" %%% "orkestra-cron" % orkestraVersion, // Optional Cron plugin
-      "com.goyeau" %% "orkestra-lock" % orkestraVersion // Optional Lock plugin
+      "tech.orkestra" %%% "orkestra-github" % orkestraVersion, // Optional Github plugin
+      "tech.orkestra" %%% "orkestra-cron" % orkestraVersion, // Optional Cron plugin
+      "tech.orkestra" %% "orkestra-lock" % orkestraVersion // Optional Lock plugin
     )
   )
 lazy val orkestraJVM = orkestra.jvm
@@ -49,11 +49,11 @@ Given the above [installation](#installation), here is a minimal project with on
 
 *orkestra/src/main/scala/orkestra.scala*:
 ```tut:silent
-import com.goyeau.orkestra._
-import com.goyeau.orkestra.Dsl._
-import com.goyeau.orkestra.board._
-import com.goyeau.orkestra.job._
-import com.goyeau.orkestra.model._
+import tech.orkestra._
+import tech.orkestra.Dsl._
+import tech.orkestra.board._
+import tech.orkestra.job._
+import tech.orkestra.model._
 
 // We extend OrkestraServer to create the web server
 object Orkestra extends OrkestraServer {

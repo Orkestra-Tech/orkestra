@@ -14,12 +14,12 @@ but if you are coming from a more DevOps background this might blow you mind.
 The `BlockingShells` provides us a function `sh` that will run the shell script you give and returns the output in a
 `String`:
 ```tut:silent
-import com.goyeau.orkestra.Dsl._
-import com.goyeau.orkestra.board._
-import com.goyeau.orkestra.job._
-import com.goyeau.orkestra.model._
+import tech.orkestra.Dsl._
+import tech.orkestra.board._
+import tech.orkestra.job._
+import tech.orkestra.model._
 // We import the blocking shell DSL
-import com.goyeau.orkestra.utils.BlockingShells._
+import tech.orkestra.utils.BlockingShells._
 
 lazy val shellJobBoard = JobBoard[() => Unit](JobId("shell"), "Shell")()
 lazy val shellJob = Job(shellJobBoard) { implicit workDir => () =>
@@ -35,12 +35,12 @@ scripts in parallel like in this example:
 ```tut:silent
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
-import com.goyeau.orkestra.Dsl._
-import com.goyeau.orkestra.board._
-import com.goyeau.orkestra.job._
-import com.goyeau.orkestra.model._
+import tech.orkestra.Dsl._
+import tech.orkestra.board._
+import tech.orkestra.job._
+import tech.orkestra.model._
 // We import the shell DSL
-import com.goyeau.orkestra.utils.Shells._
+import tech.orkestra.utils.Shells._
 
 lazy val shellJobBoard = JobBoard[() => Unit](JobId("shell"), "Shell")()
 lazy val shellJob = Job(shellJobBoard) { implicit workDir => () =>
