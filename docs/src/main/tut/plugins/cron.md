@@ -7,7 +7,7 @@ title:  "Cron jobs"
 
 Orkestra supports Cron jobs via the `orkestra-cron` library/plugin.
 ```scala
-libraryDependencies += "com.goyeau" %%% "orkestra-cron" % orkestraVersion
+libraryDependencies += "tech.orkestra" %%% "orkestra-cron" % orkestraVersion
 ```
 
 Orkestra Cron jobs have a one to one mapping to [Kubernetes CronJobs](https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/).
@@ -17,13 +17,13 @@ To add cron support, we mix in the trait `CronTriggers`, which requires us to im
 
 Let's write a job that is triggered every 5min:
 ```tut:silent
-import com.goyeau.orkestra._
-import com.goyeau.orkestra.Dsl._
-import com.goyeau.orkestra.board._
+import tech.orkestra._
+import tech.orkestra.Dsl._
+import tech.orkestra.board._
 // We import the Cron package
-import com.goyeau.orkestra.cron._
-import com.goyeau.orkestra.job._
-import com.goyeau.orkestra.model._
+import tech.orkestra.cron._
+import tech.orkestra.job._
+import tech.orkestra.model._
 
 object Orkestra extends OrkestraServer with CronTriggers { // Note that we mix in GithubHooks
   lazy val board = Folder("Orkestra")(cronJobBoard)

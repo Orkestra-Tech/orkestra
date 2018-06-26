@@ -8,7 +8,7 @@ title:  "Github"
 Orkestra has a Github integration via the `orkestra-github` library/plugin. We can do so by adding the dependency in
 `build.sbt`:
 ```scala
-libraryDependencies += "com.goyeau" %%% "orkestra-github" % orkestraVersion
+libraryDependencies += "tech.orkestra" %%% "orkestra-github" % orkestraVersion
 ```
 
 To add a webhook server so that Github can trigger jobs, we mix in the trait `GithubHooks`, which requires us to
@@ -18,14 +18,14 @@ implement `githubTriggers: Set[GithubTrigger]`. There is two implementation of `
 
 Let's have a look first to `BranchTrigger`:
 ```tut:silent
-import com.goyeau.orkestra._
-import com.goyeau.orkestra.Dsl._
-import com.goyeau.orkestra.board._
+import tech.orkestra._
+import tech.orkestra.Dsl._
+import tech.orkestra.board._
 // We import the Github package
-import com.goyeau.orkestra.github._
-import com.goyeau.orkestra.job._
-import com.goyeau.orkestra.model._
-import com.goyeau.orkestra.parameter._
+import tech.orkestra.github._
+import tech.orkestra.job._
+import tech.orkestra.model._
+import tech.orkestra.parameter._
 
 object Orkestra extends OrkestraServer with GithubHooks { // Note that we mix in GithubHooks
   lazy val board = Folder("Orkestra")(branchJobBoard)
@@ -46,14 +46,14 @@ that checkouts the Git ref and run the code updating the status on Github for th
 (<img alt="Github pending" srcset="../img/github-pending.png 2x"><img alt="Github success" srcset="../img/github-success.png 2x"><img alt="Github failure" srcset="../img/github-failure.png 2x">)
 according to if an exception has been thrown in the code:
 ```tut:silent
-import com.goyeau.orkestra._
-import com.goyeau.orkestra.Dsl._
-import com.goyeau.orkestra.board._
+import tech.orkestra._
+import tech.orkestra.Dsl._
+import tech.orkestra.board._
 // We import the Github package
-import com.goyeau.orkestra.github._
-import com.goyeau.orkestra.job._
-import com.goyeau.orkestra.model._
-import com.goyeau.orkestra.parameter._
+import tech.orkestra.github._
+import tech.orkestra.job._
+import tech.orkestra.model._
+import tech.orkestra.parameter._
 
 object Orkestra extends OrkestraServer with GithubHooks { // Note that we mix in GithubHooks
   lazy val board = Folder("Orkestra")(pullRequestJobBoard)

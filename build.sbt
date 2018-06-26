@@ -19,9 +19,9 @@ lazy val orkestra = project
   )
   .settings(
     name := "Orkestra",
-    ThisBuild / organization := "com.goyeau",
+    ThisBuild / organization := "tech.orkestra",
     ThisBuild / licenses += "APL2" -> url("http://www.apache.org/licenses/LICENSE-2.0"),
-    ThisBuild / homepage := Option(url("https://orkestracd.github.io/")),
+    ThisBuild / homepage := Option(url("https://orkestra.tech")),
     ThisBuild / scmInfo := Option(
       ScmInfo(url("https://github.com/orkestracd/orkestra"), "https://github.com/orkestracd/orkestra.git")
     ),
@@ -63,14 +63,14 @@ lazy val `orkestra-core` = crossProject(JVMPlatform, JSPlatform)
   )
   .settings(
     name := "Orkestra Core",
-    buildInfoPackage := s"${organization.value}.orkestra",
+    buildInfoPackage := organization.value,
     buildInfoKeys += "projectName" -> "Orkestra",
     resolvers += Opts.resolver.sonatypeSnapshots,
     libraryDependencies ++= Seq(
       "com.chuusai" %%% "shapeless" % "2.3.3",
       "com.vmunier" %% "scalajs-scripts" % "1.1.2",
       "com.lihaoyi" %%% "autowire" % "0.2.6",
-      "com.goyeau" %% "kubernetes-client" % "0.0.4"
+      "com.goyeau" %% "kubernetes-client" % "0.0.5"
     ) ++
       scalaJsReact.value ++
       akkaHttp.value ++
@@ -112,7 +112,7 @@ lazy val `orkestra-sbt` = project
     name := "Orkestra Plugin",
     moduleName := "sbt-orkestra",
     sbtPlugin := true,
-    buildInfoPackage := s"${organization.value}.orkestra",
+    buildInfoPackage := organization.value,
     addSbtPlugin("org.portable-scala" % "sbt-scalajs-crossproject" % "0.4.0"),
     addSbtPlugin("org.scala-js" %% "sbt-scalajs" % "0.6.23"),
     addSbtPlugin("com.vmunier" %% "sbt-web-scalajs" % "1.0.7"),
@@ -125,7 +125,7 @@ lazy val docs = project
   .enablePlugins(MicrositesPlugin)
   .settings(
     name := "Orkestra",
-    description := "DevOps with Scala and Kubernetes",
+    description := "Functional DevOps with Scala and Kubernetes",
     micrositeGithubOwner := "OrkestraCD",
     micrositeGithubRepo := "orkestra",
     micrositeHighlightTheme := "atom-one-light",
@@ -154,7 +154,7 @@ lazy val `orkestra-integration-tests` = crossProject(JVMPlatform, JSPlatform)
   .settings(
     name := "Orkestra Integration Tests",
     version ~= (_.replace('+', '-')),
-    buildInfoPackage := s"${organization.value}.orkestra.integration.tests",
+    buildInfoPackage := s"${organization.value}.integration.tests",
     buildInfoKeys += "artifactName" -> artifact.value.name,
     libraryDependencies ++= scalaTest.value,
     publishArtifact := false,

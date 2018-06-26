@@ -8,12 +8,12 @@ position: 10
 
 It is possible to get the run id of the job, for example if you want to send a Slack message with a link to the job:
 ```tut:silent
-import com.goyeau.orkestra.Dsl._
-import com.goyeau.orkestra.board._
-import com.goyeau.orkestra.job._
-import com.goyeau.orkestra.model._
+import tech.orkestra.Dsl._
+import tech.orkestra.board._
+import tech.orkestra.job._
+import tech.orkestra.model._
 // We import the job run info utils
-import com.goyeau.orkestra.utils.JobRunInfo._
+import tech.orkestra.utils.JobRunInfo._
 
 lazy val runIdJobBoard = JobBoard[() => Unit](JobId("runId"), "RunId")()
 lazy val runIdJob = Job(runIdJobBoard) { implicit workDir => () =>
@@ -27,12 +27,12 @@ So in the following example we will display in the logs a link to trigger anothe
 We usually do this when we'd like the approval of a user to continue the process and keep the run of the 2 jobs like one
 continuous run:
 ```tut:silent
-import com.goyeau.orkestra.Dsl._
-import com.goyeau.orkestra.board._
-import com.goyeau.orkestra.job._
-import com.goyeau.orkestra.model._
+import tech.orkestra.Dsl._
+import tech.orkestra.board._
+import tech.orkestra.job._
+import tech.orkestra.model._
 // We import the job run info utils
-import com.goyeau.orkestra.utils.JobRunInfo._
+import tech.orkestra.utils.JobRunInfo._
 
 lazy val firstJobBoard = JobBoard[() => Unit](JobId("first"), "First")()
 lazy val firstJob = Job(firstJobBoard) { implicit workDir => () =>

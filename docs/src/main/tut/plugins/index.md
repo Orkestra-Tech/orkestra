@@ -26,8 +26,8 @@ Now we can define a function `uploadToS3()` that we will be able to use in any j
 import com.amazonaws.regions.Regions
 import com.amazonaws.services.s3.AmazonS3ClientBuilder
 import com.amazonaws.services.s3.transfer.TransferManagerBuilder
-import com.goyeau.orkestra.filesystem._
-import com.goyeau.orkestra.utils.BlockingShells._
+import tech.orkestra.filesystem._
+import tech.orkestra.utils.BlockingShells._
 
 // We need the implicit workDir in order to know in which directory we are working in
 def uploadToS3()(implicit workDir: Directory) = {
@@ -58,7 +58,7 @@ And create the `sendSlackMessage()` function:
 ```tut:silent
 import slack.api.SlackApiClient
 // Orkestra already uses Akka so we can import the implicits for the Slack too
-import com.goyeau.orkestra.utils.AkkaImplicits._
+import tech.orkestra.utils.AkkaImplicits._
 
 def sendSlackMessage() = {
   val slack = SlackApiClient("slack token")
