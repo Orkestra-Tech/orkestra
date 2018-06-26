@@ -21,7 +21,7 @@ lazy val orkestra = project
     name := "Orkestra",
     ThisBuild / organization := "com.goyeau",
     ThisBuild / licenses += "APL2" -> url("http://www.apache.org/licenses/LICENSE-2.0"),
-    ThisBuild / homepage := Option(url("https://orkestracd.github.io/orkestra/")),
+    ThisBuild / homepage := Option(url("https://orkestracd.github.io/")),
     ThisBuild / scmInfo := Option(
       ScmInfo(url("https://github.com/orkestracd/orkestra"), "https://github.com/orkestracd/orkestra.git")
     ),
@@ -128,7 +128,6 @@ lazy val docs = project
     description := "DevOps with Scala and Kubernetes",
     micrositeGithubOwner := "OrkestraCD",
     micrositeGithubRepo := "orkestra",
-    micrositeBaseUrl := micrositeGithubRepo.value,
     micrositeHighlightTheme := "atom-one-light",
     micrositeGitterChannelUrl := "OrkestraCD/Orkestra",
     micrositePalette ++= Map(
@@ -142,6 +141,8 @@ lazy val docs = project
       "com.github.gilbertw1" %% "slack-scala-client" % "0.2.3",
       "org.zeroturnaround" % "zt-zip" % "1.12"
     ) ++ enumeratum.value,
+    git.remoteRepo := "https://github.com/orkestracd/orkestracd.github.io.git",
+    ghpagesBranch := "master",
     publishArtifact := false,
     publishLocal := {}
   )
