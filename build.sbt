@@ -176,7 +176,7 @@ lazy val CompileTest = "compile->compile;test->test"
 
 /*************** Dependencies ***************/
 lazy val akkaHttp = Def.setting {
-  val akkaHttpVersion = "10.1.1"
+  val akkaHttpVersion = "10.1.3"
   Seq(
     "com.typesafe.akka" %% "akka-http" % akkaHttpVersion,
     "com.typesafe.akka" %% "akka-stream" % "2.5.11",
