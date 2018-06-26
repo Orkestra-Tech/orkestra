@@ -95,7 +95,7 @@ More on how to configure the deployment in [Config](https://orkestracd.github.io
 
 # Documentation
 
-Find all the documentation on [https://orkestracd.github.io/orkestra/](https://orkestracd.github.io/orkestra/)
+Find all the documentation on [https://orkestracd.github.io/orkestra/](https://orkestracd.github.io/orkestra/):
 - [Jobs & Boards](https://orkestracd.github.io/orkestra/jobsboards.html)
 - [Config](https://orkestracd.github.io/orkestra/config.html)
 - [Parameters](https://orkestracd.github.io/orkestra/parameters.html)
@@ -107,6 +107,10 @@ Find all the documentation on [https://orkestracd.github.io/orkestra/](https://o
 - [RunId](https://orkestracd.github.io/orkestra/runid.html)
 - [Containers](https://orkestracd.github.io/orkestra/containers.html)
 - [Plugins](https://orkestracd.github.io/orkestra/plugins/)
+
+Talks and articles:
+- [*Functional DevOps with Scala and Kubernetes*](https://itnext.io/functional-devops-with-scala-a-kubernetes-3d7c91bca72f) article from [Joan Goyeau](https://twitter.com/JoanG38)
+- *Functional DevOps with Scala and Kubernetes* talk from [Joan Goyeau](https://twitter.com/JoanG38)
 
 
 # Origins of Orkestra
