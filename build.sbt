@@ -25,10 +25,12 @@ lazy val orkestra = project
     ThisBuild / scmInfo := Option(
       ScmInfo(url("https://github.com/orkestracd/orkestra"), "https://github.com/orkestracd/orkestra.git")
     ),
-    ThisBuild / developers += Developer(id = "joan38",
-                                        name = "Joan Goyeau",
-                                        email = "joan@goyeau.com",
-                                        url = url("http://goyeau.com")),
+    ThisBuild / developers += Developer(
+      id = "joan38",
+      name = "Joan Goyeau",
+      email = "joan@goyeau.com",
+      url = url("http://goyeau.com")
+    ),
     ThisBuild / scalaVersion := "2.12.4",
     ThisBuild / dynverSonatypeSnapshots := true,
     ThisBuild / scalacOptions ++= Seq(
@@ -58,7 +60,7 @@ lazy val `orkestra-core` = crossProject(JVMPlatform, JSPlatform)
   .enablePlugins(BuildInfoPlugin)
   .jsSettings(
     jsDependencies ++= Seq(
-      "org.webjars.npm" % "ansi_up" % "2.0.2" / "ansi_up.js" commonJSName "ansi_up"
+      ("org.webjars.npm" % "ansi_up" % "2.0.2" / "ansi_up.js").commonJSName("ansi_up")
     ) ++ react.value
   )
   .settings(
@@ -209,25 +211,33 @@ lazy val logging = Def.setting {
 lazy val scalaCss = Def.setting {
   val scalaCssVersion = "0.5.5"
   Seq(
-    "com.github.japgolly.scalacss" % "core" % scalaCssVersion cross ScalaJSCrossVersion.binary,
-    "com.github.japgolly.scalacss" % "ext-react" % scalaCssVersion cross ScalaJSCrossVersion.binary
+    ("com.github.japgolly.scalacss" % "core" % scalaCssVersion).cross(ScalaJSCrossVersion.binary),
+    ("com.github.japgolly.scalacss" % "ext-react" % scalaCssVersion).cross(ScalaJSCrossVersion.binary)
   )
 }
 
 lazy val scalaJsReact = Def.setting {
   val scalaJsReactVersion = "1.2.0"
   Seq(
-    "com.github.japgolly.scalajs-react" % "core" % scalaJsReactVersion cross ScalaJSCrossVersion.binary,
-    "com.github.japgolly.scalajs-react" % "extra" % scalaJsReactVersion cross ScalaJSCrossVersion.binary
+    ("com.github.japgolly.scalajs-react" % "core" % scalaJsReactVersion).cross(ScalaJSCrossVersion.binary),
+    ("com.github.japgolly.scalajs-react" % "extra" % scalaJsReactVersion).cross(ScalaJSCrossVersion.binary)
   )
 }
 
 lazy val react = Def.setting {
   val reactVersion = "16.2.0"
   Seq(
-    "org.webjars.npm" % "react" % reactVersion / "umd/react.development.js" minified "umd/react.production.min.js" commonJSName "React",
-    "org.webjars.npm" % "react-dom" % reactVersion / "umd/react-dom.development.js" minified "umd/react-dom.production.min.js" dependsOn "umd/react.development.js" commonJSName "ReactDOM",
-    "org.webjars.npm" % "react-dom" % reactVersion / "umd/react-dom-server.browser.development.js" minified "umd/react-dom-server.browser.production.min.js" dependsOn "umd/react-dom.development.js" commonJSName "ReactDOMServer"
+    ("org.webjars.npm" % "react" % reactVersion / "umd/react.development.js")
+      .minified("umd/react.production.min.js")
+      .commonJSName("React"),
+    ("org.webjars.npm" % "react-dom" % reactVersion / "umd/react-dom.development.js")
+      .minified("umd/react-dom.production.min.js")
+      .dependsOn("umd/react.development.js")
+      .commonJSName("ReactDOM"),
+    ("org.webjars.npm" % "react-dom" % reactVersion / "umd/react-dom-server.browser.development.js")
+      .minified("umd/react-dom-server.browser.production.min.js")
+      .dependsOn("umd/react-dom.development.js")
+      .commonJSName("ReactDOMServer")
   )
 }
 

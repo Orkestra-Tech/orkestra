@@ -12,8 +12,8 @@ object ParamValuesWitness {
   }
 
   implicit def hCons[HeadParamValue, TailParamValuesNoBranch <: HList, TailParamValues <: HList](
-                                                                                                  implicit tailBranchInjector: ParamValuesWitness[TailParamValuesNoBranch, TailParamValues],
-                                                                                                  ev: HeadParamValue
+    implicit tailBranchInjector: ParamValuesWitness[TailParamValuesNoBranch, TailParamValues],
+    ev: HeadParamValue
   ) = new ParamValuesWitness[HeadParamValue :: TailParamValuesNoBranch, HeadParamValue :: TailParamValues] {
 
     override def apply(params: HeadParamValue :: TailParamValuesNoBranch) =
