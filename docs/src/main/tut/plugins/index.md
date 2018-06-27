@@ -30,7 +30,7 @@ import tech.orkestra.filesystem._
 import tech.orkestra.utils.BlockingShells._
 
 // We need the implicit workDir in order to know in which directory we are working in
-def uploadToS3()(implicit workDir: Directory) = {
+def uploadToS3()(implicit workDir: Directory): Unit = {
   val s3 = AmazonS3ClientBuilder.standard.withRegion(Regions.EU_WEST_1).build()
   val transferManager = TransferManagerBuilder.standard.withS3Client(s3).build()
 
@@ -39,7 +39,7 @@ def uploadToS3()(implicit workDir: Directory) = {
   sh(s"echo 'Hey!' > ${file.getName}")
 
   val s3Bucket = "some-bucket-name"
-  println(s"Uploading ${file.getName} to S3 bucket s3Bucket")
+  println(s"Uploading ${file.getName} to S3 bucket $s3Bucket")
   transferManager.upload(s3Bucket, file.getName, file).waitForCompletion()
 }
 ```
@@ -60,7 +60,7 @@ import slack.api.SlackApiClient
 // Orkestra already uses Akka so we can import the implicits for the Slack too
 import tech.orkestra.utils.AkkaImplicits._
 
-def sendSlackMessage() = {
+def sendSlackMessage(): Unit = {
   val slack = SlackApiClient("slack token")
   slack.postChatMessage("channel name", "Hello!")
 }
