@@ -23,7 +23,7 @@ lazy val orkestra = project
     ThisBuild / licenses += "APL2" -> url("http://www.apache.org/licenses/LICENSE-2.0"),
     ThisBuild / homepage := Option(url("https://orkestra.tech")),
     ThisBuild / scmInfo := Option(
-      ScmInfo(url("https://github.com/orkestracd/orkestra"), "https://github.com/orkestracd/orkestra.git")
+      ScmInfo(url("https://github.com/orkestra-tech/orkestra"), "https://github.com/orkestra-tech/orkestra.git")
     ),
     ThisBuild / developers += Developer(
       id = "joan38",
@@ -128,10 +128,10 @@ lazy val docs = project
   .settings(
     name := "Orkestra",
     description := "Functional DevOps with Scala and Kubernetes",
-    micrositeGithubOwner := "OrkestraCD",
+    micrositeGithubOwner := "Orkestra-Tech",
     micrositeGithubRepo := "orkestra",
     micrositeHighlightTheme := "atom-one-light",
-    micrositeGitterChannelUrl := "OrkestraCD/Orkestra",
+    micrositeGitterChannelUrl := "orkestra-tech/Orkestra",
     micrositePalette ++= Map(
       "brand-primary" -> "#DA3435",
       "brand-secondary" -> "#3570E5",
@@ -143,7 +143,7 @@ lazy val docs = project
       "com.github.gilbertw1" %% "slack-scala-client" % "0.2.3",
       "org.zeroturnaround" % "zt-zip" % "1.12"
     ) ++ enumeratum.value,
-    git.remoteRepo := "https://github.com/orkestracd/orkestracd.github.io.git",
+    git.remoteRepo := "https://github.com/orkestra-tech/orkestra-tech.github.io.git",
     ghpagesBranch := "master",
     publishArtifact := false,
     publishLocal := {}
