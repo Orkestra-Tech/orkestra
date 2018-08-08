@@ -70,7 +70,7 @@ object Orkestra extends OrkestraServer {
   }
 }
 ```
-This example is described in [Jobs & Boards](https://orkestracd.github.io/jobsboards.html).
+This example is described in [Jobs & Boards](https://orkestra.tech/jobsboards.html).
 
 [See example projects](https://github.com/orkestracd/orkestra/tree/master/examples)
 
@@ -90,23 +90,23 @@ kubectl proxy                             # Proxy the Kubernetes api
 Visit Orkestra on `http://127.0.0.1:8001/api/v1/namespaces/orkestra/services/orkestra:http/proxy`.  
 You can troubleshoot any deployment issue with `minikube dashboard`.
 
-More on how to configure the deployment in [Config](https://orkestracd.github.io/config.html).
+More on how to configure the deployment in [Config](https://orkestra.tech/config.html).
 
 
 # Documentation
 
-Find all the documentation on [https://orkestracd.github.io](https://orkestracd.github.io):
-- [Jobs & Boards](https://orkestracd.github.io/jobsboards.html)
-- [Config](https://orkestracd.github.io/config.html)
-- [Parameters](https://orkestracd.github.io/parameters.html)
-- [Stages](https://orkestracd.github.io/stages.html)
-- [Shell scripts](https://orkestracd.github.io/shells.html)
-- [Directories](https://orkestracd.github.io/directories.html)
-- [Secrets](https://orkestracd.github.io/secrets.html)
-- [Triggering jobs](https://orkestracd.github.io/triggers.html)
-- [RunId](https://orkestracd.github.io/runid.html)
-- [Containers](https://orkestracd.github.io/containers.html)
-- [Plugins](https://orkestracd.github.io/plugins/)
+Find all the documentation on [https://orkestra.tech](https://orkestra.tech):
+- [Jobs & Boards](https://orkestra.tech/jobsboards.html)
+- [Config](https://orkestra.tech/config.html)
+- [Parameters](https://orkestra.tech/parameters.html)
+- [Stages](https://orkestra.tech/stages.html)
+- [Shell scripts](https://orkestra.tech/shells.html)
+- [Directories](https://orkestra.tech/directories.html)
+- [Secrets](https://orkestra.tech/secrets.html)
+- [Triggering jobs](https://orkestra.tech/triggers.html)
+- [RunId](https://orkestra.tech/runid.html)
+- [Containers](https://orkestra.tech/containers.html)
+- [Plugins](https://orkestra.tech/plugins/)
 
 Talks and articles:
 - [*Functional DevOps with Scala and Kubernetes*](https://itnext.io/functional-devops-with-scala-a-kubernetes-3d7c91bca72f) article from [Joan Goyeau](https://twitter.com/JoanG38)
