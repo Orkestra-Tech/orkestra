@@ -11,7 +11,7 @@ import webscalajs.WebScalaJS.autoImport._
 import org.portablescala.sbtplatformdeps.PlatformDepsPlugin.autoImport._
 import sbtcrossproject.{CrossProject, CrossType}
 import sbtcrossproject.CrossPlugin.autoImport._
-import scalajscrossproject.ScalaJSCrossPlugin.autoImport.{toScalaJSGroupID => _, _}
+import scalajscrossproject.ScalaJSCrossPlugin.autoImport._
 
 object OrkestraPlugin extends AutoPlugin {
   object autoImport {
@@ -29,7 +29,10 @@ object OrkestraPlugin extends AutoPlugin {
         )
         .jsConfigure(_.enablePlugins(ScalaJSWeb))
         .jsSettings(scalaJSUseMainModuleInitializer := true, moduleName := "web")
-        .settings(libraryDependencies += "tech.orkestra" %%% "orkestra-core" % orkestraVersion)
+        .settings(
+          libraryDependencies += "tech.orkestra" %%% "orkestra-core" % orkestraVersion,
+          dependencyOverrides += "org.webjars.npm" % "js-tokens" % "3.0.2" // https://github.com/webjars/webjars/issues/1789
+        )
     }
   }
 }

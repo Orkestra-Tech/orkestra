@@ -1,20 +1,20 @@
 import microsites.ExtraMdFileConfig
 import org.scalajs.sbtplugin.ScalaJSCrossVersion
-import sbtcrossproject.{crossProject, CrossType}
+import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
 
 lazy val orkestra = project
   .in(file("."))
   .aggregate(
-    `orkestra-coreJVM`,
-    `orkestra-coreJS`,
-    `orkestra-githubJVM`,
-    `orkestra-githubJS`,
-    `orkestra-cronJVM`,
-    `orkestra-cronJS`,
+    `orkestra-core`.jvm,
+    `orkestra-core`.js,
+    `orkestra-github`.jvm,
+    `orkestra-github`.js,
+    `orkestra-cron`.jvm,
+    `orkestra-cron`.js,
     `orkestra-lock`,
     `orkestra-sbt`,
-    `orkestra-integration-testsJVM`,
-    `orkestra-integration-testsJS`,
+    `orkestra-integration-tests`.jvm,
+    `orkestra-integration-tests`.js,
     docs
   )
   .settings(
@@ -81,8 +81,6 @@ lazy val `orkestra-core` = crossProject(JVMPlatform, JSPlatform)
       scalaTest.value ++
       enumeratum.value.map(_ % Provided)
   )
-lazy val `orkestra-coreJVM` = `orkestra-core`.jvm
-lazy val `orkestra-coreJS` = `orkestra-core`.js
 
 lazy val `orkestra-github` = crossProject(JVMPlatform, JSPlatform)
   .crossType(CrossType.Pure)
@@ -91,18 +89,14 @@ lazy val `orkestra-github` = crossProject(JVMPlatform, JSPlatform)
     name := "Orkestra Github",
     libraryDependencies += "org.eclipse.jgit" % "org.eclipse.jgit" % "4.9.0.201710071750-r"
   )
-lazy val `orkestra-githubJVM` = `orkestra-github`.jvm
-lazy val `orkestra-githubJS` = `orkestra-github`.js
 
 lazy val `orkestra-cron` = crossProject(JVMPlatform, JSPlatform)
   .crossType(CrossType.Pure)
   .dependsOn(`orkestra-core` % CompileTest)
   .settings(name := "Orkestra Cron")
-lazy val `orkestra-cronJVM` = `orkestra-cron`.jvm
-lazy val `orkestra-cronJS` = `orkestra-cron`.js
 
 lazy val `orkestra-lock` = project
-  .dependsOn(`orkestra-coreJVM` % CompileTest)
+  .dependsOn(`orkestra-core`.jvm % CompileTest)
   .settings(name := "Orkestra Lock")
 
 lazy val `orkestra-sbt` = project
@@ -112,15 +106,15 @@ lazy val `orkestra-sbt` = project
     moduleName := "sbt-orkestra",
     sbtPlugin := true,
     buildInfoPackage := organization.value,
-    addSbtPlugin("org.portable-scala" % "sbt-scalajs-crossproject" % "0.4.0"),
-    addSbtPlugin("org.scala-js" %% "sbt-scalajs" % "0.6.23"),
+    addSbtPlugin("org.portable-scala" % "sbt-scalajs-crossproject" % "0.6.0"),
+    addSbtPlugin("org.scala-js" %% "sbt-scalajs" % "0.6.24"),
     addSbtPlugin("com.vmunier" %% "sbt-web-scalajs" % "1.0.7"),
-    addSbtPlugin("com.typesafe.sbt" %% "sbt-native-packager" % "1.3.4")
+    addSbtPlugin("com.typesafe.sbt" %% "sbt-native-packager" % "1.3.6")
   )
 
 lazy val docs = project
   .in(file("docs"))
-  .dependsOn(`orkestra-coreJVM`, `orkestra-githubJVM`, `orkestra-cronJVM`, `orkestra-lock`)
+  .dependsOn(`orkestra-core`.jvm, `orkestra-github`.jvm, `orkestra-cron`.jvm, `orkestra-lock`)
   .enablePlugins(MicrositesPlugin)
   .settings(
     name := "Orkestra",
@@ -159,16 +153,16 @@ lazy val `orkestra-integration-tests` = crossProject(JVMPlatform, JSPlatform)
     publishArtifact := false,
     publishLocal := {}
   )
-lazy val `orkestra-integration-testsJVM` = `orkestra-integration-tests`.jvm
-  .dependsOn(`orkestra-lock`)
-  .enablePlugins(JavaAppPackaging)
-  .configs(TestCi)
-  .settings(
+  .jvmConfigure(
+    _.dependsOn(`orkestra-lock`)
+      .enablePlugins(JavaAppPackaging)
+      .configs(TestCi)
+  )
+  .jvmSettings(
     dockerUpdateLatest := true,
     Test / test := (Test / test).dependsOn(Docker / publishLocal).value,
     TestCi / test := (Test / test).dependsOn(Docker / publish).value
   )
-lazy val `orkestra-integration-testsJS` = `orkestra-integration-tests`.js
 
 lazy val TestCi = config("testci").extend(Test)
 lazy val CompileTest = "compile->compile;test->test"
