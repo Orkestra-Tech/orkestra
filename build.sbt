@@ -32,7 +32,8 @@ lazy val orkestra = project
       url = url("http://goyeau.com")
     ),
     ThisBuild / scalaVersion := "2.12.4",
-    ThisBuild / dynverSonatypeSnapshots := true,
+    Global / releaseEarlyWith := SonatypePublisher,
+    Global / releaseEarlyEnableLocalReleases := true,
     ThisBuild / scalacOptions ++= Seq(
       "-deprecation",
       "-feature",
@@ -45,10 +46,6 @@ lazy val orkestra = project
       "-Ywarn-unused:privates",
       "-Ypartial-unification",
       "-Ywarn-dead-code"
-    ),
-    ThisBuild / publishTo := Option(
-      if (isSnapshot.value) Opts.resolver.sonatypeSnapshots
-      else Opts.resolver.sonatypeStaging
     ),
     publishArtifact := false,
     publishLocal := {}
@@ -217,7 +214,7 @@ lazy val scalaCss = Def.setting {
 }
 
 lazy val scalaJsReact = Def.setting {
-  val scalaJsReactVersion = "1.2.0"
+  val scalaJsReactVersion = "1.2.3"
   Seq(
     ("com.github.japgolly.scalajs-react" % "core" % scalaJsReactVersion).cross(ScalaJSCrossVersion.binary),
     ("com.github.japgolly.scalajs-react" % "extra" % scalaJsReactVersion).cross(ScalaJSCrossVersion.binary)
