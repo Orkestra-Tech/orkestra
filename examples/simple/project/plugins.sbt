@@ -1,1 +1,1 @@
-addSbtPlugin("tech.orkestra" % "sbt-orkestra" % "0.9.0")
+addSbtPlugin("tech.orkestra" % "sbt-orkestra" % "0.9.1")
