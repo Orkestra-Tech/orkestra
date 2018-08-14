@@ -108,7 +108,7 @@ Find all the documentation on [https://orkestra.tech](https://orkestra.tech):
 
 Talks and articles:
 - [*Functional DevOps with Scala and Kubernetes*](https://itnext.io/functional-devops-with-scala-a-kubernetes-3d7c91bca72f) article from [Joan Goyeau](https://twitter.com/JoanG38)
-- *Functional DevOps with Scala and Kubernetes* talk from [Joan Goyeau](https://twitter.com/JoanG38)
+- [*Functional DevOps with Scala and Kubernetes*](https://skillsmatter.com/skillscasts/12343-orchestra-devops-with-scala-and-kubernetes) talk from [Joan Goyeau](https://twitter.com/JoanG38)
 
 
 # Origins of Orkestra
