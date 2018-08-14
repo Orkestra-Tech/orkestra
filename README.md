@@ -1,7 +1,7 @@
-<img alt="Orkestra" src="https://raw.githubusercontent.com/orkestracd/orkestra/master/docs/src/main/resources/microsite/img/orkestra.png" srcset="https://raw.githubusercontent.com/orkestracd/orkestra/master/docs/src/main/resources/microsite/img/orkestra.png 2x">
+<img alt="Orkestra" src="https://raw.githubusercontent.com/orkestra-tech/orkestra/master/docs/src/main/resources/microsite/img/orkestra.png" srcset="https://raw.githubusercontent.com/orkestra-tech/orkestra/master/docs/src/main/resources/microsite/img/orkestra.png 2x">
 
-[![Latest version](https://index.scala-lang.org/orkestracd/orkestra/orkestra-core/latest.svg?color=blue)](https://index.scala-lang.org/orkestracd/orkestra/orkestra-core)
-[![Gitter](https://img.shields.io/badge/gitter-join%20chat-green.svg)](https://gitter.im/OrkestraCD/orkestra)
+[![Latest version](https://index.scala-lang.org/orkestra-tech/orkestra/orkestra-core/latest.svg?color=blue)](https://index.scala-lang.org/orkestra-tech/orkestra/orkestra-core)
+[![Gitter](https://img.shields.io/badge/gitter-join%20chat-green.svg)](https://gitter.im/Orkestra-Tech/orkestra)
 
 Orkestra is an Open Source Continuous Integration / Continuous Deployment server as a library running on
 [Kubernetes](https://kubernetes.io).  
@@ -39,8 +39,6 @@ lazy val orkestra = orkestraProject("orkestra", file("orkestra"))
       "tech.orkestra" %% "orkestra-lock" % orkestraVersion // Optional Lock plugin
     )
   )
-lazy val orkestraJVM = orkestra.jvm
-lazy val orkestraJS = orkestra.js
 ```
 
 ## Simple example
@@ -72,13 +70,13 @@ object Orkestra extends OrkestraServer {
 ```
 This example is described in [Jobs & Boards](https://orkestra.tech/jobsboards.html).
 
-[See example projects](https://github.com/orkestracd/orkestra/tree/master/examples)
+[See example projects](https://github.com/orkestra-tech/orkestra/tree/master/examples)
 
 ## Deployment on Kubernetes with Minikube
 
-We provide some basic Kubernetes Deployment in [kubernetes-dev](https://github.com/orkestracd/orkestra/tree/master/examples/kubernetes-dev)
+We provide some basic Kubernetes Deployment in [kubernetes-dev](https://github.com/orkestra-tech/orkestra/tree/master/examples/kubernetes-dev)
 that you can use to deploy on a dev environment.  
-Assuming that you are in one of the [example projects](https://github.com/orkestracd/orkestra/tree/master/examples)
+Assuming that you are in one of the [example projects](https://github.com/orkestra-tech/orkestra/tree/master/examples)
 (or in your own project), here is how to deploy on Kubernetes with Minikube:
 ```
 minikube start --memory 4096              # Start Minikube
@@ -115,7 +113,7 @@ Talks and articles:
 
 # Origins of Orkestra
 
-<a href="https://drivetribe.com"><img alt="DriveTribe" src="https://raw.githubusercontent.com/orkestracd/orkestra/master/docs/src/main/resources/microsite/img/drivetribe.png" srcset="https://raw.githubusercontent.com/orkestracd/orkestra/master/docs/src/main/resources/microsite/img/drivetribe.png 2x"></a>
+<a href="https://drivetribe.com"><img alt="DriveTribe" src="https://raw.githubusercontent.com/orkestra-tech/orkestra/master/docs/src/main/resources/microsite/img/drivetribe.png" srcset="https://raw.githubusercontent.com/orkestra-tech/orkestra/master/docs/src/main/resources/microsite/img/drivetribe.png 2x"></a>
 
 Orkestra has been created at [DriveTribe](https://drivetribe.com) by its Scala backend team that had to do DevOps. Obsessed by functional programming they decided to apply the same paradigm to their DevOps.
 
