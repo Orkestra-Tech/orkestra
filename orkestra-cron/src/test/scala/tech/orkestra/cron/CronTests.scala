@@ -9,7 +9,7 @@ import org.scalatest.concurrent.Eventually
 class CronTests extends OrkestraSpec with OrkestraConfigTest with KubernetesTest with Eventually {
 
   scenario("Schedule a cron job") {
-    val someCronJob = CronTrigger("*/5 * * * *", emptyJob)
+    val someCronJob = CronTrigger("*/5 * * * *", emptyJob)()
 
     CronJobs.createOrUpdate(Set(someCronJob)).futureValue
     val cronJobs = CronJobs.list().futureValue.items
@@ -18,7 +18,7 @@ class CronTests extends OrkestraSpec with OrkestraConfigTest with KubernetesTest
   }
 
   scenario("Update a cron job") {
-    val someCronJob = CronTrigger("*/5 * * * *", emptyJob)
+    val someCronJob = CronTrigger("*/5 * * * *", emptyJob)()
 
     CronJobs.createOrUpdate(Set(someCronJob)).futureValue
     val cronJobs = CronJobs.list().futureValue.items
@@ -39,9 +39,9 @@ class CronTests extends OrkestraSpec with OrkestraConfigTest with KubernetesTest
   }
 
   scenario("Remove a cron job") {
-    val someCronJobs = Set(
-      CronTrigger("*/5 * * * *", emptyJob),
-      CronTrigger("*/10 * * * *", emptyJob2)
+    val someCronJobs = Set[CronTrigger[_]](
+      CronTrigger("*/5 * * * *", emptyJob)(),
+      CronTrigger("*/10 * * * *", emptyJob2)()
     )
 
     CronJobs.createOrUpdate(someCronJobs).futureValue

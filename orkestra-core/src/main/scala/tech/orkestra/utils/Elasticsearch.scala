@@ -34,9 +34,11 @@ object Elasticsearch {
     paramValues: ParamValues,
     tags: Seq[String],
     parent: Option[RunInfo]
-  ) =
+  ) = {
+    val now = Instant.now()
     indexInto(HistoryIndex.index, HistoryIndex.`type`)
       .id(HistoryIndex.formatId(runInfo))
-      .source(Run[ParamValues, Unit](runInfo, paramValues, Instant.now(), parent, Instant.now(), None, tags))
+      .source(Run[ParamValues, Unit](runInfo, paramValues, now, parent, now, None, tags))
       .createOnly(true)
+  }
 }

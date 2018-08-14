@@ -11,13 +11,13 @@ object GithubTriggerStaticTests extends OrkestraConfigTest {
       """
       BranchTrigger(Repository("someRepo"), "some-branch", oneParamJob)()
       """,
-      "could not find implicit value for parameter runIdOperation:.+"
+      "could not find implicit value for parameter gitRefInjector:.+"
     )
     illTyped(
       """
       PullRequestTrigger(Repository("someRepo"), oneParamJob)()
       """,
-      "could not find implicit value for parameter runIdOperation:.+"
+      "could not find implicit value for parameter gitRefInjector:.+"
     )
   }
 
@@ -26,13 +26,13 @@ object GithubTriggerStaticTests extends OrkestraConfigTest {
       """
       BranchTrigger(Repository("someRepo"), "some-branch", twoParamsJob)(true, true)
       """,
-      "could not find implicit value for parameter runIdOperation:.+"
+      "could not find implicit value for parameter gitRefInjector:.+"
     )
     illTyped(
       """
       PullRequestTrigger(Repository("someRepo"), twoParamsJob)("someString", "someWrong")
       """,
-      "could not find implicit value for parameter runIdOperation:.+"
+      "could not find implicit value for parameter gitRefInjector:.+"
     )
   }
 
@@ -41,13 +41,13 @@ object GithubTriggerStaticTests extends OrkestraConfigTest {
       """
       BranchTrigger(Repository("someRepo"), "some-branch", twoParamsJob)("someString", true, true)
       """,
-      "could not find implicit value for parameter runIdOperation:.+"
+      "could not find implicit value for parameter gitRefInjector:.+"
     )
     illTyped(
       """
       PullRequestTrigger(Repository("someRepo"), twoParamsJob)("someString", true, "someTooMuch")
       """,
-      "could not find implicit value for parameter runIdOperation:.+"
+      "could not find implicit value for parameter gitRefInjector:.+"
     )
   }
 }
