@@ -50,7 +50,14 @@ docs/publishMicrosite
 See [sbt-microsite](https://47deg.github.io/sbt-microsites/) for more info.
 
 
-## Publishing artifacts
+## Publishing artifacts locally
+
+```
+publishLocal
+```
+
+
+## Releasing artifacts
 
 First of all you need to setup the credentials to the Sonatype Nexus Repository:  
 *~/.sbt/1.0/sonatype.sbt*:
@@ -65,20 +72,5 @@ See [sbt-sonatype](https://github.com/xerial/sbt-sonatype) for more info.
 
 Then you can run:
 ```
-publish
-```
-
-If the published artifact is a `-SNAPSHOT` then you will have to add the following in *build.sbt* and *plugins.sbt* in
-the project using the published artifacts:
-```
-resolvers += Opts.resolver.sonatypeSnapshots
-```
-
-
-## Releasing artifacts
-
-Releasing requires to have published signed artifacts:
-```
-publishSigned
-sonatypeRelease
+releaseEarly
 ```

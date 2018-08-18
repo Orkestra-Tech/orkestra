@@ -122,3 +122,9 @@ Orkestra has been created at [DriveTribe](https://drivetribe.com) by its Scala b
 
 * [Jenkins](https://jenkins.io)
 * [Kubernetes Plugin for Jenkins](https://github.com/jenkinsci/kubernetes-plugin)
+
+
+# Contributing
+
+Contributions to Orkestra are more than welcomed!
+See [CONTRIBUTING.md](https://github.com/orkestra-tech/orkestra/tree/master/CONTRIBUTING.md) for all the information and getting help.
