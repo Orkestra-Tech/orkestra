@@ -22,7 +22,7 @@ object CronTrigger {
     new CronTriggerBuilder[ParamValues](schedule, job)
 
   class CronTriggerBuilder[ParamValues <: HList](repository: String, job: Job[ParamValues, _]) {
-    // No Params
+    // No Param
     def apply()(implicit defaultParamsWitness: ParamValuesWitness[HNil, ParamValues]): CronTrigger[ParamValues] =
       CronTrigger(repository, job, defaultParamsWitness(HNil))
 

@@ -2,54 +2,43 @@ import microsites.ExtraMdFileConfig
 import org.scalajs.sbtplugin.ScalaJSCrossVersion
 import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
 
-lazy val orkestra = project
-  .in(file("."))
-  .aggregate(
-    `orkestra-core`.jvm,
-    `orkestra-core`.js,
-    `orkestra-github`.jvm,
-    `orkestra-github`.js,
-    `orkestra-cron`.jvm,
-    `orkestra-cron`.js,
-    `orkestra-lock`,
-    `orkestra-sbt`,
-    `orkestra-integration-tests`.jvm,
-    `orkestra-integration-tests`.js,
-    docs
-  )
-  .settings(
-    name := "Orkestra",
-    ThisBuild / organization := "tech.orkestra",
-    ThisBuild / licenses += "APL2" -> url("http://www.apache.org/licenses/LICENSE-2.0"),
-    ThisBuild / homepage := Option(url("https://orkestra.tech")),
-    ThisBuild / scmInfo := Option(
-      ScmInfo(url("https://github.com/orkestra-tech/orkestra"), "https://github.com/orkestra-tech/orkestra.git")
-    ),
-    ThisBuild / developers += Developer(
-      id = "joan38",
-      name = "Joan Goyeau",
-      email = "joan@goyeau.com",
-      url = url("http://goyeau.com")
-    ),
-    ThisBuild / scalaVersion := "2.12.4",
-    Global / releaseEarlyWith := SonatypePublisher,
-    Global / releaseEarlyEnableLocalReleases := true,
-    ThisBuild / scalacOptions ++= Seq(
-      "-deprecation",
-      "-feature",
-      "-Xlint:unsound-match",
-      "-Ywarn-inaccessible",
-      "-Ywarn-infer-any",
-      "-Ywarn-unused:imports",
-      "-Ywarn-unused:locals",
-      "-Ywarn-unused:patvars",
-      "-Ywarn-unused:privates",
-      "-Ypartial-unification",
-      "-Ywarn-dead-code"
-    ),
-    publishArtifact := false,
-    publishLocal := {}
-  )
+ThisBuild / organization := "tech.orkestra"
+ThisBuild / licenses += "APL2" -> url("http://www.apache.org/licenses/LICENSE-2.0")
+ThisBuild / homepage := Option(url("https://orkestra.tech"))
+ThisBuild / scmInfo := Option(
+  ScmInfo(url("https://github.com/orkestra-tech/orkestra"), "https://github.com/orkestra-tech/orkestra.git")
+)
+ThisBuild / developers += Developer(
+  id = "joan38",
+  name = "Joan Goyeau",
+  email = "joan@goyeau.com",
+  url = url("http://goyeau.com")
+)
+ThisBuild / scalaVersion := "2.12.6"
+Global / releaseEarlyWith := SonatypePublisher
+Global / releaseEarlyEnableLocalReleases := true
+ThisBuild / scalacOptions ++= Seq(
+  "-deprecation",
+  "-feature",
+  "-Xlint:unsound-match",
+  "-Yrangepos",
+  "-Ywarn-inaccessible",
+  "-Ywarn-infer-any",
+  "-Ywarn-unused:imports",
+  "-Ywarn-unused:locals",
+  "-Ywarn-unused:patvars",
+  "-Ywarn-unused:privates",
+  "-language:higherKinds",
+  "-Ypartial-unification",
+  "-Ywarn-dead-code"
+)
+ThisBuild / libraryDependencies += compilerPlugin(scalafixSemanticdb)
+addCommandAlias("fix", "; compile:scalafix; test:scalafix")
+addCommandAlias("fixCheck", "; compile:scalafix --check; test:scalafix --check")
+addCommandAlias("fmt", "; compile:scalafmt; test:scalafmt; scalafmtSbt")
+addCommandAlias("fmtCheck", "; compile:scalafmtCheck; test:scalafmtCheck; scalafmtSbtCheck")
+publishArtifact := false
+publishLocal := {}
 
 /***************** Projects *****************/
 lazy val `orkestra-core` = crossProject(JVMPlatform, JSPlatform)
@@ -69,7 +58,9 @@ lazy val `orkestra-core` = crossProject(JVMPlatform, JSPlatform)
       "com.chuusai" %%% "shapeless" % "2.3.3",
       "com.vmunier" %% "scalajs-scripts" % "1.1.2",
       "com.lihaoyi" %%% "autowire" % "0.2.6",
-      "com.goyeau" %% "kubernetes-client" % "0.0.5"
+      "com.goyeau" %% "kubernetes-client" % "0.0.5",
+      "org.typelevel" %% "cats-effect" % "1.0.0",
+      "org.scala-lang" % "scala-reflect" % scalaVersion.value
     ) ++
       scalaJsReact.value ++
       akkaHttp.value ++

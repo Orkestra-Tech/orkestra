@@ -8,7 +8,12 @@ import tech.orkestra.utils.JobRunInfo
 import org.scalatest.Matchers._
 import shapeless.HNil
 
-class RunIdTests extends OrkestraSpec with OrkestraConfigTest with KubernetesTest with ElasticsearchTest with JobRunInfo {
+class RunIdTests
+    extends OrkestraSpec
+    with OrkestraConfigTest
+    with KubernetesTest
+    with ElasticsearchTest
+    with JobRunInfo {
 
   scenario("Getting the RunId") {
     val job = Job(emptyJobBoard) { implicit workDir => () =>

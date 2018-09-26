@@ -2,12 +2,10 @@ package tech.orkestra.utils
 
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
-
 import io.circe._
 import io.circe.parser._
 import io.circe.syntax._
 import org.scalajs.dom.ext.Ajax
-
 import tech.orkestra.OrkestraConfig
 
 object AutowireClient {

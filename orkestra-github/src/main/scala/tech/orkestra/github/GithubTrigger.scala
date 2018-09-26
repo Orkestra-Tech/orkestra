@@ -60,7 +60,7 @@ object BranchTrigger {
     branchRegex: String,
     job: Job[ParamValues, _]
   ) {
-    // No Params
+    // No Param
     def apply()(
       implicit gitRefInjector: GitRefInjector[HNil, ParamValues]
     ): BranchTrigger[HNil, ParamValues] =
@@ -122,7 +122,7 @@ object PullRequestTrigger {
     new PullRequestTriggerBuilder[ParamValues](repository, job)
 
   class PullRequestTriggerBuilder[ParamValues <: HList](repository: Repository, job: Job[ParamValues, _]) {
-    // No Params
+    // No Param
     def apply()(
       implicit gitRefInjector: GitRefInjector[HNil, ParamValues]
     ): PullRequestTrigger[HNil, ParamValues] =

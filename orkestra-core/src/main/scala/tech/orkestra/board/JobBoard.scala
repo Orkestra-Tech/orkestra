@@ -58,7 +58,7 @@ object JobBoard {
   def apply[Func](id: JobId, name: String) = new JobBuilder[Func](id, name)
 
   class JobBuilder[Func](id: JobId, name: String) {
-    // No Params
+    // No Param
     def apply[ParamValues <: HList, Result, PodSpecFunc]()(
       implicit fnToProdFunc: FnToProduct.Aux[Func, ParamValues => Result],
       fnToProdPodSpec: FnToProduct.Aux[PodSpecFunc, ParamValues => PodSpec],

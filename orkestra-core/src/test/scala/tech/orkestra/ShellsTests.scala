@@ -6,12 +6,7 @@ import org.scalatest.Matchers._
 import tech.orkestra.filesystem.Implicits.workDir
 import tech.orkestra.utils._
 
-class ShellsTests
-    extends OrkestraSpec
-    with OrkestraConfigTest
-    with KubernetesTest
-    with ElasticsearchTest
-    with Shells {
+class ShellsTests extends OrkestraSpec with OrkestraConfigTest with KubernetesTest with ElasticsearchTest with Shells {
 
   scenario("Run shell command") {
     val log = sh("echo Hello").futureValue
