@@ -16,12 +16,12 @@ private[cron] object CronJobs {
   private def cronJobName(jobId: JobId) = jobId.value.toLowerCase
 
   def deleteStale(
-    cronTriggers: Set[CronTrigger[_]]
+    cronTriggers: Set[CronTrigger]
   )(implicit orkestraConfig: OrkestraConfig, kubernetesClient: KubernetesClient): Future[Unit] =
     for {
       currentCronJobs <- kubernetesClient.cronJobs.namespace(orkestraConfig.namespace).list()
       currentCronJobNames = currentCronJobs.items.flatMap(_.metadata).flatMap(_.name).toSet
-      cronJobNames = cronTriggers.map(cronTrigger => cronJobName(cronTrigger.job.board.id))
+      cronJobNames = cronTriggers.map(cronTrigger => cronJobName(cronTrigger.jobId))
       jobsToRemove = currentCronJobNames.diff(cronJobNames)
       _ <- Future.traverse(jobsToRemove) { cronJobName =>
         logger.debug(s"Deleting cronjob $cronJobName")
@@ -30,20 +30,19 @@ private[cron] object CronJobs {
     } yield ()
 
   def createOrUpdate(
-    cronTriggers: Set[CronTrigger[_]]
+    cronTriggers: Set[CronTrigger]
   )(implicit orkestraConfig: OrkestraConfig, kubernetesClient: KubernetesClient): Future[Unit] =
     for {
       masterPod <- MasterPod.get()
       _ <- Future.traverse(cronTriggers) { cronTrigger =>
         val cronJob = CronJob(
-          metadata = Option(ObjectMeta(name = Option(cronJobName(cronTrigger.job.board.id)))),
+          metadata = Option(ObjectMeta(name = Option(cronJobName(cronTrigger.jobId)))),
           spec = Option(
             CronJobSpec(
               schedule = cronTrigger.schedule,
               jobTemplate = JobTemplateSpec(
                 spec = Option(
-                  JobSpecs
-                    .create(masterPod, EnvRunInfo(cronTrigger.job.board.id, None), cronTrigger.podSpecWithDefaultParams)
+                  JobSpecs.create(masterPod, EnvRunInfo(cronTrigger.jobId, None), cronTrigger.podSpecWithDefaultParams)
                 )
               )
             )

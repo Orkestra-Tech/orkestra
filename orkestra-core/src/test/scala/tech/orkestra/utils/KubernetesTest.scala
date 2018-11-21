@@ -24,8 +24,8 @@ trait KubernetesTest extends BeforeAndAfterEach with BeforeAndAfterAll with Scal
   implicit override val patienceConfig: PatienceConfig = PatienceConfig(timeout = 10.seconds)
   implicit val kubernetesClient: KubernetesClient = KubernetesClient(KubeConfig(orkestraConfig.kubeUri))
 
-  private var jobs = Map.empty[String, Job]
-  private var cronJobs = Map.empty[String, CronJob]
+  private var jobs = Map.empty[String, Job] // scalafix:ok
+  private var cronJobs = Map.empty[String, CronJob] // scalafix:ok
   private val routes =
     pathPrefix("apis" / "batch") {
       pathPrefix("v1beta1" / "namespaces" / orkestraConfig.namespace / "cronjobs") {

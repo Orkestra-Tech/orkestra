@@ -1,11 +1,11 @@
 package tech.orkestra.model
 
 import com.sksamuel.elastic4s.Index
-import com.sksamuel.elastic4s.indexes.CreateIndexDefinition
+import com.sksamuel.elastic4s.indexes.CreateIndexRequest
 
 trait IndexDefinition {
   val index: Index
-  val createDefinition: CreateIndexDefinition
+  val createIndexRequest: CreateIndexRequest
 }
 
 trait Indexed {

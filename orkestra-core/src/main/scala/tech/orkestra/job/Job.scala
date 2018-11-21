@@ -3,12 +3,15 @@ package tech.orkestra.job
 import java.io.{IOException, PrintStream}
 import java.time.Instant
 
+import cats.effect.implicits._
+import cats.implicits._
+
 import scala.concurrent.Future
 import scala.concurrent.duration._
 import akka.http.scaladsl.server.Route
 import autowire.Core
+import cats.effect.Effect
 import tech.orkestra.board.JobBoard
-import tech.orkestra.filesystem.Directory
 import tech.orkestra.model.Indexed._
 import tech.orkestra.model._
 import tech.orkestra.utils.AkkaImplicits._
@@ -17,25 +20,24 @@ import tech.orkestra.{kubernetes, CommonApiServer, OrkestraConfig}
 import com.goyeau.kubernetes.client.KubernetesClient
 import com.sksamuel.elastic4s.circe._
 import com.sksamuel.elastic4s.http.ElasticDsl._
-import com.sksamuel.elastic4s.http.HttpClient
+import com.sksamuel.elastic4s.http.ElasticClient
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
 import io.circe.{Decoder, Encoder, Json}
 import io.circe.generic.auto._
 import io.circe.java8.time._
 import io.k8s.api.core.v1.PodSpec
 import shapeless._
-import shapeless.ops.function.FnToProduct
 
-case class Job[ParamValues <: HList: Encoder: Decoder, Result: Encoder: Decoder](
-  board: JobBoard[ParamValues, Result, _, _],
-  podSpec: ParamValues => PodSpec,
-  func: ParamValues => Result
+case class Job[F[_]: Effect, Parameters <: HList: Encoder: Decoder, Result: Encoder: Decoder](
+  board: JobBoard[Parameters],
+  podSpec: Parameters => PodSpec,
+  func: Parameters => F[Result]
 ) {
 
   private[orkestra] def start(runInfo: RunInfo)(
     implicit orkestraConfig: OrkestraConfig,
     kubernetesClient: KubernetesClient,
-    elasticsearchClient: HttpClient
+    elasticsearchClient: ElasticClient
   ): Future[Result] = {
     val runningPong = system.scheduler.schedule(0.second, 1.second)(Jobs.pong(runInfo))
 
@@ -43,7 +45,7 @@ case class Job[ParamValues <: HList: Encoder: Decoder, Result: Encoder: Decoder]
       run <- elasticsearchClient
         .execute(get(HistoryIndex.index, HistoryIndex.`type`, HistoryIndex.formatId(runInfo)))
         .map(
-          _.fold(failure => throw new IOException(failure.error.reason), identity).result.to[Run[ParamValues, Result]]
+          response => response.fold(throw new IOException(response.error.reason))(_.to[Run[Parameters, Result]])
         )
 
       _ = run.parentJob.foreach { parentJob =>
@@ -63,7 +65,7 @@ case class Job[ParamValues <: HList: Encoder: Decoder, Result: Encoder: Decoder]
       ) {
         println(s"Running job ${board.name}")
         val result =
-          try func(run.paramValues)
+          try func(run.parameters).toIO.unsafeRunSync()
           catch {
             case throwable: Throwable =>
               throwable.printStackTrace()
@@ -88,20 +90,19 @@ case class Job[ParamValues <: HList: Encoder: Decoder, Result: Encoder: Decoder]
   private[orkestra] case class ApiServer()(
     implicit orkestraConfig: OrkestraConfig,
     kubernetesClient: KubernetesClient,
-    elasticsearchClient: HttpClient
+    elasticsearchClient: ElasticClient
   ) extends board.Api {
     override def trigger(
       runId: RunId,
-      paramValues: ParamValues,
+      parameters: Parameters,
       tags: Seq[String] = Seq.empty,
       parent: Option[RunInfo] = None
     ): Future[Unit] =
       for {
         runInfo <- Future.successful(RunInfo(board.id, runId))
-        _ <- elasticsearchClient
-          .execute(Elasticsearch.indexRun(runInfo, paramValues, tags, parent))
-          .map(_.fold(failure => throw new IOException(failure.error.reason), identity))
-        _ <- kubernetes.Jobs.create(runInfo, podSpec(paramValues))
+        _ <- elasticsearchClient.execute(Elasticsearch.indexRun(runInfo, parameters, tags, parent))
+          .map(response => response.fold(throw new IOException(response.error.reason))(identity))
+        _ <- kubernetes.Jobs.create(runInfo, podSpec(parameters))
       } yield ()
 
     override def stop(runId: RunId): Future[Unit] = kubernetes.Jobs.delete(RunInfo(board.id, runId))
@@ -115,15 +116,14 @@ case class Job[ParamValues <: HList: Encoder: Decoder, Result: Encoder: Decoder]
             .aggregations(termsAgg(aggregationName, "tags"))
             .size(1000)
         )
-        .map(
-          _.fold(failure => throw new IOException(failure.error.reason), identity).result.aggregations
-            .terms(aggregationName)
-            .buckets
-            .map(_.key)
-        )
+        .map { response =>
+          response.fold(throw new IOException(response.error.reason))(
+            _.aggregations.terms(aggregationName).buckets.map(_.key)
+          )
+        }
     }
 
-    override def history(page: Page[Instant]): Future[History[ParamValues, Result]] =
+    override def history(page: Page[Instant]): Future[History[Parameters]] =
       for {
         runs <- elasticsearchClient
           .execute(
@@ -140,10 +140,11 @@ case class Job[ParamValues <: HList: Encoder: Decoder, Result: Encoder: Decoder]
               )
               .size(math.abs(page.size))
           )
-          .map(
-            _.fold(failure => throw new IOException(failure.error.reason), identity).result.hits.hits
-              .flatMap(hit => hit.safeTo[Run[ParamValues, Result]].toOption)
-          )
+          .map { response =>
+            response.fold(throw new IOException(response.error.reason))(
+              _.hits.hits.flatMap(hit => hit.safeTo[Run[Parameters, Result]].toOption)
+            )
+          }
 
         stages <- if (runs.nonEmpty)
           elasticsearchClient
@@ -153,7 +154,7 @@ case class Job[ParamValues <: HList: Encoder: Decoder, Result: Encoder: Decoder]
                 .sortBy(fieldSort("startedOn").asc(), fieldSort("_id").desc())
                 .size(1000)
             )
-            .map(_.fold(failure => throw new IOException(failure.error.reason), identity).result.to[Stage])
+            .map(response => response.fold(throw new IOException(response.error.reason))(_.to[Stage]))
         else Future.successful(Seq.empty)
       } yield
         History(
@@ -165,7 +166,7 @@ case class Job[ParamValues <: HList: Encoder: Decoder, Result: Encoder: Decoder]
   private[orkestra] def apiRoute(
     implicit orkestraConfig: OrkestraConfig,
     kubernetesClient: KubernetesClient,
-    elasticsearchClient: HttpClient
+    elasticsearchClient: ElasticClient
   ): Route = {
     import akka.http.scaladsl.server.Directives._
     path(board.id.value / Segments) { segments =>
@@ -184,41 +185,34 @@ object Job {
     * Create a Job.
     *
     * @param board The board that will represent this job on the UI
+    * @param func The function to execute to complete the job
     */
-  def apply[ParamValues <: HList, Result, Func, PodSpecFunc](
-    board: JobBoard[ParamValues, Result, Func, PodSpecFunc]
-  ) =
-    new JobBuilder(board)
+  def apply[F[_]: Effect, Parameters <: HList: Encoder: Decoder, Result: Encoder: Decoder](
+    board: JobBoard[Parameters]
+  )(func: Parameters => F[Result]): Job[F, Parameters, Result] =
+    Job(board, _ => PodSpec(Seq.empty), func)
 
-  class JobBuilder[ParamValues <: HList, Result, Func, PodSpecFunc](
-    board: JobBoard[ParamValues, Result, Func, PodSpecFunc]
-  ) {
-    def apply(func: Directory => Func)(
-      implicit fnToProdFunc: FnToProduct.Aux[Func, ParamValues => Result],
-      encoderP: Encoder[ParamValues],
-      decoderP: Decoder[ParamValues],
-      encoderR: Encoder[Result],
-      decoderR: Decoder[Result]
-    ) =
-      Job(board, (_: ParamValues) => PodSpec(Seq.empty), fnToProdFunc(func(Directory("."))))
+  /**
+    * Create a Job.
+    *
+    * @param board The board that will represent this job on the UI
+    * @param func The function to execute to complete the job
+    */
+  def withPodSpec[F[_]: Effect, Parameters <: HList: Encoder: Decoder, Result: Encoder: Decoder](
+    board: JobBoard[Parameters],
+    podSpec: PodSpec
+  )(func: Parameters => F[Result]): Job[F, Parameters, Result] =
+    Job(board, _ => podSpec, func)
 
-    def apply(podSpec: PodSpec)(func: Directory => Func)(
-      implicit fnToProdFunc: FnToProduct.Aux[Func, ParamValues => Result],
-      encoderP: Encoder[ParamValues],
-      decoderP: Decoder[ParamValues],
-      encoderR: Encoder[Result],
-      decoderR: Decoder[Result]
-    ) =
-      Job(board, (_: ParamValues) => podSpec, fnToProdFunc(func(Directory("."))))
-
-    def apply(podSpecFunc: PodSpecFunc)(func: Directory => Func)(
-      implicit fnToProdFunc: FnToProduct.Aux[Func, ParamValues => Result],
-      fnToProdPodSpec: FnToProduct.Aux[PodSpecFunc, ParamValues => PodSpec],
-      encoderP: Encoder[ParamValues],
-      decoderP: Decoder[ParamValues],
-      encoderR: Encoder[Result],
-      decoderR: Decoder[Result]
-    ) =
-      Job(board, fnToProdPodSpec(podSpecFunc), fnToProdFunc(func(Directory("."))))
-  }
+  /**
+    * Create a Job.
+    *
+    * @param board The board that will represent this job on the UI
+    * @param func The function to execute to complete the job
+    */
+  def withPodSpec[F[_]: Effect, Parameters <: HList: Encoder: Decoder, Result: Encoder: Decoder](
+    board: JobBoard[Parameters],
+    podSpecFunc: Parameters => PodSpec
+  )(func: Parameters => F[Result]): Job[F, Parameters, Result] =
+    Job(board, podSpecFunc, func)
 }

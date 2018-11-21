@@ -1,4 +1,4 @@
-package tech.orkestra.parameter
+package tech.orkestra.input
 
 import enumeratum._
 import japgolly.scalajs.react.vdom.TagMod
@@ -8,7 +8,7 @@ import japgolly.scalajs.react.{Callback, ReactEventFromInput}
 /**
   * A parameter is a UI element for user to parametrise the run of a job.
   */
-trait Parameter[T] {
+trait Input[T] {
   lazy val id: Symbol = Symbol(name.toLowerCase.replaceAll("\\s", ""))
   def name: String
   def default: Option[T]
@@ -17,7 +17,7 @@ trait Parameter[T] {
   def getValue(valueMap: Map[Symbol, Any]): T =
     valueMap
       .get(id)
-      .map(_.asInstanceOf[T])
+      .map(_.asInstanceOf[T]) // scalafix:ok
       .orElse(default)
       .getOrElse(throw new IllegalArgumentException(s"Can't get param ${id.name}"))
 }
@@ -29,7 +29,7 @@ case class State(updated: ((Symbol, Any)) => Callback, get: Symbol => Option[Any
 /**
   * An input field where the user can enter data.
   */
-case class Input[T: Encoder: Decoder](name: String, default: Option[T] = None) extends Parameter[T] {
+case class Text[T: Encoder: Decoder](name: String, default: Option[T] = None) extends Input[T] {
   override def display(state: State) = {
     def modValue(event: ReactEventFromInput) = {
       event.persist()
@@ -40,7 +40,9 @@ case class Input[T: Encoder: Decoder](name: String, default: Option[T] = None) e
       <.span(name),
       <.input.text(
         ^.key := id.name,
-        ^.value := state.get(id).map(_.asInstanceOf[T]).orElse(default).fold("")(implicitly[Encoder[T]].apply(_)),
+        ^.value := state.get(id).map(_.asInstanceOf[T]) // scalafix:ok
+          .orElse(default)
+          .fold("")(implicitly[Encoder[T]].apply(_)),
         ^.onChange ==> modValue
       )
     )
@@ -50,7 +52,7 @@ case class Input[T: Encoder: Decoder](name: String, default: Option[T] = None) e
 /**
   * A checkbox.
   */
-case class Checkbox(name: String, checked: Boolean = false) extends Parameter[Boolean] {
+case class Checkbox(name: String, checked: Boolean = false) extends Input[Boolean] {
   def default = Option(checked)
 
   override def display(state: State) = {
@@ -62,7 +64,7 @@ case class Checkbox(name: String, checked: Boolean = false) extends Parameter[Bo
     <.label(^.display.block)(
       <.input.checkbox(
         ^.key := id.name,
-        ^.checked := state.get(id).map(_.asInstanceOf[Boolean]).orElse(default).getOrElse(false),
+        ^.checked := state.get(id).map(_.asInstanceOf[Boolean]).orElse(default).getOrElse(false), // scalafix:ok
         ^.onChange ==> modValue
       ),
       <.span(name)
@@ -74,7 +76,7 @@ case class Checkbox(name: String, checked: Boolean = false) extends Parameter[Bo
   * A drop-down list.
   */
 case class Select[Entry <: EnumEntry](name: String, enum: Enum[Entry], default: Option[Entry] = None)
-    extends Parameter[Entry] {
+    extends Input[Entry] {
   override def display(state: State) = {
     def modValue(event: ReactEventFromInput) = {
       event.persist()
@@ -86,7 +88,10 @@ case class Select[Entry <: EnumEntry](name: String, enum: Enum[Entry], default: 
       <.span(name),
       <.select(
         ^.key := id.name,
-        ^.value := state.get(id).map(_.asInstanceOf[Entry]).orElse(default).map(_.entryName).getOrElse(disabled),
+        ^.value := state.get(id).map(_.asInstanceOf[Entry]) // scalafix:ok
+          .orElse(default)
+          .map(_.entryName)
+          .getOrElse(disabled),
         ^.onChange ==> modValue
       )(
         <.option(^.disabled := true, ^.value := disabled)(name) +:

@@ -12,6 +12,8 @@ import tech.orkestra.utils.AkkaImplicits._
 import tech.orkestra.utils.DummyJobs._
 import org.scalatest.concurrent.Eventually
 
+import scala.language.existentials
+
 class HistoryTests
     extends OrkestraSpec
     with OrkestraConfigTest
@@ -58,7 +60,7 @@ class HistoryTests
       (history.runs should have).size(1)
       val run = history.runs.headOption.value._1
       run.runInfo should ===(orkestraConfig.runInfo)
-      run.result should ===(Some(Right(())))
+      run.result.value shouldBe a[Right[_, _]]
     }
   }
 

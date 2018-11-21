@@ -48,7 +48,7 @@ object TopNav {
     rootPage: BoardPageRoute,
     selectedPage: PageRoute,
     ctl: RouterCtl[PageRoute],
-    jobs: Seq[JobBoard[_ <: HList, _, _, _]]
+    jobs: Seq[JobBoard[_ <: HList]]
   )
 
   implicit val currentPageReuse: Reusability[PageRoute] = Reusability.by_==[PageRoute]

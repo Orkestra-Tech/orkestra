@@ -1,7 +1,6 @@
 package tech.orkestra.route
 
-import tech.orkestra.board.{Board, Folder, JobBoard}
-import japgolly.scalajs.react.extra.router.{Resolution, RouterConfigDsl, RouterCtl, _}
+import japgolly.scalajs.react.extra.router._
 import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
 import org.scalajs.dom
@@ -45,8 +44,8 @@ object WebRouter {
       }
   }
 
-  private def allJobs(board: Board): Seq[JobBoard[_ <: HList, _, _, _]] = board match {
-    case folder: Folder            => folder.childBoards.flatMap(allJobs)
-    case job: JobBoard[_, _, _, _] => Seq(job)
+  private def allJobs(board: Board): Seq[JobBoard[_ <: HList]] = board match {
+    case folder: Folder   => folder.childBoards.flatMap(allJobs)
+    case job: JobBoard[_] => Seq(job)
   }
 }

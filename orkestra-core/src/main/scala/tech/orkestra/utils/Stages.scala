@@ -5,23 +5,20 @@ import java.time.Instant
 
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
-
 import io.circe.generic.auto._
 import io.circe.java8.time._
 import io.circe.shapes._
 import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.circe._
-import com.sksamuel.elastic4s.http.HttpClient
+import com.sksamuel.elastic4s.http.ElasticClient
 import shapeless._
-
 import tech.orkestra.OrkestraConfig
 import tech.orkestra.model.Indexed._
 import tech.orkestra.utils.AkkaImplicits._
 
 trait Stages {
   protected def orkestraConfig: OrkestraConfig
-
-  protected def elasticsearchClient: HttpClient
+  protected def elasticsearchClient: ElasticClient
 
   /**
     * Create a stage.
@@ -38,20 +35,20 @@ trait Stages {
       for {
         run <- elasticsearchClient
           .execute(get(HistoryIndex.index, HistoryIndex.`type`, HistoryIndex.formatId(orkestraConfig.runInfo)))
-          .map(_.fold(failure => throw new IOException(failure.error.reason), identity).result.to[Run[HNil, Unit]])
+          .map(response => response.fold(throw new IOException(response.error.reason))(_.to[Run[HNil, Unit]]))
 
         stageStart = Stage(orkestraConfig.runInfo, run.parentJob, name, Instant.now(), Instant.now())
         stageIndexResponse <- elasticsearchClient
           .execute(indexInto(StagesIndex.index, StagesIndex.`type`).source(stageStart))
-          .map(_.fold(failure => throw new IOException(failure.error.reason), identity))
+          .map(response => response.fold(throw new IOException(response.error.reason))(identity))
 
         runningPong = system.scheduler.schedule(1.second, 1.second) {
           elasticsearchClient
             .execute(
-              updateById(StagesIndex.index, StagesIndex.`type`, stageIndexResponse.result.id)
+              updateById(StagesIndex.index, StagesIndex.`type`, stageIndexResponse.id)
                 .source(stageStart.copy(latestUpdateOn = Instant.now()))
             )
-            .map(_.fold(failure => throw new IOException(failure.error.reason), identity))
+            .map(response => response.fold(throw new IOException(response.error.reason))(identity))
         }
 
         _ = println(s"Stage: $name")
@@ -65,5 +62,5 @@ trait Stages {
 
 object Stages extends Stages {
   implicit override lazy val orkestraConfig: OrkestraConfig = OrkestraConfig.fromEnvVars()
-  override lazy val elasticsearchClient: HttpClient = Elasticsearch.client
+  override lazy val elasticsearchClient: ElasticClient = Elasticsearch.client
 }

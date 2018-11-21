@@ -1,15 +1,16 @@
 package tech.orkestra.cron
 
-import tech.orkestra.utils.DummyJobs._
-import tech.orkestra.utils._
 import org.scalatest.Matchers._
 import org.scalatest.OptionValues._
 import org.scalatest.concurrent.Eventually
+import shapeless._
+import tech.orkestra.utils._
+import tech.orkestra.utils.DummyJobs._
 
 class CronTests extends OrkestraSpec with OrkestraConfigTest with KubernetesTest with Eventually {
 
   scenario("Schedule a cron job") {
-    val someCronJob = CronTrigger("*/5 * * * *", emptyJob)()
+    val someCronJob = CronTrigger("*/5 * * * *", emptyJob, HNil)
 
     CronJobs.createOrUpdate(Set(someCronJob)).futureValue
     val cronJobs = CronJobs.list().futureValue.items
@@ -18,7 +19,7 @@ class CronTests extends OrkestraSpec with OrkestraConfigTest with KubernetesTest
   }
 
   scenario("Update a cron job") {
-    val someCronJob = CronTrigger("*/5 * * * *", emptyJob)()
+    val someCronJob = CronTrigger("*/5 * * * *", emptyJob, HNil)
 
     CronJobs.createOrUpdate(Set(someCronJob)).futureValue
     val cronJobs = CronJobs.list().futureValue.items
@@ -26,7 +27,7 @@ class CronTests extends OrkestraSpec with OrkestraConfigTest with KubernetesTest
     cronJobs.head.spec.value.schedule should ===(someCronJob.schedule)
 
     // Update
-    val newCronJob = someCronJob.copy(schedule = "*/10 * * * *")
+    val newCronJob = CronTrigger("*/10 * * * *", emptyJob, HNil)
     CronJobs.createOrUpdate(Set(newCronJob)).futureValue
     val updatedCronJobs = CronJobs.list().futureValue.items
     (updatedCronJobs should have).size(1)
@@ -39,9 +40,9 @@ class CronTests extends OrkestraSpec with OrkestraConfigTest with KubernetesTest
   }
 
   scenario("Remove a cron job") {
-    val someCronJobs = Set[CronTrigger[_]](
-      CronTrigger("*/5 * * * *", emptyJob)(),
-      CronTrigger("*/10 * * * *", emptyJob2)()
+    val someCronJobs = Set[CronTrigger](
+      CronTrigger("*/5 * * * *", emptyJob, HNil),
+      CronTrigger("*/10 * * * *", emptyJob2, HNil)
     )
 
     CronJobs.createOrUpdate(someCronJobs).futureValue

@@ -1,5 +1,6 @@
 package tech.orkestra
 
+import cats.effect.IO
 import tech.orkestra.Dsl._
 import tech.orkestra.job.Job
 import tech.orkestra.utils._
@@ -16,8 +17,8 @@ class RunIdTests
     with JobRunInfo {
 
   scenario("Getting the RunId") {
-    val job = Job(emptyJobBoard) { implicit workDir => () =>
-      runId should ===(orkestraConfig.runInfo.runId)
+    val job = Job(emptyJobBoard) { _: HNil =>
+      IO.pure(runId should ===(orkestraConfig.runInfo.runId)).map(_ => ())
     }
 
     job.ApiServer().trigger(orkestraConfig.runInfo.runId, HNil).futureValue

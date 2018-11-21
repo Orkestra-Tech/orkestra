@@ -2,13 +2,12 @@ package tech.orkestra
 
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
-
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.{ContentTypes, HttpEntity}
 import akka.http.scaladsl.server.Directives.{entity, _}
 import autowire.Core
 import com.goyeau.kubernetes.client.KubernetesClient
-import com.sksamuel.elastic4s.http.HttpClient
+import com.sksamuel.elastic4s.http.ElasticClient
 import com.typesafe.scalalogging.Logger
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
 import io.circe.Json
@@ -24,13 +23,13 @@ import scalajs.html.scripts
 /**
   * Mix in this trait to create the Orkestra job server.
   */
-trait OrkestraServer extends OrkestraPlugin {
+trait OrkestraServer[F[_]] extends OrkestraPlugin {
   private lazy val logger = Logger(getClass)
   implicit override lazy val orkestraConfig: OrkestraConfig = OrkestraConfig.fromEnvVars()
   implicit override lazy val kubernetesClient: KubernetesClient = Kubernetes.client
-  implicit override lazy val elasticsearchClient: HttpClient = Elasticsearch.client
+  implicit override lazy val elasticsearchClient: ElasticClient = Elasticsearch.client
 
-  def jobs: Set[Job[_, _]]
+  def jobs: Set[Job[F, _, _]]
 
   lazy val routes =
     pathPrefix("assets" / Remaining) { file =>
@@ -55,7 +54,7 @@ trait OrkestraServer extends OrkestraPlugin {
                |${scripts(
                  "web",
                  name => s"/assets/$name",
-                 name => getClass.getResource(s"/public/$name") != null
+                 name => Option(getClass.getResource(s"/public/$name")).isDefined
                ).body}
                |</body>
                |</html>

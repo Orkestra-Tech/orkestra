@@ -26,9 +26,9 @@ object LogsPage {
   val component =
     ScalaComponent
       .builder[Props](getClass.getSimpleName)
-      .initialState[(Option[Seq[LogLine]], SetIntervalHandle)]((None, null))
+      .initialState[(Option[Seq[LogLine]], Option[SetIntervalHandle])]((None, None))
       .render { $ =>
-        def format(log: String) = newInstance(global.AnsiUp)().ansi_to_html(log).asInstanceOf[String]
+        def format(log: String) = newInstance(global.AnsiUp)().ansi_to_html(log).asInstanceOf[String] // scalafix:ok
 
         val logs = $.state._1 match {
           case Some(log) if log.nonEmpty =>
@@ -49,13 +49,13 @@ object LogsPage {
         )
       }
       .componentDidMount { $ =>
-        $.setState($.state.copy(_2 = js.timers.setInterval(1.second)(pullLogs($))))
+        $.setState($.state.copy(_2 = Option(js.timers.setInterval(1.second)(pullLogs($)))))
           .map(_ => pullLogs($))
       }
-      .componentWillUnmount($ => Callback(js.timers.clearInterval($.state._2)))
+      .componentWillUnmount($ => Callback($.state._2.foreach(js.timers.clearInterval)))
       .build
 
-  private def pullLogs($ : ComponentDidMount[Props, (Option[Seq[LogLine]], SetIntervalHandle), Unit]) =
+  private def pullLogs($ : ComponentDidMount[Props, (Option[Seq[LogLine]], Option[SetIntervalHandle]), Unit]) =
     CommonApi.client
       .logs(
         $.props.page.runId,

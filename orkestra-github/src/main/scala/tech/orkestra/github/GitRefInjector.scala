@@ -2,8 +2,8 @@ package tech.orkestra.github
 
 import shapeless._
 
-trait GitRefInjector[ParamValuesNoGifRef <: HList, ParamValues <: HList] {
-  def apply(params: ParamValuesNoGifRef, ref: GitRef): ParamValues
+trait GitRefInjector[ParametersNoGifRef <: HList, Parameters <: HList] {
+  def apply(params: ParametersNoGifRef, ref: GitRef): Parameters
 }
 
 object GitRefInjector {
@@ -11,20 +11,20 @@ object GitRefInjector {
     override def apply(params: HNil, ref: GitRef) = HNil
   }
 
-  implicit def hConsBranch[ParamValuesNoBranch <: HList, TailParamValues <: HList](
-    implicit tailRunIdInjector: GitRefInjector[ParamValuesNoBranch, TailParamValues]
-  ) = new GitRefInjector[ParamValuesNoBranch, GitRef :: TailParamValues] {
+  implicit def hConsBranch[ParametersNoBranch <: HList, TailParameters <: HList](
+    implicit tailRunIdInjector: GitRefInjector[ParametersNoBranch, TailParameters]
+  ) = new GitRefInjector[ParametersNoBranch, GitRef :: TailParameters] {
 
-    override def apply(valuesNoRunId: ParamValuesNoBranch, ref: GitRef) =
+    override def apply(valuesNoRunId: ParametersNoBranch, ref: GitRef) =
       ref :: tailRunIdInjector(valuesNoRunId, ref)
   }
 
-  implicit def hCons[HeadParamValue, TailParamValuesNoBranch <: HList, TailParamValues <: HList](
-    implicit tailBranchInjector: GitRefInjector[TailParamValuesNoBranch, TailParamValues],
+  implicit def hCons[HeadParamValue, TailParametersNoBranch <: HList, TailParameters <: HList](
+    implicit tailBranchInjector: GitRefInjector[TailParametersNoBranch, TailParameters],
     ev: HeadParamValue <:!< GitRef
-  ) = new GitRefInjector[HeadParamValue :: TailParamValuesNoBranch, HeadParamValue :: TailParamValues] {
+  ) = new GitRefInjector[HeadParamValue :: TailParametersNoBranch, HeadParamValue :: TailParameters] {
 
-    override def apply(params: HeadParamValue :: TailParamValuesNoBranch, ref: GitRef) =
+    override def apply(params: HeadParamValue :: TailParametersNoBranch, ref: GitRef) =
       params.head :: tailBranchInjector(params.tail, ref)
   }
 }

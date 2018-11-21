@@ -6,23 +6,21 @@ import java.time.Instant
 import scala.concurrent.Await
 import scala.concurrent.duration._
 import scala.util.DynamicVariable
-
 import akka.stream.OverflowStrategy
 import akka.stream.scaladsl.{Sink, Source}
 import com.sksamuel.elastic4s.circe._
 import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.streams.ReactiveElastic._
-import com.sksamuel.elastic4s.http.HttpClient
+import com.sksamuel.elastic4s.http.ElasticClient
 import com.sksamuel.elastic4s.streams.RequestBuilder
 import io.circe.generic.auto._
 import io.circe.java8.time._
-
 import tech.orkestra.model.Indexed.LogLine
 import tech.orkestra.model.Indexed.LogsIndex
 import tech.orkestra.model.RunId
 import tech.orkestra.utils.AkkaImplicits._
 
-class ElasticsearchOutputStream(client: HttpClient, runId: RunId) extends OutputStream {
+class ElasticsearchOutputStream(client: ElasticClient, runId: RunId) extends OutputStream {
   private val lineBuffer = new DynamicVariable(new StringBuffer())
   implicit private val requestBuilder: RequestBuilder[LogLine] = indexInto(LogsIndex.index, LogsIndex.`type`).source(_)
   private val batchSize = 50

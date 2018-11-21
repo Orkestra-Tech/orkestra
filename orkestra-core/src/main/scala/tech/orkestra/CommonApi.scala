@@ -4,17 +4,15 @@ import java.io.IOException
 import java.time.Instant
 
 import scala.concurrent.Future
-
 import com.goyeau.kubernetes.client.KubernetesClient
 import com.sksamuel.elastic4s.circe._
 import com.sksamuel.elastic4s.http.ElasticDsl._
-import com.sksamuel.elastic4s.http.HttpClient
+import com.sksamuel.elastic4s.http.ElasticClient
 import com.sksamuel.elastic4s.searches.sort.SortOrder
 import io.circe.generic.auto._
 import io.circe.java8.time._
 import io.circe.shapes._
 import shapeless.HNil
-
 import tech.orkestra.model.Indexed._
 import tech.orkestra.model.{Page, RunId, RunInfo}
 import tech.orkestra.utils.AutowireClient
@@ -31,7 +29,7 @@ object CommonApi {
 case class CommonApiServer()(
   implicit orkestraConfig: OrkestraConfig,
   kubernetesClient: KubernetesClient,
-  elasticsearchClient: HttpClient
+  elasticsearchClient: ElasticClient
 ) extends CommonApi {
   import tech.orkestra.utils.AkkaImplicits._
 
@@ -56,7 +54,7 @@ case class CommonApiServer()(
           )
           .size(math.abs(page.size))
       )
-      .map(_.fold(failure => throw new IOException(failure.error.reason), identity).result.to[LogLine])
+      .map(response => response.fold(throw new IOException(response.error.reason))(_.to[LogLine]))
 
   override def runningJobs(): Future[Seq[Run[HNil, Unit]]] =
     for {
@@ -78,7 +76,7 @@ case class CommonApiServer()(
               .sortBy(fieldSort("triggeredOn").desc(), fieldSort("_id").desc())
               .size(1000)
           )
-          .map(_.fold(failure => throw new IOException(failure.error.reason), identity).result.to[Run[HNil, Unit]])
+          .map(response => response.fold(throw new IOException(response.error.reason))(_.to[Run[HNil, Unit]]))
       else Future.successful(Seq.empty)
     } yield runs
 }

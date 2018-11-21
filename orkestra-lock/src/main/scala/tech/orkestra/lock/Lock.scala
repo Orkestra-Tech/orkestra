@@ -2,15 +2,13 @@ package tech.orkestra.lock
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
-
-import com.sksamuel.elastic4s.http.HttpClient
-
+import com.sksamuel.elastic4s.http.ElasticClient
 import tech.orkestra.OrkestraConfig
 import tech.orkestra.utils.AkkaImplicits._
 import tech.orkestra.utils.Elasticsearch
 
 sealed trait ElasticsearchLock {
-  implicit protected val elasticsearchClient: HttpClient
+  implicit protected val elasticsearchClient: ElasticClient
   val id: String
 
   /**
@@ -28,7 +26,7 @@ sealed trait ElasticsearchLock {
     * @param or The function to run if the lock has not been acquired
     */
   def orElse[Result](func: => Future[Result])(or: => Future[Result])(implicit dummy: DummyImplicit): Future[Result] =
-    Locks.trylock(id).flatMap(_.fold(_ => or, _ => Locks.runLocked(id, func)))
+    Locks.trylock(id).flatMap(_.fold(or)(_ => Locks.runLocked(id, func)))
 
   /**
     * Try lock. This awaits asynchronously until the lock is released to run func.
@@ -47,15 +45,12 @@ sealed trait ElasticsearchLock {
       Locks
         .trylock(id)
         .flatMap(
-          _.fold(
-            { _ =>
-              val interval = 1.second
-              if (timeElapsed.toSeconds % 1.minute.toSeconds == 1) println(s"Waiting for lock $id to be released")
-              Thread.sleep(interval.toMillis)
-              retry(func, timeElapsed + interval)
-            },
-            _ => Locks.runLocked(id, func)
-          )
+          _.fold {
+            val interval = 1.second
+            if (timeElapsed.toSeconds % 1.minute.toSeconds == 1) println(s"Waiting for lock $id to be released")
+            Thread.sleep(interval.toMillis)
+            retry(func, timeElapsed + interval)
+          }(_ => Locks.runLocked(id, func))
         )
 
     retry(func)
@@ -69,5 +64,5 @@ sealed trait ElasticsearchLock {
   */
 case class Lock(id: String) extends ElasticsearchLock {
   implicit private val orkestraConfig: OrkestraConfig = OrkestraConfig.fromEnvVars()
-  protected val elasticsearchClient: HttpClient = Elasticsearch.client
+  protected val elasticsearchClient: ElasticClient = Elasticsearch.client
 }

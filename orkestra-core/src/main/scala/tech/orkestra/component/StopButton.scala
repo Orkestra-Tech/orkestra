@@ -23,7 +23,7 @@ object StopButton {
     )
   }
 
-  case class Props(job: JobBoard[_ <: HList, _, _, _], runId: RunId)
+  case class Props(job: JobBoard[_ <: HList], runId: RunId)
 
   val component = ScalaComponent
     .builder[Props](getClass.getSimpleName)
@@ -32,7 +32,7 @@ object StopButton {
     }
     .build
 
-  private def stop(job: JobBoard[_, _, _, _], runId: RunId)(event: ReactEventFromInput) = Callback.future {
+  private def stop(job: JobBoard[_], runId: RunId)(event: ReactEventFromInput) = Callback.future {
     event.stopPropagation()
     job.Api.client.stop(runId).call().map(Callback(_))
   }

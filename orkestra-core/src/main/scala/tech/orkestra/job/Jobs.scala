@@ -5,15 +5,13 @@ import java.time.Instant
 
 import scala.concurrent.Future
 import scala.util.DynamicVariable
-
 import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.circe._
-import com.sksamuel.elastic4s.http.HttpClient
+import com.sksamuel.elastic4s.http.ElasticClient
 import io.circe.{Encoder, Json}
 import io.circe.syntax._
 import io.circe.generic.auto._
 import io.circe.java8.time._
-
 import tech.orkestra.model.Indexed._
 import tech.orkestra.model.RunInfo
 import tech.orkestra.utils.AkkaImplicits._
@@ -21,24 +19,24 @@ import tech.orkestra.utils.BaseEncoders._
 
 private[orkestra] object Jobs {
 
-  def pong(runInfo: RunInfo)(implicit elasticsearchClient: HttpClient) =
+  def pong(runInfo: RunInfo)(implicit elasticsearchClient: ElasticClient) =
     elasticsearchClient
       .execute(
         updateById(HistoryIndex.index.name, HistoryIndex.`type`, HistoryIndex.formatId(runInfo))
           .doc(Json.obj("latestUpdateOn" -> Instant.now().asJson))
       )
-      .map(_.fold(failure => throw new IOException(failure.error.reason), identity))
+      .map(response => response.fold(throw new IOException(response.error.reason))(identity))
 
-  def succeedJob[Result: Encoder](runInfo: RunInfo, result: Result)(implicit elasticsearchClient: HttpClient) =
+  def succeedJob[Result: Encoder](runInfo: RunInfo, result: Result)(implicit elasticsearchClient: ElasticClient) =
     elasticsearchClient
       .execute(
         updateById(HistoryIndex.index.name, HistoryIndex.`type`, HistoryIndex.formatId(runInfo))
           .doc(Json.obj("result" -> Option(Right(result): Either[Throwable, Result]).asJson))
           .retryOnConflict(1)
       )
-      .map(_.fold(failure => throw new IOException(failure.error.reason), identity))
+      .map(response => response.fold(throw new IOException(response.error.reason))(identity))
 
-  def failJob(runInfo: RunInfo, throwable: Throwable)(implicit elasticsearchClient: HttpClient) =
+  def failJob(runInfo: RunInfo, throwable: Throwable)(implicit elasticsearchClient: ElasticClient) =
     elasticsearchClient
       .execute(
         updateById(HistoryIndex.index.name, HistoryIndex.`type`, HistoryIndex.formatId(runInfo))

@@ -2,6 +2,7 @@ import microsites.ExtraMdFileConfig
 import org.scalajs.sbtplugin.ScalaJSCrossVersion
 import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
 
+name := "Orkestra"
 ThisBuild / organization := "tech.orkestra"
 ThisBuild / licenses += "APL2" -> url("http://www.apache.org/licenses/LICENSE-2.0")
 ThisBuild / homepage := Option(url("https://orkestra.tech"))
@@ -20,15 +21,14 @@ Global / releaseEarlyEnableLocalReleases := true
 ThisBuild / scalacOptions ++= Seq(
   "-deprecation",
   "-feature",
+  "-language:higherKinds",
   "-Xlint:unsound-match",
-  "-Yrangepos",
   "-Ywarn-inaccessible",
   "-Ywarn-infer-any",
   "-Ywarn-unused:imports",
   "-Ywarn-unused:locals",
   "-Ywarn-unused:patvars",
   "-Ywarn-unused:privates",
-  "-language:higherKinds",
   "-Ypartial-unification",
   "-Ywarn-dead-code"
 )
@@ -173,7 +173,7 @@ lazy val akkaHttpCirce = Def.setting {
 }
 
 lazy val circe = Def.setting {
-  val version = "0.9.3"
+  val version = "0.10.1"
   Seq(
     "io.circe" %%% "circe-core" % version,
     "io.circe" %%% "circe-generic" % version,
@@ -199,7 +199,7 @@ lazy val scalaCss = Def.setting {
 }
 
 lazy val scalaJsReact = Def.setting {
-  val scalaJsReactVersion = "1.2.3"
+  val scalaJsReactVersion = "1.3.1"
   Seq(
     ("com.github.japgolly.scalajs-react" % "core" % scalaJsReactVersion).cross(ScalaJSCrossVersion.binary),
     ("com.github.japgolly.scalajs-react" % "extra" % scalaJsReactVersion).cross(ScalaJSCrossVersion.binary)
@@ -207,7 +207,7 @@ lazy val scalaJsReact = Def.setting {
 }
 
 lazy val react = Def.setting {
-  val reactVersion = "16.2.0"
+  val reactVersion = "16.5.1"
   Seq(
     ("org.webjars.npm" % "react" % reactVersion / "umd/react.development.js")
       .minified("umd/react.production.min.js")
@@ -224,10 +224,11 @@ lazy val react = Def.setting {
 }
 
 lazy val elastic4s = Def.setting {
-  val elastic4sVersion = "6.2.3"
+  val elastic4sVersion = "6.4.0"
   Seq(
     "com.sksamuel.elastic4s" %% "elastic4s-http" % elastic4sVersion,
     "com.sksamuel.elastic4s" %% "elastic4s-http-streams" % elastic4sVersion,
+    "com.sksamuel.elastic4s" %% "elastic4s-cats-effect" % elastic4sVersion,
     "com.sksamuel.elastic4s" %% "elastic4s-circe" % elastic4sVersion,
     "com.sksamuel.elastic4s" %% "elastic4s-testkit" % elastic4sVersion % Test
   )

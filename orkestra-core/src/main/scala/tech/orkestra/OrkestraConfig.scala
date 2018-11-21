@@ -4,13 +4,13 @@ import java.io.IOException
 import java.nio.file.Paths
 
 import scala.io.Source
-import com.sksamuel.elastic4s.ElasticsearchClientUri
+import com.sksamuel.elastic4s.http.ElasticProperties
 import io.circe.generic.auto._
 import io.circe.parser._
 import tech.orkestra.model.{EnvRunInfo, RunId, RunInfo}
 
 case class OrkestraConfig(
-  elasticsearchUri: ElasticsearchClientUri,
+  elasticsearchProperties: ElasticProperties,
   workspace: String = OrkestraConfig.defaultWorkspace,
   port: Int = OrkestraConfig.defaultBindPort,
   runInfoMaybe: Option[RunInfo] = None,
@@ -24,7 +24,7 @@ case class OrkestraConfig(
 
 object OrkestraConfig {
   def fromEnvVars() = OrkestraConfig(
-    ElasticsearchClientUri(
+    ElasticProperties(
       fromEnvVar("ELASTICSEARCH_URI").getOrElse(
         throw new IllegalStateException("ORKESTRA_ELASTICSEARCH_URI should be set")
       )
