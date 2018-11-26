@@ -1,6 +1,8 @@
 package tech.orkestra.cron
 
-import scala.concurrent.Future
+import cats.effect.{Effect, IO}
+import cats.implicits._
+import com.goyeau.kubernetes.client.KubernetesClient
 import com.sksamuel.elastic4s.RefreshPolicy
 import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.typesafe.scalalogging.Logger
@@ -14,26 +16,26 @@ import tech.orkestra.OrkestraPlugin
 /**
   * Mix in this trait to get support for cron triggered jobs.
   */
-trait CronTriggers extends OrkestraPlugin {
+trait CronTriggers extends OrkestraPlugin[IO] {
   private lazy val logger = Logger(getClass)
+  override lazy val F: Effect[IO] = implicitly[Effect[IO]]
 
-  def cronTriggers: Set[CronTrigger]
+  def cronTriggers: Set[CronTrigger[IO, _]]
 
-  override def onMasterStart(): Future[Unit] =
-    for {
-      _ <- super.onMasterStart()
-      _ = logger.info("Configuring cron jobs")
+  override def onMasterStart(kubernetesClient: KubernetesClient[IO]): IO[Unit] = {
+    implicit val kubeClient: KubernetesClient[IO] = kubernetesClient
+    super.onMasterStart(kubernetesClient) *>
+      IO.delay(logger.info("Configuring cron jobs")) *>
+      CronJobs.deleteStale(cronTriggers) *>
+      CronJobs.createOrUpdate(cronTriggers)
+  }
 
-      _ <- CronJobs.deleteStale(cronTriggers)
-      _ <- CronJobs.createOrUpdate(cronTriggers)
-    } yield ()
-
-  override def onJobStart(runInfo: RunInfo): Future[Unit] =
-    for {
-      _ <- super.onJobStart(runInfo)
-      _ <- if (cronTriggers.exists(_.jobId == runInfo.jobId))
-        elasticsearchClient
-          .execute(Elasticsearch.indexRun[HNil](runInfo, HNil, Seq.empty, None).refresh(RefreshPolicy.WaitFor))
-      else Future.unit
-    } yield ()
+  override def onJobStart(runInfo: RunInfo): IO[Unit] =
+    super.onJobStart(runInfo) *>
+      (if (cronTriggers.exists(_.jobId == runInfo.jobId))
+         IO.fromFuture(IO {
+           elasticsearchClient
+             .execute(Elasticsearch.indexRun[HNil](runInfo, HNil, Seq.empty, None).refresh(RefreshPolicy.WaitFor))
+         }) *> IO.unit
+       else IO.unit)
 }

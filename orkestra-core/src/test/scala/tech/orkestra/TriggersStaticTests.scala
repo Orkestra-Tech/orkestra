@@ -2,7 +2,6 @@ package tech.orkestra
 
 import shapeless._
 import shapeless.test.illTyped
-
 import tech.orkestra.Dsl._
 import tech.orkestra.utils.DummyJobs._
 import tech.orkestra.utils.Triggers._
@@ -36,11 +35,9 @@ object TriggersStaticTests {
   object `Trigger a job with 1 parameter not of the same type should not compile` {
     illTyped("""
       twoParamsJob.trigger("some string" :: "I should be of type boolean" :: HNil)
-    """,
-             "type mismatch;.+")
+    """, "type mismatch;.+")
     illTyped("""
       twoParamsJob.run("some string" :: "I should be of type boolean" :: HNil)
-    """,
-             "type mismatch;.+")
+    """, "type mismatch;.+")
   }
 }

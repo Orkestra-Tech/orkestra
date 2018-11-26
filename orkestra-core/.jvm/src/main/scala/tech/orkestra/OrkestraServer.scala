@@ -1,11 +1,11 @@
 package tech.orkestra
 
-import scala.concurrent.{Await, Future}
-import scala.concurrent.duration._
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.{ContentTypes, HttpEntity}
 import akka.http.scaladsl.server.Directives.{entity, _}
 import autowire.Core
+import cats.Applicative
+import cats.effect.{ExitCode, IO, IOApp}
 import com.goyeau.kubernetes.client.KubernetesClient
 import com.sksamuel.elastic4s.http.ElasticClient
 import com.typesafe.scalalogging.Logger
@@ -14,24 +14,24 @@ import io.circe.Json
 import io.circe.generic.auto._
 import io.circe.shapes._
 import io.circe.java8.time._
+import scalajs.html.scripts
 import tech.orkestra.utils.AkkaImplicits._
 import tech.orkestra.job.Job
 import tech.orkestra.kubernetes.Kubernetes
 import tech.orkestra.utils.{AutowireServer, Elasticsearch}
-import scalajs.html.scripts
 
 /**
   * Mix in this trait to create the Orkestra job server.
   */
-trait OrkestraServer[F[_]] extends OrkestraPlugin {
+trait OrkestraServer extends IOApp with OrkestraPlugin[IO] {
   private lazy val logger = Logger(getClass)
+  override lazy val F: Applicative[IO] = implicitly[Applicative[IO]]
   implicit override lazy val orkestraConfig: OrkestraConfig = OrkestraConfig.fromEnvVars()
-  implicit override lazy val kubernetesClient: KubernetesClient = Kubernetes.client
   implicit override lazy val elasticsearchClient: ElasticClient = Elasticsearch.client
 
-  def jobs: Set[Job[F, _, _]]
+  def jobs: Set[Job[IO, _, _]]
 
-  lazy val routes =
+  def routes(implicit kubernetesClient: KubernetesClient[IO]) =
     pathPrefix("assets" / Remaining) { file =>
       encodeResponse {
         getFromResource(s"public/$file")
@@ -69,32 +69,30 @@ trait OrkestraServer[F[_]] extends OrkestraPlugin {
           path(OrkestraConfig.commonSegment / Segments) { segments =>
             entity(as[Json]) { json =>
               val body = AutowireServer.read[Map[String, Json]](json)
-              val request = AutowireServer.route[CommonApi](CommonApiServer())(Core.Request(segments, body))
+              val request = AutowireServer.route[CommonApi](CommonApiServer[IO]())(Core.Request(segments, body))
               onSuccess(request)(json => complete(json))
             }
           }
       }
 
-  def main(args: Array[String]): Unit =
-    Await.result(
-      orkestraConfig.runInfoMaybe.fold {
-        for {
-          _ <- Future(logger.info("Initializing Elasticsearch"))
-          _ <- Elasticsearch.init()
-          _ = logger.info("Starting master Orkestra")
-          _ <- onMasterStart()
-          _ <- Http().bindAndHandle(routes, "0.0.0.0", orkestraConfig.port)
-        } yield ()
-      } { runInfo =>
-        for {
-          _ <- Future(logger.info(s"Running job $runInfo"))
-          _ <- onJobStart(runInfo)
-          _ <- jobs
-            .find(_.board.id == runInfo.jobId)
-            .getOrElse(throw new IllegalArgumentException(s"No job found for id ${runInfo.jobId}"))
-            .start(runInfo)
-        } yield ()
-      },
-      Duration.Inf
-    )
+  def run(args: List[String]): IO[ExitCode] = Kubernetes.client[IO].use { implicit kubernetesClient =>
+    orkestraConfig.runInfoMaybe.fold {
+      for {
+        _ <- IO.pure(logger.info("Initializing Elasticsearch"))
+        _ <- Elasticsearch.init[IO]
+        _ = logger.info("Starting master Orkestra")
+        _ <- onMasterStart(kubernetesClient)
+        _ <- IO.fromFuture(IO(Http().bindAndHandle(routes, "0.0.0.0", orkestraConfig.port)))
+      } yield ExitCode.Success
+    } { runInfo =>
+      for {
+        _ <- IO.delay(logger.info(s"Running job $runInfo"))
+        _ <- onJobStart(runInfo)
+        _ <- jobs
+          .find(_.board.id == runInfo.jobId)
+          .getOrElse(throw new IllegalArgumentException(s"No job found for id ${runInfo.jobId}"))
+          .start(runInfo)
+      } yield ExitCode.Success
+    }
+  }
 }

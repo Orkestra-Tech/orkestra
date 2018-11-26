@@ -1,6 +1,6 @@
 package tech.orkestra.utils
 
-import cats.effect.IO
+import cats.effect.{ContextShift, IO}
 import shapeless._
 import tech.orkestra.Dsl._
 import tech.orkestra.OrkestraConfig
@@ -12,16 +12,17 @@ import tech.orkestra.input.{Checkbox, Text}
 object DummyJobs {
   def emptyJobBoard(implicit orkestraConfig: OrkestraConfig) =
     JobBoard(orkestraConfig.runInfo.jobId, "Empty Job")(HNil)
-  def emptyJob(implicit orkestraConfig: OrkestraConfig) =
+  def emptyJob(implicit orkestraConfig: OrkestraConfig, contextShift: ContextShift[IO]) =
     Job(emptyJobBoard)(_ => IO.unit)
 
-  def emptyJobBoard2(implicit orkestraConfig: OrkestraConfig) =
+  lazy val emptyJobBoard2 =
     JobBoard(JobId("emptyJob2"), "Empty Job 2")(HNil)
-  def emptyJob2(implicit orkestraConfig: OrkestraConfig) = Job(emptyJobBoard2)(_ => IO.unit)
+  def emptyJob2(implicit contextShift: ContextShift[IO]) =
+    Job(emptyJobBoard2)(_ => IO.unit)
 
   def oneParamJobBoard(implicit orkestraConfig: OrkestraConfig) =
     JobBoard(orkestraConfig.runInfo.jobId, "One Param Job")(Text[String]("Some string") :: HNil)
-  def oneParamJob(implicit orkestraConfig: OrkestraConfig) =
+  def oneParamJob(implicit orkestraConfig: OrkestraConfig, contextShift: ContextShift[IO]) =
     Job(oneParamJobBoard) {
       case someString :: HNil =>
         IO(println(someString))
@@ -33,7 +34,7 @@ object DummyJobs {
         Checkbox("Some bool") ::
         HNil
     )
-  def twoParamsJob(implicit orkestraConfig: OrkestraConfig) =
+  def twoParamsJob(implicit orkestraConfig: OrkestraConfig, contextShift: ContextShift[IO]) =
     Job(twoParamsJobBoard) {
       case _ :: _ :: HNil =>
         IO.unit

@@ -29,16 +29,16 @@ import tech.orkestra.utils.Colours
 object JobPage {
 
   case class Props[
-    Params <: HList,
+    Inputs <: HList,
     ParametersNoRunId <: HList,
     Parameters <: HList: Encoder: Decoder,
     Result: Decoder
   ](
     job: JobBoard[Parameters],
-    params: Params,
+    inputs: Inputs,
     page: BoardPageRoute,
     ctl: RouterCtl[PageRoute]
-  )(implicit paramOperations: InputOperations[Params, Parameters]) {
+  )(implicit inputOperations: InputOperations[Inputs, Parameters]) {
 
     def runJob(
       $ : RenderScope[Props[_, _, _ <: HList, _], (RunId, Map[Symbol, Any], TagMod, Option[SetIntervalHandle]), Unit]
@@ -46,7 +46,7 @@ object JobPage {
       Callback.future {
         event.preventDefault()
         job.Api.client
-          .trigger($.state._1, paramOperations.values(params, $.state._2))
+          .trigger($.state._1, inputOperations.values(inputs, $.state._2))
           .call()
           .map(_ => $.modState(_.copy(_1 = RunId.random(), _2 = Map.empty)))
       }
@@ -65,8 +65,9 @@ object JobPage {
           val runDisplays = history.runs.zipWithIndex.toTagMod {
             case ((run, stages), index) =>
               val paramsDescription =
-                paramOperations.inputsState(params, run.parameters)
-                  .map(param => s"${param._1}: ${param._2}")
+                inputOperations
+                  .inputsState(inputs, run.parameters)
+                  .map(input => s"${input._1}: ${input._2}")
                   .mkString("\n")
               val rerunButton =
                 <.div(
@@ -154,7 +155,7 @@ object JobPage {
       $ : RenderScope[Props[_, _, _ <: HList, _], (RunId, Map[Symbol, Any], TagMod, Option[SetIntervalHandle]), Unit]
     ) = {
       val displayState = State(kv => $.modState(s => s.copy(_2 = s._2 + kv)), key => $.state._2.get(key))
-      paramOperations.displays(params, displayState).zipWithIndex.toTagMod {
+      inputOperations.displays(inputs, displayState).zipWithIndex.toTagMod {
         case (param, index) => param(Global.Style.listItem(index % 2 == 0))
       }
     }

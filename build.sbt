@@ -25,10 +25,7 @@ ThisBuild / scalacOptions ++= Seq(
   "-Xlint:unsound-match",
   "-Ywarn-inaccessible",
   "-Ywarn-infer-any",
-  "-Ywarn-unused:imports",
-  "-Ywarn-unused:locals",
-  "-Ywarn-unused:patvars",
-  "-Ywarn-unused:privates",
+  "-Ywarn-unused",
   "-Ypartial-unification",
   "-Ywarn-dead-code"
 )
@@ -58,8 +55,7 @@ lazy val `orkestra-core` = crossProject(JVMPlatform, JSPlatform)
       "com.chuusai" %%% "shapeless" % "2.3.3",
       "com.vmunier" %% "scalajs-scripts" % "1.1.2",
       "com.lihaoyi" %%% "autowire" % "0.2.6",
-      "com.goyeau" %% "kubernetes-client" % "0.0.5",
-      "org.typelevel" %% "cats-effect" % "1.0.0",
+      "com.goyeau" %% "kubernetes-client" % "0.3.0",
       "org.scala-lang" % "scala-reflect" % scalaVersion.value
     ) ++
       scalaJsReact.value ++
@@ -140,6 +136,7 @@ lazy val `orkestra-integration-tests` = crossProject(JVMPlatform, JSPlatform)
     version ~= (_.replace('+', '-')),
     buildInfoPackage := s"${organization.value}.integration.tests",
     buildInfoKeys += "artifactName" -> artifact.value.name,
+    scalaJSUseMainModuleInitializer := true,
     libraryDependencies ++= scalaTest.value,
     publishArtifact := false,
     publishLocal := {}
@@ -224,7 +221,7 @@ lazy val react = Def.setting {
 }
 
 lazy val elastic4s = Def.setting {
-  val elastic4sVersion = "6.4.0"
+  val elastic4sVersion = "6.5.0"
   Seq(
     "com.sksamuel.elastic4s" %% "elastic4s-http" % elastic4sVersion,
     "com.sksamuel.elastic4s" %% "elastic4s-http-streams" % elastic4sVersion,

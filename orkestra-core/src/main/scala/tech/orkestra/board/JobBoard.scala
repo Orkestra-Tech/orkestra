@@ -30,11 +30,7 @@ trait JobBoard[Parameters <: HList] extends Board {
   }
 
   private[orkestra] object Api {
-    def router(apiServer: Api)(
-      implicit ec: ExecutionContext,
-      encoderP: Encoder[Parameters],
-      decoderP: Decoder[Parameters]
-    ) =
+    def router(apiServer: Api)(implicit ec: ExecutionContext, decoder: Decoder[Parameters]) =
       AutowireServer.route[Api](apiServer)
 
     val client = AutowireClient(s"${OrkestraConfig.jobSegment}/${id.value}")[Api]

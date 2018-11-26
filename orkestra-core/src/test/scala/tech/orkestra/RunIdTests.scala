@@ -1,6 +1,7 @@
 package tech.orkestra
 
-import cats.effect.IO
+import cats.effect.{ConcurrentEffect, ContextShift, IO, Timer}
+import cats.implicits._
 import tech.orkestra.Dsl._
 import tech.orkestra.job.Job
 import tech.orkestra.utils._
@@ -9,19 +10,24 @@ import tech.orkestra.utils.JobRunInfo
 import org.scalatest.Matchers._
 import shapeless.HNil
 
+import scala.concurrent.ExecutionContext
+
 class RunIdTests
     extends OrkestraSpec
     with OrkestraConfigTest
-    with KubernetesTest
+    with KubernetesTest[IO]
     with ElasticsearchTest
     with JobRunInfo {
+  implicit override lazy val timer: Timer[IO] = IO.timer(ExecutionContext.global)
+  implicit lazy val contextShift: ContextShift[IO] = IO.contextShift(ExecutionContext.global)
+  implicit override lazy val F: ConcurrentEffect[IO] = IO.ioConcurrentEffect
 
-  scenario("Getting the RunId") {
+  "runId" should "return the RunId" in usingKubernetesClient { implicit kubernetesClient =>
     val job = Job(emptyJobBoard) { _: HNil =>
-      IO.pure(runId should ===(orkestraConfig.runInfo.runId)).map(_ => ())
+      IO(runId shouldBe orkestraConfig.runInfo.runId) *> IO.unit
     }
 
-    job.ApiServer().trigger(orkestraConfig.runInfo.runId, HNil).futureValue
-    job.start(orkestraConfig.runInfo).futureValue
+    IO.fromFuture(IO(job.ApiServer().trigger(orkestraConfig.runInfo.runId, HNil))) *>
+      job.start(orkestraConfig.runInfo)
   }
 }

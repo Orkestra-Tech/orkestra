@@ -3,8 +3,13 @@ package tech.orkestra
 import java.io.IOException
 import java.time.Instant
 
+import cats.Applicative
+import cats.effect.ConcurrentEffect
+import cats.implicits._
+
 import scala.concurrent.Future
 import com.goyeau.kubernetes.client.KubernetesClient
+import com.sksamuel.elastic4s.cats.effect.instances._
 import com.sksamuel.elastic4s.circe._
 import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.http.ElasticClient
@@ -26,12 +31,12 @@ object CommonApi {
   val client = AutowireClient(OrkestraConfig.commonSegment)[CommonApi]
 }
 
-case class CommonApiServer()(
-  implicit orkestraConfig: OrkestraConfig,
-  kubernetesClient: KubernetesClient,
+case class CommonApiServer[F[_]: ConcurrentEffect]()(
+  implicit
+  orkestraConfig: OrkestraConfig,
+  kubernetesClient: KubernetesClient[F],
   elasticsearchClient: ElasticClient
 ) extends CommonApi {
-  import tech.orkestra.utils.AkkaImplicits._
 
   override def logs(runId: RunId, page: Page[(Instant, Int)]): Future[Seq[LogLine]] =
     elasticsearchClient
@@ -55,28 +60,34 @@ case class CommonApiServer()(
           .size(math.abs(page.size))
       )
       .map(response => response.fold(throw new IOException(response.error.reason))(_.to[LogLine]))
+      .unsafeToFuture()
 
   override def runningJobs(): Future[Seq[Run[HNil, Unit]]] =
-    for {
-      runInfos <- kubernetesClient.jobs
-        .namespace(orkestraConfig.namespace)
-        .list()
-        .map(_.items.map(RunInfo.fromKubeJob))
+    ConcurrentEffect[F]
+      .toIO {
+        for {
+          runInfo <- kubernetesClient.jobs
+            .namespace(orkestraConfig.namespace)
+            .list
+            .map(_.items.map(RunInfo.fromKubeJob))
 
-      runs <- if (runInfos.nonEmpty)
-        elasticsearchClient
-          .execute(
-            search(HistoryIndex.index)
-              .query(
-                boolQuery.filter(
-                  termsQuery("runInfo.runId", runInfos.map(_.runId.value)),
-                  termsQuery("runInfo.jobId", runInfos.map(_.jobId.value))
-                )
+          runs <- if (runInfo.nonEmpty)
+            elasticsearchClient
+              .execute(
+                search(HistoryIndex.index)
+                  .query(
+                    boolQuery.filter(
+                      termsQuery("runInfo.runId", runInfo.map(_.runId.value)),
+                      termsQuery("runInfo.jobId", runInfo.map(_.jobId.value))
+                    )
+                  )
+                  .sortBy(fieldSort("triggeredOn").desc(), fieldSort("_id").desc())
+                  .size(1000)
               )
-              .sortBy(fieldSort("triggeredOn").desc(), fieldSort("_id").desc())
-              .size(1000)
-          )
-          .map(response => response.fold(throw new IOException(response.error.reason))(_.to[Run[HNil, Unit]]))
-      else Future.successful(Seq.empty)
-    } yield runs
+              .map(response => response.fold(throw new IOException(response.error.reason))(_.to[Run[HNil, Unit]]))
+              .to[F]
+          else Applicative[F].pure(IndexedSeq.empty[Run[HNil, Unit]])
+        } yield runs
+      }
+      .unsafeToFuture()
 }

@@ -11,7 +11,7 @@ object GitRefInjector {
     override def apply(params: HNil, ref: GitRef) = HNil
   }
 
-  implicit def hConsBranch[ParametersNoBranch <: HList, TailParameters <: HList](
+  implicit def hConsGitRef[ParametersNoBranch <: HList, TailParameters <: HList](
     implicit tailRunIdInjector: GitRefInjector[ParametersNoBranch, TailParameters]
   ) = new GitRefInjector[ParametersNoBranch, GitRef :: TailParameters] {
 
@@ -20,8 +20,7 @@ object GitRefInjector {
   }
 
   implicit def hCons[HeadParamValue, TailParametersNoBranch <: HList, TailParameters <: HList](
-    implicit tailBranchInjector: GitRefInjector[TailParametersNoBranch, TailParameters],
-    ev: HeadParamValue <:!< GitRef
+    implicit tailBranchInjector: GitRefInjector[TailParametersNoBranch, TailParameters]
   ) = new GitRefInjector[HeadParamValue :: TailParametersNoBranch, HeadParamValue :: TailParameters] {
 
     override def apply(params: HeadParamValue :: TailParametersNoBranch, ref: GitRef) =

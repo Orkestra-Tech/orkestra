@@ -1,6 +1,6 @@
 package tech.orkestra.utils
 
 import org.scalactic.TypeCheckedTripleEquals
-import org.scalatest.FeatureSpec
+import org.scalatest.FlatSpec
 
-trait OrkestraSpec extends FeatureSpec with TypeCheckedTripleEquals
+trait OrkestraSpec extends FlatSpec with TypeCheckedTripleEquals

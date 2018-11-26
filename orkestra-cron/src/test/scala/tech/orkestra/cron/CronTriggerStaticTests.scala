@@ -1,11 +1,15 @@
 package tech.orkestra.cron
 
+import cats.effect.{ContextShift, IO}
 import shapeless._
 import shapeless.test.illTyped
 import tech.orkestra.utils.DummyJobs._
 import tech.orkestra.utils.OrkestraConfigTest
 
+import scala.concurrent.ExecutionContext
+
 object CronTriggerStaticTests extends OrkestraConfigTest {
+  implicit lazy val contextShift: ContextShift[IO] = IO.contextShift(ExecutionContext.global)
 
   object `Define a CronTrigger with job that has no parameters` {
     CronTrigger("*/5 * * * *", emptyJob, HNil)

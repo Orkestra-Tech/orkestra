@@ -1,6 +1,9 @@
 package tech.orkestra.integration.tests
 
-import cats.effect.IO
+import cats.effect.{ContextShift, IO, Timer}
+import cats.implicits._
+import java.io.File
+
 import shapeless._
 
 import scala.concurrent.duration._
@@ -12,9 +15,7 @@ import tech.orkestra.github.GithubHooks
 import tech.orkestra.job.Job
 import tech.orkestra.model.JobId
 
-import scala.concurrent.ExecutionContext
-
-object Orkestra extends OrkestraServer[IO] with GithubHooks with CronTriggers {
+object Orkestra extends OrkestraServer with GithubHooks with CronTriggers {
   lazy val board = Folder("Integration Test")(SomeJob.board)
   lazy val jobs = Set(SomeJob.job)
   lazy val githubTriggers = Set.empty
@@ -22,15 +23,12 @@ object Orkestra extends OrkestraServer[IO] with GithubHooks with CronTriggers {
 }
 
 object SomeJob {
-  implicit val timer = IO.timer(ExecutionContext.global)
-
   lazy val board = JobBoard(JobId("someJob"), "Some Job")(HNil)
 
-  lazy val job = Job(board) { _ =>
-  for {
-      _ <- IO(println("Start"))
-      _ <- IO.sleep(3.seconds)
-      _ <- IO(println("Done"))
-    } yield ()
+  def job(implicit timer: Timer[IO], contextShift: ContextShift[IO]) = Job(board) { _ =>
+    IO(println("Start")) *>
+      IO(println(new File("some-file").exists())) *>
+      IO.sleep(3.seconds) *>
+      IO(println("Done"))
   }
 }

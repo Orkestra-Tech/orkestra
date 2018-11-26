@@ -10,11 +10,11 @@ import tech.orkestra.job.Job
 import tech.orkestra.model.RunId
 import tech.orkestra.utils.AkkaImplicits._
 
-sealed trait GithubTrigger {
+sealed trait GithubTrigger[F[_]] {
   private[github] def trigger(eventType: String, json: Json)(
     implicit
     orkestraConfig: OrkestraConfig,
-    kubernetesClient: KubernetesClient,
+    kubernetesClient: KubernetesClient[F],
     elasticsearchClient: ElasticClient
   ): Future[Boolean]
 }
@@ -25,12 +25,12 @@ case class BranchTrigger[F[_], ParametersNoGitRef <: HList, Parameters <: HList]
   job: Job[F, Parameters, _],
   parameters: ParametersNoGitRef
 )(implicit gitRefInjector: GitRefInjector[ParametersNoGitRef, Parameters])
-    extends GithubTrigger {
+    extends GithubTrigger[F] {
 
   private[github] def trigger(eventType: String, json: Json)(
     implicit
     orkestraConfig: OrkestraConfig,
-    kubernetesClient: KubernetesClient,
+    kubernetesClient: KubernetesClient[F],
     elasticsearchClient: ElasticClient
   ): Future[Boolean] =
     eventType match {
@@ -41,7 +41,7 @@ case class BranchTrigger[F[_], ParametersNoGitRef <: HList, Parameters <: HList]
         if (repoName == repository.name && s"^$branchRegex$$".r.findFirstIn(branch).isDefined) {
           val runId = RunId.random()
           job
-            .ApiServer()
+            .ApiServer()(orkestraConfig, kubernetesClient, elasticsearchClient)
             .trigger(runId, gitRefInjector(parameters, GitRef(branch)))
             .map(_ => true)
         } else Future.successful(false)
@@ -54,12 +54,12 @@ case class PullRequestTrigger[F[_], ParametersNoGitRef <: HList, Parameters <: H
   job: Job[F, Parameters, _],
   parameters: ParametersNoGitRef
 )(implicit gitRefInjector: GitRefInjector[ParametersNoGitRef, Parameters])
-    extends GithubTrigger {
+    extends GithubTrigger[F] {
 
   private[github] def trigger(eventType: String, json: Json)(
     implicit
     orkestraConfig: OrkestraConfig,
-    kubernetesClient: KubernetesClient,
+    kubernetesClient: KubernetesClient[F],
     elasticsearchClient: ElasticClient
   ): Future[Boolean] =
     eventType match {

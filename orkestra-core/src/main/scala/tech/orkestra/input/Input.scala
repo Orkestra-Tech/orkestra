@@ -40,7 +40,9 @@ case class Text[T: Encoder: Decoder](name: String, default: Option[T] = None) ex
       <.span(name),
       <.input.text(
         ^.key := id.name,
-        ^.value := state.get(id).map(_.asInstanceOf[T]) // scalafix:ok
+        ^.value := state
+          .get(id)
+          .map(_.asInstanceOf[T]) // scalafix:ok
           .orElse(default)
           .fold("")(implicitly[Encoder[T]].apply(_)),
         ^.onChange ==> modValue
@@ -88,7 +90,9 @@ case class Select[Entry <: EnumEntry](name: String, enum: Enum[Entry], default: 
       <.span(name),
       <.select(
         ^.key := id.name,
-        ^.value := state.get(id).map(_.asInstanceOf[Entry]) // scalafix:ok
+        ^.value := state
+          .get(id)
+          .map(_.asInstanceOf[Entry]) // scalafix:ok
           .orElse(default)
           .map(_.entryName)
           .getOrElse(disabled),
