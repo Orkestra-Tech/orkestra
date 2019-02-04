@@ -16,9 +16,9 @@ import shapeless.HList
 import tech.orkestra.utils.BaseEncoders._
 
 trait HistoryIndex extends Indexed {
-  case class Run[ParamValues <: HList, Result](
+  case class Run[Parameters <: HList, Result](
     runInfo: RunInfo,
-    paramValues: ParamValues,
+    parameters: Parameters,
     triggeredOn: Instant,
     parentJob: Option[RunInfo],
     latestUpdateOn: Instant,
@@ -27,25 +27,25 @@ trait HistoryIndex extends Indexed {
   )
 
   object Run {
-    implicit def decoder[ParamValues <: HList: Decoder, Result: Decoder]: Decoder[Run[ParamValues, Result]] =
+    implicit def decoder[Parameters <: HList: Decoder, Result: Decoder]: Decoder[Run[Parameters, Result]] =
       cursor =>
         for {
           runInfo <- cursor.downField("runInfo").as[RunInfo]
-          paramValuesString <- cursor.downField("paramValues").as[String]
-          paramValues <- decode[ParamValues](paramValuesString)
-            .leftMap(failure => DecodingFailure(failure.getMessage, List(DownField("paramValues"))))
+          parametersString <- cursor.downField("parameters").as[String]
+          parameters <- decode[Parameters](parametersString)
+            .leftMap(failure => DecodingFailure(failure.getMessage, List(DownField("parameters"))))
           triggeredOn <- cursor.downField("triggeredOn").as[Instant]
           parentJob <- cursor.downField("parentJob").as[Option[RunInfo]]
           latestUpdateOn <- cursor.downField("latestUpdateOn").as[Instant]
           result <- cursor.downField("result").as[Option[Either[Throwable, Result]]]
           tags <- cursor.downField("tags").as[Seq[String]]
-        } yield Run(runInfo, paramValues, triggeredOn, parentJob, latestUpdateOn, result, tags)
+        } yield Run(runInfo, parameters, triggeredOn, parentJob, latestUpdateOn, result, tags)
 
-    implicit def encoder[ParamValues <: HList: Encoder, Result: Encoder]: Encoder[Run[ParamValues, Result]] =
+    implicit def encoder[Parameters <: HList: Encoder, Result: Encoder]: Encoder[Run[Parameters, Result]] =
       run =>
         Json.obj(
           "runInfo" -> run.runInfo.asJson,
-          "paramValues" -> Json.fromString(run.paramValues.asJson.noSpaces),
+          "parameters" -> Json.fromString(run.parameters.asJson.noSpaces),
           "triggeredOn" -> run.triggeredOn.asJson,
           "parentJob" -> run.parentJob.asJson,
           "latestUpdateOn" -> run.latestUpdateOn.asJson,
@@ -62,11 +62,11 @@ trait HistoryIndex extends Indexed {
 
     def formatId(runInfo: RunInfo) = s"${runInfo.jobId.value}-${runInfo.runId.value}"
 
-    val createDefinition =
+    val createIndexRequest =
       createIndex(index.name).mappings(
         mapping(`type`).fields(
           objectField("runInfo").fields(RunInfo.elasticsearchFields),
-          textField("paramValues"),
+          textField("parameters"),
           dateField("triggeredOn"),
           objectField("parentJob").fields(RunInfo.elasticsearchFields),
           dateField("latestUpdateOn"),

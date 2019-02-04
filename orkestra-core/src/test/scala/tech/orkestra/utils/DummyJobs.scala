@@ -1,31 +1,42 @@
 package tech.orkestra.utils
 
-import io.circe.shapes._
+import cats.effect.{ContextShift, IO}
+import shapeless._
+import tech.orkestra.Dsl._
 import tech.orkestra.OrkestraConfig
 import tech.orkestra.board.JobBoard
 import tech.orkestra.job.Job
 import tech.orkestra.model.JobId
-import tech.orkestra.parameter.{Checkbox, Input}
+import tech.orkestra.input.{Checkbox, Text}
 
 object DummyJobs {
   def emptyJobBoard(implicit orkestraConfig: OrkestraConfig) =
-    JobBoard[() => Unit](orkestraConfig.runInfo.jobId, "Empty Job")()
-  def emptyJob(implicit orkestraConfig: OrkestraConfig) = Job(emptyJobBoard)(implicit workDir => () => ())
+    JobBoard(orkestraConfig.runInfo.jobId, "Empty Job")(HNil)
+  def emptyJob(implicit orkestraConfig: OrkestraConfig, contextShift: ContextShift[IO]) =
+    Job(emptyJobBoard)(_ => IO.unit)
 
-  def emptyJobBoard2(implicit orkestraConfig: OrkestraConfig) =
-    JobBoard[() => Unit](JobId("emptyJob2"), "Empty Job 2")()
-  def emptyJob2(implicit orkestraConfig: OrkestraConfig) = Job(emptyJobBoard2)(implicit workDir => () => ())
+  lazy val emptyJobBoard2 =
+    JobBoard(JobId("emptyJob2"), "Empty Job 2")(HNil)
+  def emptyJob2(implicit contextShift: ContextShift[IO]) =
+    Job(emptyJobBoard2)(_ => IO.unit)
 
   def oneParamJobBoard(implicit orkestraConfig: OrkestraConfig) =
-    JobBoard[String => Unit](orkestraConfig.runInfo.jobId, "One Param Job")(Input[String]("Some string"))
-  def oneParamJob(implicit orkestraConfig: OrkestraConfig) =
-    Job(oneParamJobBoard)(implicit workDir => someString => ())
+    JobBoard(orkestraConfig.runInfo.jobId, "One Param Job")(Text[String]("Some string") :: HNil)
+  def oneParamJob(implicit orkestraConfig: OrkestraConfig, contextShift: ContextShift[IO]) =
+    Job(oneParamJobBoard) {
+      case someString :: HNil =>
+        IO(println(someString))
+    }
 
   def twoParamsJobBoard(implicit orkestraConfig: OrkestraConfig) =
-    JobBoard[(String, Boolean) => Unit](orkestraConfig.runInfo.jobId, "Two Params Job")(
-      Input[String]("Some string"),
-      Checkbox("Some bool")
+    JobBoard(orkestraConfig.runInfo.jobId, "Two Params Job")(
+      Text[String]("Some string") ::
+        Checkbox("Some bool") ::
+        HNil
     )
-  def twoParamsJob(implicit orkestraConfig: OrkestraConfig) =
-    Job(twoParamsJobBoard)(implicit workDir => (someString, someBool) => ())
+  def twoParamsJob(implicit orkestraConfig: OrkestraConfig, contextShift: ContextShift[IO]) =
+    Job(twoParamsJobBoard) {
+      case _ :: _ :: HNil =>
+        IO.unit
+    }
 }

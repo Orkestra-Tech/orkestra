@@ -1,7 +1,7 @@
 package tech.orkestra.utils
 
 object Secrets {
-  private var secrets = Seq.empty[String]
+  private var secrets = Seq.empty[String] // scalafix:ok
 
   private[orkestra] def sanitize(string: String): String =
     secrets.foldLeft(string) {

@@ -1,7 +1,6 @@
 package tech.orkestra.utils
 
 import scala.concurrent.ExecutionContext
-
 import akka.actor.ActorSystem
 import akka.stream.{ActorMaterializer, Materializer}
 

@@ -1,89 +1,107 @@
 package tech.orkestra
 
+import cats.effect.{ConcurrentEffect, ContextShift, IO, Timer}
+import io.circe.shapes._
 import org.scalatest.Matchers._
-import tech.orkestra.Dsl._
+import org.scalatest.concurrent.Eventually
+
+import scala.concurrent.ExecutionContext
+import shapeless._
 import tech.orkestra.job.Jobs
 import tech.orkestra.utils.DummyJobs._
 import tech.orkestra.utils._
-import org.scalatest.concurrent.Eventually
+import scala.concurrent.duration._
 
 class TriggersTests
     extends OrkestraSpec
     with OrkestraConfigTest
-    with KubernetesTest
+    with KubernetesTest[IO]
     with ElasticsearchTest
-    with Triggers
+    with Triggers[IO]
     with Eventually {
+  implicit lazy val timer: Timer[IO] = IO.timer(ExecutionContext.global)
+  implicit lazy val contextShift: ContextShift[IO] = IO.contextShift(ExecutionContext.global)
+  implicit lazy val F: ConcurrentEffect[IO] = IO.ioConcurrentEffect
 
-  scenario("Trigger a job with empty parameter") {
-    emptyJob.trigger().futureValue
-    eventually {
-      val runningJobs = CommonApiServer().runningJobs().futureValue
-      (runningJobs should have).size(1)
-    }
+  "Trigger a job" should "start a job given empty parameter" in usingKubernetesClient { implicit kubernetesClient =>
+    for {
+      _ <- emptyJob.trigger(HNil)
+      _ <- refreshIndexes
+      runningJobs <- IO.fromFuture(IO(CommonApiServer().runningJobs()))
+      _ = (runningJobs should have).size(1)
+    } yield ()
   }
 
-  scenario("Run a job with empty parameter") {
-    val run = emptyJob.run()
-    eventually {
-      val runningJobs = CommonApiServer().runningJobs().futureValue
-      (runningJobs should have).size(1)
-    }
-
-    Jobs.succeedJob(orkestraConfig.runInfo, ()).futureValue
-    kubernetes.Jobs.delete(orkestraConfig.runInfo).futureValue
-    run.futureValue
-    eventually {
-      val runningJobs2 = CommonApiServer().runningJobs().futureValue
-      (runningJobs2 should have).size(0)
-    }
+  it should "start a job given 1 parameter" in usingKubernetesClient { implicit kubernetesClient =>
+    for {
+      _ <- oneParamJob.trigger("someString" :: HNil)
+      _ <- refreshIndexes
+      runningJobs <- IO.fromFuture(IO(CommonApiServer().runningJobs()))
+      _ = (runningJobs should have).size(1)
+    } yield ()
   }
 
-  scenario("Trigger a job with 1 parameter") {
-    oneParamJob.trigger("someString").futureValue
-    eventually {
-      val runningJobs = CommonApiServer().runningJobs().futureValue
-      (runningJobs should have).size(1)
-    }
+  it should "start a job given multiple parameters" in usingKubernetesClient { implicit kubernetesClient =>
+    for {
+      _ <- twoParamsJob.trigger("someString" :: true :: HNil)
+      _ <- refreshIndexes
+      runningJobs <- IO.fromFuture(IO(CommonApiServer().runningJobs()))
+      _ = (runningJobs should have).size(1)
+    } yield ()
   }
 
-  scenario("Run a job with 1 parameter") {
-    val run = oneParamJob.run("someString")
-    eventually {
-      val runningJobs = CommonApiServer().runningJobs().futureValue
-      (runningJobs should have).size(1)
-    }
+  "Run a job" should "start a job and await result given empty parameter" in usingKubernetesClient {
+    implicit kubernetesClient =>
+      for {
+        run <- emptyJob.run(HNil).start
+        _ <- timer.sleep(1.milli)
+        _ <- refreshIndexes
+        runningJobs <- IO.fromFuture(IO(CommonApiServer().runningJobs()))
+        _ = (runningJobs should have).size(1)
 
-    Jobs.succeedJob(orkestraConfig.runInfo, ()).futureValue
-    kubernetes.Jobs.delete(orkestraConfig.runInfo).futureValue
-    run.futureValue
-    eventually {
-      val runningJobs2 = CommonApiServer().runningJobs().futureValue
-      (runningJobs2 should have).size(0)
-    }
+        _ <- Jobs.succeedJob(orkestraConfig.runInfo, ())
+        _ <- kubernetes.Jobs.delete(orkestraConfig.runInfo)
+        _ <- run.join
+        _ <- refreshIndexes
+        runningJobs2 <- IO.fromFuture(IO(CommonApiServer().runningJobs()))
+        _ = (runningJobs2 should have).size(0)
+      } yield ()
   }
 
-  scenario("Trigger a job with multiple parameters") {
-    twoParamsJob.trigger("someString", true).futureValue
-    eventually {
-      val runningJobs = CommonApiServer().runningJobs().futureValue
-      (runningJobs should have).size(1)
-    }
-  }
-
-  scenario("Run a job with multiple parameters") {
-    val run = twoParamsJob.run("someString", true)
-    eventually {
-      val runningJobs = CommonApiServer().runningJobs().futureValue
-      (runningJobs should have).size(1)
-    }
-
-    Jobs.succeedJob(orkestraConfig.runInfo, ()).futureValue
-    kubernetes.Jobs.delete(orkestraConfig.runInfo).futureValue
-    run.futureValue
-    eventually {
-      val runningJobs2 = CommonApiServer().runningJobs().futureValue
-      (runningJobs2 should have).size(0)
-    }
-  }
+//  it should "start a job and await result given 1 parameter" in usingKubernetesClient { implicit kubernetesClient =>
+//    for {
+//      run <- oneParamJob.run("someString" :: HNil).start
+//      _ = eventually {
+//        val runningJobs = CommonApiServer().runningJobs().futureValue
+//        (runningJobs should have).size(1)
+//      }
+//
+//      _ <- IO.fromFuture(IO(Jobs.succeedJob(orkestraConfig.runInfo, ())))
+//      _ <- kubernetes.Jobs.delete(orkestraConfig.runInfo)
+//      _ <- run.join
+//      _ = eventually {
+//        val runningJobs2 = CommonApiServer().runningJobs().futureValue
+//        (runningJobs2 should have).size(0)
+//      }
+//    } yield ()
+//  }
+//
+//  it should "start a job and await result given multiple parameters" in usingKubernetesClient {
+//    implicit kubernetesClient =>
+//      for {
+//        run <- twoParamsJob.run("someString" :: true :: HNil).start
+//        _ = eventually {
+//          val runningJobs = CommonApiServer().runningJobs().futureValue
+//          (runningJobs should have).size(1)
+//        }
+//
+//        _ <- IO.fromFuture(IO(Jobs.succeedJob(orkestraConfig.runInfo, ())))
+//        _ <- kubernetes.Jobs.delete(orkestraConfig.runInfo)
+//        _ <- run.join
+//        _ = eventually {
+//          val runningJobs2 = CommonApiServer().runningJobs().futureValue
+//          (runningJobs2 should have).size(0)
+//        }
+//      } yield ()
+//  }
 }

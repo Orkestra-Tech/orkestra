@@ -20,7 +20,7 @@ trait StagesIndex extends Indexed {
     val index = Index("stages")
     val `type` = "stage"
 
-    val createDefinition =
+    val createIndexRequest =
       createIndex(index.name).mappings(
         mapping(`type`).fields(
           objectField("runInfo").fields(RunInfo.elasticsearchFields),

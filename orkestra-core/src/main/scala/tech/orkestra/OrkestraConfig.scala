@@ -4,17 +4,18 @@ import java.io.IOException
 import java.nio.file.Paths
 
 import scala.io.Source
-import com.sksamuel.elastic4s.ElasticsearchClientUri
+import com.sksamuel.elastic4s.http.ElasticProperties
 import io.circe.generic.auto._
 import io.circe.parser._
+import org.http4s.Uri
 import tech.orkestra.model.{EnvRunInfo, RunId, RunInfo}
 
 case class OrkestraConfig(
-  elasticsearchUri: ElasticsearchClientUri,
+  elasticsearchProperties: ElasticProperties,
   workspace: String = OrkestraConfig.defaultWorkspace,
   port: Int = OrkestraConfig.defaultBindPort,
   runInfoMaybe: Option[RunInfo] = None,
-  kubeUri: String,
+  kubeUri: Uri,
   namespace: String,
   podName: String,
   basePath: String = OrkestraConfig.defaultBasePath
@@ -24,7 +25,7 @@ case class OrkestraConfig(
 
 object OrkestraConfig {
   def fromEnvVars() = OrkestraConfig(
-    ElasticsearchClientUri(
+    ElasticProperties(
       fromEnvVar("ELASTICSEARCH_URI").getOrElse(
         throw new IllegalStateException("ORKESTRA_ELASTICSEARCH_URI should be set")
       )
@@ -34,7 +35,8 @@ object OrkestraConfig {
     fromEnvVar("RUN_INFO").map { runInfoJson =>
       decode[EnvRunInfo](runInfoJson).fold(throw _, runInfo => RunInfo(runInfo.jobId, runInfo.runId.getOrElse(jobUid)))
     },
-    fromEnvVar("KUBE_URI").getOrElse(throw new IllegalStateException("ORKESTRA_KUBE_URI should be set")),
+    fromEnvVar("KUBE_URI")
+      .fold(throw new IllegalStateException("ORKESTRA_KUBE_URI should be set"))(Uri.unsafeFromString),
     fromEnvVar("NAMESPACE").getOrElse(throw new IllegalStateException("ORKESTRA_NAMESPACE should be set")),
     fromEnvVar("POD_NAME").getOrElse(throw new IllegalStateException("ORKESTRA_POD_NAME should be set")),
     fromEnvVar("BASEPATH").getOrElse(defaultBasePath)

@@ -77,7 +77,7 @@ spec:
     targetPort: 9300
 
 ---
-apiVersion: apps/v1beta2
+apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: elasticsearch
@@ -141,7 +141,7 @@ spec:
     targetPort: 8081
 
 ---
-apiVersion: apps/v1beta2
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: orkestra

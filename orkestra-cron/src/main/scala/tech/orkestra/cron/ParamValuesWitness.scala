@@ -2,20 +2,20 @@ package tech.orkestra.cron
 
 import shapeless._
 
-trait ParamValuesWitness[DefaultParamValues <: HList, ParamValues <: HList] {
-  def apply(params: DefaultParamValues): ParamValues
+trait ParametersWitness[DefaultParameters <: HList, Parameters <: HList] {
+  def apply(params: DefaultParameters): Parameters
 }
 
-object ParamValuesWitness {
-  implicit val hNil = new ParamValuesWitness[HNil, HNil] {
+object ParametersWitness {
+  implicit val hNil = new ParametersWitness[HNil, HNil] {
     override def apply(params: HNil) = HNil
   }
 
-  implicit def hCons[HeadParamValue, TailParamValuesUnwitnessed <: HList, TailParamValues <: HList](
-    implicit tailParamValuesWitness: ParamValuesWitness[TailParamValuesUnwitnessed, TailParamValues]
-  ) = new ParamValuesWitness[HeadParamValue :: TailParamValuesUnwitnessed, HeadParamValue :: TailParamValues] {
+  implicit def hCons[HeadParamValue, TailParametersUnwitnessed <: HList, TailParameters <: HList](
+    implicit tailParametersWitness: ParametersWitness[TailParametersUnwitnessed, TailParameters]
+  ) = new ParametersWitness[HeadParamValue :: TailParametersUnwitnessed, HeadParamValue :: TailParameters] {
 
-    override def apply(params: HeadParamValue :: TailParamValuesUnwitnessed) =
-      params.head :: tailParamValuesWitness(params.tail)
+    override def apply(params: HeadParamValue :: TailParametersUnwitnessed) =
+      params.head :: tailParametersWitness(params.tail)
   }
 }

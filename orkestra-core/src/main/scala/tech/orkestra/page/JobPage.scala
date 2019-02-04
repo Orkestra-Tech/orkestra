@@ -9,8 +9,8 @@ import scala.scalajs.js
 
 import autowire._
 import tech.orkestra.board.JobBoard
-import tech.orkestra.parameter.State
-import tech.orkestra.parameter.ParameterOperations
+import tech.orkestra.input.State
+import tech.orkestra.input.InputOperations
 import tech.orkestra.route.WebRouter.{BoardPageRoute, LogsPageRoute, PageRoute}
 import io.circe._
 import io.circe.generic.auto._
@@ -29,30 +29,34 @@ import tech.orkestra.utils.Colours
 object JobPage {
 
   case class Props[
-    Params <: HList,
-    ParamValuesNoRunId <: HList,
-    ParamValues <: HList: Encoder: Decoder,
+    Inputs <: HList,
+    ParametersNoRunId <: HList,
+    Parameters <: HList: Encoder: Decoder,
     Result: Decoder
   ](
-    job: JobBoard[ParamValues, Result, _, _],
-    params: Params,
+    job: JobBoard[Parameters],
+    inputs: Inputs,
     page: BoardPageRoute,
     ctl: RouterCtl[PageRoute]
-  )(implicit paramOperations: ParameterOperations[Params, ParamValues]) {
+  )(implicit inputOperations: InputOperations[Inputs, Parameters]) {
 
     def runJob(
-      $ : RenderScope[Props[_, _, _ <: HList, _], (RunId, Map[Symbol, Any], TagMod, SetIntervalHandle), Unit]
+      $ : RenderScope[Props[_, _, _ <: HList, _], (RunId, Map[Symbol, Any], TagMod, Option[SetIntervalHandle]), Unit]
     )(event: ReactEventFromInput) =
       Callback.future {
         event.preventDefault()
         job.Api.client
-          .trigger($.state._1, paramOperations.values(params, $.state._2))
+          .trigger($.state._1, inputOperations.values(inputs, $.state._2))
           .call()
           .map(_ => $.modState(_.copy(_1 = RunId.random(), _2 = Map.empty)))
       }
 
     def pullHistory(
-      $ : ComponentDidMount[Props[_, _, _ <: HList, _], (RunId, Map[Symbol, Any], TagMod, SetIntervalHandle), Unit]
+      $ : ComponentDidMount[
+        Props[_, _, _ <: HList, _],
+        (RunId, Map[Symbol, Any], TagMod, Option[SetIntervalHandle]),
+        Unit
+      ]
     ) = Callback.future {
       job.Api.client
         .history(Page(None, -50)) // TODO load more as we scroll
@@ -61,16 +65,16 @@ object JobPage {
           val runDisplays = history.runs.zipWithIndex.toTagMod {
             case ((run, stages), index) =>
               val paramsDescription =
-                paramOperations
-                  .paramsState(params, run.paramValues)
-                  .map(param => s"${param._1}: ${param._2}")
+                inputOperations
+                  .inputsState(inputs, run.parameters)
+                  .map(input => s"${input._1}: ${input._2}")
                   .mkString("\n")
               val rerunButton =
                 <.div(
                   Global.Style.brandColorButton,
                   ^.width := "30px",
                   ^.height := "30px",
-                  ^.onClick ==> reRun(run.paramValues, run.tags)
+                  ^.onClick ==> reRun(run.parameters, run.tags)
                 )("↻")
               val stopButton = StopButton.component(StopButton.Props(job, run.runInfo.runId))
               def runIdDisplay(icon: String, runId: RunId, color: String, title: String) =
@@ -142,16 +146,16 @@ object JobPage {
         }
     }
 
-    private def reRun(paramValues: ParamValues, tags: Seq[String])(event: ReactEventFromInput) = Callback.future {
+    private def reRun(parameters: Parameters, tags: Seq[String])(event: ReactEventFromInput) = Callback.future {
       event.stopPropagation()
-      job.Api.client.trigger(RunId.random(), paramValues, tags).call().map(Callback(_))
+      job.Api.client.trigger(RunId.random(), parameters, tags).call().map(Callback(_))
     }
 
     def displays(
-      $ : RenderScope[Props[_, _, _ <: HList, _], (RunId, Map[Symbol, Any], TagMod, SetIntervalHandle), Unit]
+      $ : RenderScope[Props[_, _, _ <: HList, _], (RunId, Map[Symbol, Any], TagMod, Option[SetIntervalHandle]), Unit]
     ) = {
       val displayState = State(kv => $.modState(s => s.copy(_2 = s._2 + kv)), key => $.state._2.get(key))
-      paramOperations.displays(params, displayState).zipWithIndex.toTagMod {
+      inputOperations.displays(inputs, displayState).zipWithIndex.toTagMod {
         case (param, index) => param(Global.Style.listItem(index % 2 == 0))
       }
     }
@@ -160,9 +164,9 @@ object JobPage {
   val component =
     ScalaComponent
       .builder[Props[_, _, _ <: HList, _]](getClass.getSimpleName)
-      .initialStateFromProps[(RunId, Map[Symbol, Any], TagMod, SetIntervalHandle)] { props =>
+      .initialStateFromProps[(RunId, Map[Symbol, Any], TagMod, Option[SetIntervalHandle])] { props =>
         val runId = props.page.runId.getOrElse(RunId.random())
-        (runId, Map.empty, "Loading runs", null)
+        (runId, Map.empty, "Loading runs", None)
       }
       .renderP { ($, props) =>
         <.div(
@@ -176,9 +180,9 @@ object JobPage {
         )
       }
       .componentDidMount { $ =>
-        $.modState(_.copy(_4 = js.timers.setInterval(1.second)($.props.pullHistory($).runNow())))
+        $.modState(_.copy(_4 = Option(js.timers.setInterval(1.second)($.props.pullHistory($).runNow()))))
           .flatMap(_ => $.props.pullHistory($))
       }
-      .componentWillUnmount($ => Callback(js.timers.clearInterval($.state._4)))
+      .componentWillUnmount($ => Callback($.state._4.foreach(js.timers.clearInterval)))
       .build
 }

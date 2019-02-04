@@ -4,15 +4,13 @@ import java.time.Instant
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
-
 import com.sksamuel.elastic4s.circe._
 import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.http.index.IndexResponse
-import com.sksamuel.elastic4s.http.{HttpClient, RequestFailure, RequestSuccess}
+import com.sksamuel.elastic4s.http._
 import com.sksamuel.elastic4s.{ElasticDate, Index, Minutes}
 import io.circe.generic.auto._
 import io.circe.java8.time._
-
 import tech.orkestra.utils.AkkaImplicits._
 
 private[lock] object Locks {
@@ -25,7 +23,7 @@ private[lock] object Locks {
 
   def trylock(
     id: String
-  )(implicit elasticsearchClient: HttpClient): Future[Either[RequestFailure, RequestSuccess[IndexResponse]]] =
+  )(implicit elasticsearchClient: ElasticClient): Future[Response[IndexResponse]] =
     for {
       _ <- elasticsearchClient.execute(
         deleteByQuery(index, `type`, rangeQuery("updatedOn").lt(ElasticDate.now.minus(1, Minutes)))
@@ -34,7 +32,7 @@ private[lock] object Locks {
     } yield createLock
 
   def runLocked[Result](id: String, func: => Future[Result])(
-    implicit elasticsearchClient: HttpClient
+    implicit elasticsearchClient: ElasticClient
   ): Future[Result] = {
     val keepLock =
       system.scheduler.schedule(30.seconds, 30.seconds)(elasticsearchClient.execute(indexLockDoc(id)))

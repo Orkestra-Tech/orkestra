@@ -1,7 +1,10 @@
 package tech.orkestra.cron
 
+import cats.effect.Effect
+import io.k8s.api.core.v1.PodSpec
 import shapeless._
 import tech.orkestra.job.Job
+import tech.orkestra.model.JobId
 
 /**
   * A cron triggerable job.
@@ -9,33 +12,11 @@ import tech.orkestra.job.Job
   * @param schedule The cron schedule expression
   * @param job The job to trigger
   */
-case class CronTrigger[ParamValues <: HList] private (
+case class CronTrigger[F[_]: Effect, Parameters <: HList](
   schedule: String,
-  job: Job[ParamValues, _],
-  paramsValues: ParamValues
+  job: Job[F, Parameters, _],
+  parameters: Parameters
 ) {
-  private[cron] val podSpecWithDefaultParams = job.podSpec(paramsValues)
-}
-
-object CronTrigger {
-  def apply[ParamValues <: HList](schedule: String, job: Job[ParamValues, _]) =
-    new CronTriggerBuilder[ParamValues](schedule, job)
-
-  class CronTriggerBuilder[ParamValues <: HList](repository: String, job: Job[ParamValues, _]) {
-    // No Param
-    def apply()(implicit defaultParamsWitness: ParamValuesWitness[HNil, ParamValues]): CronTrigger[ParamValues] =
-      CronTrigger(repository, job, defaultParamsWitness(HNil))
-
-    // One param
-    def apply[ParamValue](
-      value: ParamValue
-    )(implicit defaultParamsWitness: ParamValuesWitness[ParamValue :: HNil, ParamValues]): CronTrigger[ParamValues] =
-      CronTrigger(repository, job, defaultParamsWitness(value :: HNil))
-
-    // Multi param
-    def apply[TupledValues <: Product](paramValues: TupledValues)(
-      implicit tupleToHList: Generic.Aux[TupledValues, ParamValues]
-    ): CronTrigger[ParamValues] =
-      CronTrigger(repository, job, tupleToHList.to(paramValues))
-  }
+  val podSpecWithDefaultParams: PodSpec = job.podSpec(parameters)
+  val jobId: JobId = job.board.id
 }

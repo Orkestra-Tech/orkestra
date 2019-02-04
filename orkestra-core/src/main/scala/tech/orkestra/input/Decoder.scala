@@ -1,4 +1,4 @@
-package tech.orkestra.parameter
+package tech.orkestra.input
 
 import shapeless._
 

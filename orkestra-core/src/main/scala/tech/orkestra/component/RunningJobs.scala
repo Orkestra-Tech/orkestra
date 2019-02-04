@@ -25,11 +25,11 @@ import tech.orkestra.route.WebRouter.{BoardPageRoute, LogsPageRoute, PageRoute}
 
 object RunningJobs {
 
-  case class Props(ctl: RouterCtl[PageRoute], jobs: Seq[JobBoard[_ <: HList, _, _, _]], closeRunningJobs: Callback)
+  case class Props(ctl: RouterCtl[PageRoute], jobs: Seq[JobBoard[_ <: HList]], closeRunningJobs: Callback)
 
   val component = ScalaComponent
     .builder[Props](getClass.getSimpleName)
-    .initialState[(Option[Seq[Run[_, _]]], SetIntervalHandle)]((None, null))
+    .initialState[(Option[Seq[Run[_, _]]], Option[SetIntervalHandle])]((None, None))
     .renderP { ($, props) =>
       val runs = $.state._1 match {
         case Some(runningJobs) if runningJobs.nonEmpty =>
@@ -72,14 +72,14 @@ object RunningJobs {
       )(runs)
     }
     .componentDidMount { $ =>
-      $.modState(_.copy(_2 = js.timers.setInterval(1.second)(pullRunningJobs($).runNow())))
+      $.modState(_.copy(_2 = Option(js.timers.setInterval(1.second)(pullRunningJobs($).runNow()))))
         .flatMap(_ => pullRunningJobs($))
     }
-    .componentWillUnmount($ => Callback(js.timers.clearInterval($.state._2)))
+    .componentWillUnmount($ => Callback($.state._2.foreach(js.timers.clearInterval)))
     .build
 
   private def pullRunningJobs(
-    $ : ComponentDidMount[Props, (Option[Seq[Run[_, _]]], SetIntervalHandle), Unit]
+    $ : ComponentDidMount[Props, (Option[Seq[Run[_, _]]], Option[SetIntervalHandle]), Unit]
   ) = Callback.future {
     CommonApi.client.runningJobs().call().map(runningJobs => $.modState(_.copy(_1 = Option(runningJobs))))
   }

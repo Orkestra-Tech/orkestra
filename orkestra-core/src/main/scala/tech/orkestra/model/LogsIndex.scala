@@ -14,7 +14,7 @@ trait LogsIndex extends Indexed {
     val index = Index("logs")
     val `type` = "line"
 
-    val createDefinition =
+    val createIndexRequest =
       createIndex(index.name).mappings(
         mapping(`type`).fields(
           keywordField("runId"),

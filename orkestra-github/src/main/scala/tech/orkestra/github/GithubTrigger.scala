@@ -1,36 +1,38 @@
 package tech.orkestra.github
 
 import scala.concurrent.Future
-
 import com.goyeau.kubernetes.client.KubernetesClient
-import com.sksamuel.elastic4s.http.HttpClient
+import com.sksamuel.elastic4s.http.ElasticClient
 import io.circe.Json
 import shapeless._
-
 import tech.orkestra.OrkestraConfig
 import tech.orkestra.job.Job
-import tech.orkestra.kubernetes.Kubernetes
 import tech.orkestra.model.RunId
-import tech.orkestra.utils.Elasticsearch
 import tech.orkestra.utils.AkkaImplicits._
 
-sealed trait GithubTrigger {
-  private[github] def trigger(eventType: String, json: Json): Future[Boolean]
+sealed trait GithubTrigger[F[_]] {
+  private[github] def trigger(eventType: String, json: Json)(
+    implicit
+    orkestraConfig: OrkestraConfig,
+    kubernetesClient: KubernetesClient[F],
+    elasticsearchClient: ElasticClient
+  ): Future[Boolean]
 }
 
-case class BranchTrigger[ParamValuesNoGitRef <: HList, ParamValues <: HList] private (
+case class BranchTrigger[F[_], ParametersNoGitRef <: HList, Parameters <: HList](
   repository: Repository,
   branchRegex: String,
-  job: Job[ParamValues, _],
-  values: ParamValuesNoGitRef
-)(
-  implicit gitRefInjector: GitRefInjector[ParamValuesNoGitRef, ParamValues],
-  orkestraConfig: OrkestraConfig,
-  kubernetesClient: KubernetesClient,
-  elasticsearchClient: HttpClient
-) extends GithubTrigger {
+  job: Job[F, Parameters, _],
+  parameters: ParametersNoGitRef
+)(implicit gitRefInjector: GitRefInjector[ParametersNoGitRef, Parameters])
+    extends GithubTrigger[F] {
 
-  private[github] def trigger(eventType: String, json: Json): Future[Boolean] =
+  private[github] def trigger(eventType: String, json: Json)(
+    implicit
+    orkestraConfig: OrkestraConfig,
+    kubernetesClient: KubernetesClient[F],
+    elasticsearchClient: ElasticClient
+  ): Future[Boolean] =
     eventType match {
       case "push" =>
         val repoName = json.hcursor.downField("repository").downField("full_name").as[String].fold(throw _, identity)
@@ -39,62 +41,27 @@ case class BranchTrigger[ParamValuesNoGitRef <: HList, ParamValues <: HList] pri
         if (repoName == repository.name && s"^$branchRegex$$".r.findFirstIn(branch).isDefined) {
           val runId = RunId.random()
           job
-            .ApiServer()
-            .trigger(runId, gitRefInjector(values, GitRef(branch)))
+            .ApiServer()(orkestraConfig, kubernetesClient, elasticsearchClient)
+            .trigger(runId, gitRefInjector(parameters, GitRef(branch)))
             .map(_ => true)
         } else Future.successful(false)
       case _ => Future.successful(false)
     }
 }
 
-object BranchTrigger {
-  implicit private lazy val orkestraConfig: OrkestraConfig = OrkestraConfig.fromEnvVars()
-  implicit private lazy val kubernetesClient: KubernetesClient = Kubernetes.client
-  implicit private lazy val httpClient: HttpClient = Elasticsearch.client
-
-  def apply[ParamValues <: HList](repository: Repository, branchRegex: String, job: Job[ParamValues, _]) =
-    new BranchTriggerBuilder[ParamValues](repository, branchRegex, job)
-
-  class BranchTriggerBuilder[ParamValues <: HList](
-    repository: Repository,
-    branchRegex: String,
-    job: Job[ParamValues, _]
-  ) {
-    // No Param
-    def apply()(
-      implicit gitRefInjector: GitRefInjector[HNil, ParamValues]
-    ): BranchTrigger[HNil, ParamValues] =
-      BranchTrigger(repository, branchRegex, job, HNil)
-
-    // One param
-    def apply[ParamValueNoGitRef](value: ParamValueNoGitRef)(
-      implicit gitRefInjector: GitRefInjector[ParamValueNoGitRef :: HNil, ParamValues]
-    ): BranchTrigger[ParamValueNoGitRef :: HNil, ParamValues] =
-      BranchTrigger(repository, branchRegex, job, value :: HNil)
-
-    // Multi param
-    def apply[TupledValues <: Product, ParamValuesNoGitRef <: HList](
-      paramValues: TupledValues
-    )(
-      implicit tupleToHList: Generic.Aux[TupledValues, ParamValuesNoGitRef],
-      gitRefInjector: GitRefInjector[ParamValuesNoGitRef, ParamValues]
-    ): BranchTrigger[ParamValuesNoGitRef, ParamValues] =
-      BranchTrigger(repository, branchRegex, job, tupleToHList.to(paramValues))
-  }
-}
-
-case class PullRequestTrigger[ParamValuesNoGitRef <: HList, ParamValues <: HList] private (
+case class PullRequestTrigger[F[_], ParametersNoGitRef <: HList, Parameters <: HList](
   repository: Repository,
-  job: Job[ParamValues, _],
-  values: ParamValuesNoGitRef
-)(
-  implicit gitRefInjector: GitRefInjector[ParamValuesNoGitRef, ParamValues],
-  orkestraConfig: OrkestraConfig,
-  kubernetesClient: KubernetesClient,
-  elasticsearchClient: HttpClient
-) extends GithubTrigger {
+  job: Job[F, Parameters, _],
+  parameters: ParametersNoGitRef
+)(implicit gitRefInjector: GitRefInjector[ParametersNoGitRef, Parameters])
+    extends GithubTrigger[F] {
 
-  private[github] def trigger(eventType: String, json: Json): Future[Boolean] =
+  private[github] def trigger(eventType: String, json: Json)(
+    implicit
+    orkestraConfig: OrkestraConfig,
+    kubernetesClient: KubernetesClient[F],
+    elasticsearchClient: ElasticClient
+  ): Future[Boolean] =
     eventType match {
       case "pull_request" =>
         val eventRepoName =
@@ -106,41 +73,9 @@ case class PullRequestTrigger[ParamValuesNoGitRef <: HList, ParamValues <: HList
           val runId = RunId.random()
           job
             .ApiServer()
-            .trigger(runId, gitRefInjector(values, GitRef(branch)), Seq(branch))
+            .trigger(runId, gitRefInjector(parameters, GitRef(branch)), Seq(branch))
             .map(_ => true)
         } else Future.successful(false)
       case _ => Future.successful(false)
     }
-}
-
-object PullRequestTrigger {
-  implicit private lazy val orkestraConfig: OrkestraConfig = OrkestraConfig.fromEnvVars()
-  implicit private lazy val kubernetesClient: KubernetesClient = Kubernetes.client
-  implicit private lazy val httpClient: HttpClient = Elasticsearch.client
-
-  def apply[ParamValues <: HList](repository: Repository, job: Job[ParamValues, _]) =
-    new PullRequestTriggerBuilder[ParamValues](repository, job)
-
-  class PullRequestTriggerBuilder[ParamValues <: HList](repository: Repository, job: Job[ParamValues, _]) {
-    // No Param
-    def apply()(
-      implicit gitRefInjector: GitRefInjector[HNil, ParamValues]
-    ): PullRequestTrigger[HNil, ParamValues] =
-      PullRequestTrigger(repository, job, HNil)
-
-    // One param
-    def apply[ParamValueNoGitRef](value: ParamValueNoGitRef)(
-      implicit gitRefInjector: GitRefInjector[ParamValueNoGitRef :: HNil, ParamValues]
-    ): PullRequestTrigger[ParamValueNoGitRef :: HNil, ParamValues] =
-      PullRequestTrigger(repository, job, value :: HNil)
-
-    // Multi param
-    def apply[TupledValues <: Product, ParamValuesNoGitRef <: HList](
-      paramValues: TupledValues
-    )(
-      implicit tupleToHList: Generic.Aux[TupledValues, ParamValuesNoGitRef],
-      gitRefInjector: GitRefInjector[ParamValuesNoGitRef, ParamValues]
-    ): PullRequestTrigger[ParamValuesNoGitRef, ParamValues] =
-      PullRequestTrigger(repository, job, tupleToHList.to(paramValues))
-  }
 }
